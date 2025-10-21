@@ -1,5 +1,3 @@
-from idlelib.window import add_windows_to_menu
-
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
