@@ -1,5 +1,3 @@
-from idlelib.window import add_windows_to_menu
-
 import asyncpg
 from aiogram import Router
 from aiogram.fsm.context import FSMContext

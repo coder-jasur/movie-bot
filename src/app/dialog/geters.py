@@ -1,6 +1,5 @@
 import asyncpg
 from aiogram_dialog import DialogManager
-from asyncpg import Connection
 
 from src.app.database.queries.channels import ChannelActions
 

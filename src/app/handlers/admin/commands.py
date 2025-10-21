@@ -3,7 +3,6 @@ from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
-from aiogram_dialog import DialogManager
 
 from src.app.database.queries.user import UserActions
 from src.app.keyboards.inline import admin_menu, choose_movie_type, back_to_admin_menu_kbd

@@ -9,7 +9,7 @@ from aiogram_dialog.widgets.text import Const, Format, Case
 from src.app.dialog.geters import op_menu_getter, channel_info_getter, add_chanenl_getter
 from src.app.dialog.handlers import (
     add_channel_input, get_channel_info, on_delete_channel,
-    on_edit_op, take_channel_data, on_done_dialog, add_channel
+    on_edit_op, take_channel_data, on_done_dialog
 )
 from src.app.states.admin.channel import ChannelsMenu, ChannelMenu, AddChannelSG
 

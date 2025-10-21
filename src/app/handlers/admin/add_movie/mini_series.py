@@ -4,7 +4,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
 from src.app.database.queries.movie.mini_series import MiniSeriesActions
-from src.app.database.queries.movie.series import SeriesActions
 from src.app.keyboards.callback_data import MiniSeriesCD
 from src.app.states.admin.movie import AddMovieSG
 
