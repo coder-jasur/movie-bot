@@ -35,13 +35,13 @@ async def check_channel_sub(
             )
         else:
             await dialog_manager.event.message.answer(
-                f"👋 Assalomu aleykum {dialog_manager.event.from_user.first_name}\n\n"
-                "👀 Film - Serila - Multfilm ko'rish uchun:\n\n"
-                "1️⃣ Kanalga obuna bo'ling\n"
-                "2⃣  Instagram yoki telegram kanalimizdan kerakli filmni tanlang👇\n"
-                "3⃣  Botga film kodini yuboring✍️\n\n"
-                "🎬 Eng so'nggi filmlar va seriallar! Faqat siz uchun! 🍿",
-                reply_markup=start_menu
+                f"👋 </b>Salom {
+                dialog_manager.event.message.from_user.first_name
+                or dialog_manager.event.message.from_user.last_name
+                or dialog_manager.event.message.from_user.full_name
+                }</b>\n\n"
+                f"<b>Botimizga xush kelibsiz.</b>\n\n"
+                f"<b>🍿 Kino kodini yuboring: </b>",
             )
     elif not_sub_channels:
         await dialog_manager.event.message.answer(
