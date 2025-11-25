@@ -197,7 +197,7 @@ def series_player_kbd(
     if int(current_series_for_current_season) > 1:
         nav_buttons.append(
             InlineKeyboardButton(
-                text="⬅️ Oldingi seria",
+                text="⬅️ Предыдущая серия",
                 callback_data=SeriesPlayerCD(
                     code=code,
                     series_number=current_series_for_current_season - 1,
@@ -208,7 +208,7 @@ def series_player_kbd(
             )
         )
 
-    # Seriya raqami
+    # Серия номер
     nav_buttons.append(
         InlineKeyboardButton(
             text=f"{current_series_for_current_season}/{series_count_for_current_season}",
@@ -216,11 +216,11 @@ def series_player_kbd(
         )
     )
 
-    # Next series
+    # Следующая серия
     if current_series_for_current_season < series_count_for_current_season:
         nav_buttons.append(
             InlineKeyboardButton(
-                text="Keyingi seria ➡️",
+                text="Следующая серия ➡️",
                 callback_data=SeriesPlayerCD(
                     code=code,
                     series_number=current_series_for_current_season + 1,
@@ -233,7 +233,7 @@ def series_player_kbd(
 
     keyboard.row(*nav_buttons)
 
-    # 🔢 Umumiy seriya raqami (masalan 4/30)
+    # 🔢 Общий номер серии (например 4/30)
     if series_count > 1:
         keyboard.row(
             InlineKeyboardButton(
@@ -242,25 +242,25 @@ def series_player_kbd(
             )
         )
 
-    # 📺 Sezon navigatsiyasi
+    # 📺 Навигация по сезонам
     season_buttons = []
     if seasons_count > 1:
-        # Oldingi sezon
+        # Предыдущий сезон
         if current_season > 1:
             season_buttons.append(
                 InlineKeyboardButton(
-                    text="⬅️ Oldingi fasl",
+                    text="⬅️ Предыдущий сезон",
                     callback_data=SeriesPlayerCD(
                         code=code,
                         series_number=1,
                         season_number=current_season - 1,
-                        all_series_numebr=current_series,  # yoki kerak bo‘lsa qayta hisoblanadi
+                        all_series_numebr=current_series,
                         action=ActionType.back_season
                     ).pack()
                 )
             )
 
-        # Sezon raqami
+        # Номер сезона
         if seasons_count > 1:
             season_buttons.append(
                 InlineKeyboardButton(
@@ -269,11 +269,11 @@ def series_player_kbd(
                 )
             )
 
-        # Keyingi sezon
+        # Следующий сезон
         if current_season < seasons_count:
             season_buttons.append(
                 InlineKeyboardButton(
-                    text="Keyingi fasl ➡️",
+                    text="Следующий сезон ➡️",
                     callback_data=SeriesPlayerCD(
                         code=code,
                         series_number=1,
@@ -286,11 +286,11 @@ def series_player_kbd(
 
         keyboard.row(*season_buttons)
 
-    # ⭐ Favorites tugmasi
+    # ⭐ Кнопка избранного
     if saved:
         keyboard.row(
             InlineKeyboardButton(
-                text="🗑 Saqlanganlardan o'chirish",
+                text="🗑 Удалить из избранного",
                 callback_data=SeriesPlayerCD(
                     code=code,
                     series_number=current_series_for_current_season,
@@ -303,7 +303,7 @@ def series_player_kbd(
     else:
         keyboard.row(
             InlineKeyboardButton(
-                text="💾 Saqlab qo'yish",
+                text="💾 Сохранить",
                 callback_data=SeriesPlayerCD(
                     code=code,
                     series_number=current_series_for_current_season,
@@ -330,7 +330,7 @@ def film_kbd(code: int, saved: bool) -> InlineKeyboardMarkup:
 
     if saved:
         add_to_favorites = InlineKeyboardButton(
-            text="🗑 O‘chirish",
+            text="🗑 Удалить",
             callback_data=FeatureFilmPlayerCD(
                 code=code,
                 actions="delete_for_favorites"
@@ -338,7 +338,7 @@ def film_kbd(code: int, saved: bool) -> InlineKeyboardMarkup:
         )
     else:
         add_to_favorites = InlineKeyboardButton(
-            text="💾 Saqlash",
+            text="💾 Сохранить",
             callback_data=FeatureFilmPlayerCD(
                 code=code,
                 actions="add_to_favorites"
@@ -356,12 +356,12 @@ def mini_series_player_kbd(code: int, current_seria: int, serias_count: int, sav
 
     serias_info_button = InlineKeyboardButton(text=f'{current_seria}/{serias_count}', callback_data="serias_info")
     next_button = InlineKeyboardButton(
-        text='Keyingi seria ⏭️',
+        text='Следующая серия ⏭️',
         callback_data=MiniSeriesPlayerCD(code=code, series_number=current_seria + 1,
                                          action=ActionType.next_series).pack()
     )
     previous_button = InlineKeyboardButton(
-        text='⏮️ Orqaga',
+        text='⏮️ Назад',
         callback_data=MiniSeriesPlayerCD(code=code, series_number=current_seria - 1,
                                          action=ActionType.back_series).pack()
     )
@@ -372,7 +372,7 @@ def mini_series_player_kbd(code: int, current_seria: int, serias_count: int, sav
 
     if saved:
         add_to_favorites = InlineKeyboardButton(
-            text="🗑 O‘chirish",
+            text="🗑 Удалить",
             callback_data=MiniSeriesPlayerCD(
                 code=code,
                 series_number=current_seria,
@@ -381,7 +381,7 @@ def mini_series_player_kbd(code: int, current_seria: int, serias_count: int, sav
         )
     else:
         add_to_favorites = InlineKeyboardButton(
-            text="💾 Saqlash",
+            text="💾 Сохранить",
             callback_data=MiniSeriesPlayerCD(
                 code=code,
                 series_number=current_seria,
@@ -401,6 +401,7 @@ def mini_series_player_kbd(code: int, current_seria: int, serias_count: int, sav
     inline_keyboard.row(film_kbd_clouse_for_series)
 
     return inline_keyboard.as_markup()
+
 
 
 def confirm_delete_kbd(code: int, action: str):

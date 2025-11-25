@@ -33,7 +33,7 @@ async def series_player(call: CallbackQuery, pool: asyncpg.Pool, callback_data: 
     )
 
     if current_series is None:
-        await call.answer("❌ Seriya topilmadi", show_alert=True)
+        await call.answer("❌ Серия не найдена", show_alert=True)
         return
 
     current_index = next(
@@ -88,14 +88,14 @@ async def feature_movies_player(call: CallbackQuery, callback_data: FeatureFilmP
         await call.message.edit_reply_markup(
             reply_markup=film_kbd(callback_data.code, False)
         )
-        return await call.answer("❌ Film sevimlilardan o‘chirildi")
+        return await call.answer("❌ Фильм удалён из избранного")
 
     if callback_data.actions == "add_to_favorites" and not saved:
         await favorite_films_actions.add_favorite_movie(callback_data.code, call.from_user.id)
         await call.message.edit_reply_markup(
             reply_markup=film_kbd(callback_data.code, True)
         )
-        return await call.answer("💾 Film sevimlilarga qo‘shildi")
+        return await call.answer("💾 Фильм добавлен в избранное")
 
 
 @player_router.callback_query(MiniSeriesPlayerCD.filter())
@@ -119,7 +119,7 @@ async def mini_series_player(call: CallbackQuery, callback_data: MiniSeriesPlaye
             InputMediaVideo(media=current_series[3], caption=current_series[-1]),
             reply_markup=mini_series_player_kbd(callback_data.code, current_series[2], len(mini_series_data), False)
         )
-        return await call.answer("❌ Film sevimlilardan o‘chirildi")
+        return await call.answer("❌ Фильм удалён из избранного")
 
     if callback_data.action == "add_to_favorites" and not saved:
         await favorite_films_actions.add_favorite_movie(callback_data.code, call.from_user.id)
@@ -127,7 +127,7 @@ async def mini_series_player(call: CallbackQuery, callback_data: MiniSeriesPlaye
             InputMediaVideo(media=current_series[3], caption=current_series[-1]),
             reply_markup=mini_series_player_kbd(callback_data.code, current_series[2], len(mini_series_data), True)
         )
-        return await call.answer("💾 Film sevimlilarga qo‘shildi")
+        return await call.answer("💾 Фильм добавлен в избранное")
 
     if callback_data.action == "next_series":
         await call.message.edit_media(
@@ -140,4 +140,3 @@ async def mini_series_player(call: CallbackQuery, callback_data: MiniSeriesPlaye
             InputMediaVideo(media=current_series[3], caption=current_series[-1]),
             reply_markup=mini_series_player_kbd(callback_data.code, current_series[2], len(mini_series_data), saved)
         )
-

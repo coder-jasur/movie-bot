@@ -13,16 +13,27 @@ start_router = Router()
 @start_router.message(CommandStart())
 async def start_bot(message: Message, pool: asyncpg.Pool):
     user_actions = UserActions(pool)
+
+    # Получение данных пользователя
     user_data = await user_actions.get_user(message.from_user.id)
 
+    # Если пользователя нет — добавляем
     if not user_data:
         await user_actions.add_user(
             message.from_user.id,
             message.from_user.username or message.from_user.first_name,
-
         )
+
+    # Определение имени пользователя
+    name = (
+        message.from_user.first_name
+        or message.from_user.last_name
+        or message.from_user.full_name
+        or "Друг"
+    )
+
     await message.answer(
-        f"<b>👋 Salom {message.from_user.first_name or message.from_user.last_name or message.from_user.full_name}</b>\n\n"
-        f"<b>Botimizga xush kelibsiz.</b>\n\n"
-        f"<b>🍿 Kino kodini yuboring: </b>",
+        f"<b>👋 Привет {name}</b>\n\n"
+        f"<b>Добро пожаловать в нашего бота!</b>\n\n"
+        f"<b>🍿 Отправьте код фильма:</b>"
     )

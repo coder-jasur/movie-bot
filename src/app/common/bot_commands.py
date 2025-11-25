@@ -7,17 +7,17 @@ from src.app.core.config import Settings
 async def create_bot_commands(bot: Bot, settings: Settings):
     await bot.set_my_commands(
         [
-            BotCommand(command="/start", description="Botni ishga tushirish"),
-            BotCommand(command="/favorites", description="Sevimli filmlar to'plami")
+            BotCommand(command="/start", description="Запустить бота"),
+            BotCommand(command="/favorites", description="Коллекция любимых фильмов")
         ]
     )
     for admin_id in settings.admins_ids:
         scope = BotCommandScopeChat(chat_id=int(admin_id))
         await bot.set_my_commands(
             [
-                BotCommand(command="/start", description="Botni ishga tushirish"),
-                BotCommand(command="/favorites", description="Sevimli filmlar to'plami"),
-                BotCommand(command="/admin_menu", description="Admin menu")
+                BotCommand(command="/start", description="Запустить бота"),
+                BotCommand(command="/favorites", description="Коллекция любимых фильмов"),
+                BotCommand(command="/admin_menu", description="Админ меню")
             ],
             scope=scope
         )

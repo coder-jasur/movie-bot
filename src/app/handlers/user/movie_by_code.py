@@ -48,7 +48,6 @@ async def send_movie_by_code(message: Message, pool: asyncpg.Pool):
             if s[2] == 1:
                 current_season_series += 1
 
-
         await message.answer_video(
             video=series[0][4],
             caption=series[0][5],
@@ -64,4 +63,4 @@ async def send_movie_by_code(message: Message, pool: asyncpg.Pool):
             )
         )
     else:
-        await message.answer("😔 Hechnima topilmadi.")
+        await message.answer("😔 Ничего не найдено.")
