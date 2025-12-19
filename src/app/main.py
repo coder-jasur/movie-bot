@@ -7,6 +7,7 @@ from aiogram_dialog import setup_dialogs
 
 from logs.logger_conf import setup_logging
 from src.app.common.bot_commands import create_bot_commands
+from src.app.common.database_beckup import daily_database_sender
 from src.app.common.database_dsn import construct_postgresql_url
 from src.app.core.config import Settings
 from src.app.database.tables import create_database_tables
@@ -36,6 +37,9 @@ async def main():
     register_middleware(dp, pool)
 
     bot = Bot(settings.bot_token, default=DefaultBotProperties(parse_mode="HTML"))
+
+    asyncio.create_task(daily_database_sender(bot, settings.admins_ids, pool))
+
     await create_bot_commands(bot, settings)
 
     await dp.start_polling(bot)

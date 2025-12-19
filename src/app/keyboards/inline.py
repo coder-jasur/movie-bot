@@ -197,7 +197,7 @@ def series_player_kbd(
     if int(current_series_for_current_season) > 1:
         nav_buttons.append(
             InlineKeyboardButton(
-                text="⬅️ Предыдущая серия",
+                text="⬅️ Oldingi Seria",
                 callback_data=SeriesPlayerCD(
                     code=code,
                     series_number=current_series_for_current_season - 1,
@@ -220,7 +220,7 @@ def series_player_kbd(
     if current_series_for_current_season < series_count_for_current_season:
         nav_buttons.append(
             InlineKeyboardButton(
-                text="Следующая серия ➡️",
+                text="Keyingi seria ➡️",
                 callback_data=SeriesPlayerCD(
                     code=code,
                     series_number=current_series_for_current_season + 1,
@@ -249,7 +249,7 @@ def series_player_kbd(
         if current_season > 1:
             season_buttons.append(
                 InlineKeyboardButton(
-                    text="⬅️ Предыдущий сезон",
+                    text="⬅️ Oldingi Fasl",
                     callback_data=SeriesPlayerCD(
                         code=code,
                         series_number=1,
@@ -273,7 +273,7 @@ def series_player_kbd(
         if current_season < seasons_count:
             season_buttons.append(
                 InlineKeyboardButton(
-                    text="Следующий сезон ➡️",
+                    text="Keyingi Fasl ➡️",
                     callback_data=SeriesPlayerCD(
                         code=code,
                         series_number=1,
@@ -290,7 +290,7 @@ def series_player_kbd(
     if saved:
         keyboard.row(
             InlineKeyboardButton(
-                text="🗑 Удалить из избранного",
+                text="🗑 O'chirish",
                 callback_data=SeriesPlayerCD(
                     code=code,
                     series_number=current_series_for_current_season,
@@ -303,7 +303,7 @@ def series_player_kbd(
     else:
         keyboard.row(
             InlineKeyboardButton(
-                text="💾 Сохранить",
+                text="💾 Saqlash",
                 callback_data=SeriesPlayerCD(
                     code=code,
                     series_number=current_series_for_current_season,
@@ -330,7 +330,7 @@ def film_kbd(code: int, saved: bool) -> InlineKeyboardMarkup:
 
     if saved:
         add_to_favorites = InlineKeyboardButton(
-            text="🗑 Удалить",
+            text="🗑 O'chirish",
             callback_data=FeatureFilmPlayerCD(
                 code=code,
                 actions="delete_for_favorites"
@@ -338,7 +338,7 @@ def film_kbd(code: int, saved: bool) -> InlineKeyboardMarkup:
         )
     else:
         add_to_favorites = InlineKeyboardButton(
-            text="💾 Сохранить",
+            text="💾 Saqlash",
             callback_data=FeatureFilmPlayerCD(
                 code=code,
                 actions="add_to_favorites"
@@ -356,12 +356,12 @@ def mini_series_player_kbd(code: int, current_seria: int, serias_count: int, sav
 
     serias_info_button = InlineKeyboardButton(text=f'{current_seria}/{serias_count}', callback_data="serias_info")
     next_button = InlineKeyboardButton(
-        text='Следующая серия ⏭️',
+        text='Keyingi Seria ⏭️',
         callback_data=MiniSeriesPlayerCD(code=code, series_number=current_seria + 1,
                                          action=ActionType.next_series).pack()
     )
     previous_button = InlineKeyboardButton(
-        text='⏮️ Назад',
+        text='⏮️ Orqaga',
         callback_data=MiniSeriesPlayerCD(code=code, series_number=current_seria - 1,
                                          action=ActionType.back_series).pack()
     )
@@ -372,7 +372,7 @@ def mini_series_player_kbd(code: int, current_seria: int, serias_count: int, sav
 
     if saved:
         add_to_favorites = InlineKeyboardButton(
-            text="🗑 Удалить",
+            text="🗑 O'chirish",
             callback_data=MiniSeriesPlayerCD(
                 code=code,
                 series_number=current_seria,
@@ -381,7 +381,7 @@ def mini_series_player_kbd(code: int, current_seria: int, serias_count: int, sav
         )
     else:
         add_to_favorites = InlineKeyboardButton(
-            text="💾 Сохранить",
+            text="💾 Saqlash",
             callback_data=MiniSeriesPlayerCD(
                 code=code,
                 series_number=current_seria,

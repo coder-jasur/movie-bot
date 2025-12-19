@@ -33,7 +33,7 @@ async def start_bot(message: Message, pool: asyncpg.Pool):
     )
 
     await message.answer(
-        f"<b>👋 Привет {name}</b>\n\n"
-        f"<b>Добро пожаловать в нашего бота!</b>\n\n"
-        f"<b>🍿 Отправьте код фильма:</b>"
+        f"<b>👋 Salom {name}</b>\n\n"
+        f"<b>Botimizga xush kelibsiz.</b>\n\n"
+        f"<b>🍿 Kino kodini yuboring:</b>"
     )

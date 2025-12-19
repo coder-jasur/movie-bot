@@ -63,4 +63,4 @@ async def send_movie_by_code(message: Message, pool: asyncpg.Pool):
             )
         )
     else:
-        await message.answer("😔 Ничего не найдено.")
+        await message.answer("😔 Hechnima topilmadi.")

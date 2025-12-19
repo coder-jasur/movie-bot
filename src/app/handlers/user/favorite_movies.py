@@ -19,7 +19,7 @@ async def list_favorite_movies(message: Message, pool: asyncpg.Pool):
 
         texts = ""
         if favorite_films_data:
-            texts += "📬 Коллекция фильмов\n\n"
+            texts += "📬 Filmlar toplami\n\n"
             for favorite_film_data in favorite_films_data:
                 feature_movies_actions = FeatureFilmsActions(pool)
                 mini_series_actions = MiniSeriesActions(pool)
@@ -40,12 +40,12 @@ async def list_favorite_movies(message: Message, pool: asyncpg.Pool):
 
                 texts += text
 
-            texts += "Просто отправьте код боту и наслаждайтесь вашими любимыми фильмами"
+            texts += "Shunchaki kodni botga yuboring va sevimli filmlaringizdan maroqlaning"
         else:
-            texts += "Вы ещё ничего не сохранили"
+            texts += "Siz hali hechnima saqlamagansiz"
 
         await message.answer(texts)
 
     except Exception as e:
         print("ERROR", e)
-        await message.answer("Произошла ошибка. Попробуйте снова")
+        await message.answer("Xatolik yuzberdi qaytatdan urinib ko'ring")
