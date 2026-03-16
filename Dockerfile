@@ -6,6 +6,9 @@ WORKDIR /app
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir uv
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+
 # Copy configuration files
 COPY pyproject.toml /app/
 
@@ -17,5 +20,8 @@ RUN uv pip install -r requirements.txt --system
 
 # Copy application code
 COPY . /app/
+
+# Compile translations
+RUN pybabel compile -d translations
 
 CMD ["python", "-m", "src.app.main"]

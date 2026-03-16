@@ -1,10 +1,11 @@
-import logging
-import aiofiles
-from aiogram.types import FSInputFile
-import os
 import asyncio
 import datetime
+import logging
+import os
+
+import aiofiles
 from aiogram import Bot
+from aiogram.types import FSInputFile
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from src.app.database.queries.user import UserActions
@@ -28,7 +29,9 @@ async def send_database_to_owner(bot: Bot, chat_ids: list[int], db_path: str):
         await asyncio.gather(*tasks)
 
 
-async def daily_database_sender(bot: Bot, chat_ids: list[int], session_pool: async_sessionmaker) -> None:
+async def daily_database_sender(
+    bot: Bot, chat_ids: list[int], session_pool: async_sessionmaker
+) -> None:
     while True:
         try:
             async with session_pool() as session:

@@ -1,5 +1,6 @@
 from sqlalchemy import select, delete, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 import logging
 
 from src.app.database.models import MiniSeries
@@ -19,21 +20,242 @@ class MiniSeriesActions:
             video_file_id: str,
             caption: str,
             genres: str = None,
+            format: str = None,
+            language: str = None,
+            files: dict = None,
+            thumbnail_file_id: str = None,
     ):
+        lang_key = language or "uz"
+        
+        # Determine structured names/captions - prioritize existing dicts
+        if isinstance(mini_series_name, dict):
+            structured_names = mini_series_name
+        else:
+            structured_names = {lang_key: mini_series_name}
+
+        if isinstance(caption, dict):
+            structured_captions = caption
+        else:
+            structured_captions = {lang_key: caption} if caption else {}
+
+        structured_files = {lang_key: files or {"original": video_file_id}}
+        structured_thumbnails = {lang_key: thumbnail_file_id} if thumbnail_file_id else {}
+
         ms = MiniSeries(
             code=mini_series_code,
-            name=mini_series_name,
+            name=structured_names,
             series=series,
             video_file_id=video_file_id,
-            captions=caption,
-            genres=genres
+            captions=structured_captions,
+            genres=genres,
+            format=format,
+            language=language or lang_key,
+            files=structured_files,
+            thumbnails=structured_thumbnails
         )
-        # Update genres for all other episodes of the same mini-series
-        if genres:
-            stmt = update(MiniSeries).where(MiniSeries.code == mini_series_code).values(genres=genres)
+        # Update genres, format for all other episodes of the same mini-series
+        updates = {}
+        if genres: updates["genres"] = genres
+        if format: updates["format"] = format
+        
+        if updates:
+            stmt = update(MiniSeries).where(MiniSeries.code == mini_series_code).values(**updates)
             await self.session.execute(stmt)
 
         self.session.add(ms)
+        await self.session.commit()
+
+    async def add_language_track(
+            self,
+            mini_series_code: int,
+            series_num: int,
+            language: str,
+            video_file_id: str,
+            caption: str,
+            files: dict = None,
+            name: str = None,
+            thumbnail_file_id: str = None,
+    ):
+        # Mini-series name handling
+        pass # We'll handle 'name' in the episode record below
+
+        stmt = select(MiniSeries).where(
+            MiniSeries.code == mini_series_code,
+            MiniSeries.series == series_num
+        )
+        result = await self.session.execute(stmt)
+        episode = result.scalar_one_or_none()
+        
+        if not episode:
+            raise ValueError(f"Episode {series_num} of mini-series {mini_series_code} not found")
+
+        # Ensure we work with dictionaries and don't lose legacy data
+        if isinstance(episode.files, dict):
+            current_files = dict(episode.files)
+        else:
+            current_files = {"uz": {"original": episode.video_file_id}} if episode.video_file_id else {}
+
+        if isinstance(episode.captions, dict):
+            current_captions = dict(episode.captions)
+        elif isinstance(episode.captions, str) and episode.captions.strip():
+            try:
+                import json
+                parsed = json.loads(episode.captions)
+                if isinstance(parsed, dict):
+                    current_captions = parsed
+                else:
+                    current_captions = {"uz": episode.captions}
+            except:
+                current_captions = {"uz": episode.captions}
+        else:
+            current_captions = {}
+
+        if isinstance(episode.name, dict):
+            current_names = dict(episode.name)
+        else:
+            current_names = {"uz": str(episode.name)} if episode.name else {}
+
+        if name:
+            current_names[language] = name
+            episode.name = current_names
+            flag_modified(episode, "name")
+        
+        if language not in current_files or not isinstance(current_files[language], dict):
+            current_files[language] = {}
+
+        if files:
+            current_files[language].update(files)
+        else:
+            current_files[language]["original"] = video_file_id
+
+        current_captions[language] = caption
+        
+        current_langs = [l for l in (episode.language or "").split(",") if l]
+        if language not in current_langs:
+            current_langs.append(language)
+        
+        episode.language = ",".join(current_langs)
+        episode.files = current_files
+        episode.captions = current_captions
+
+        if thumbnail_file_id:
+            if not isinstance(episode.thumbnails, dict):
+                episode.thumbnails = {}
+            episode.thumbnails[language] = thumbnail_file_id
+            flag_modified(episode, "thumbnails")
+
+        flag_modified(episode, "files")
+        flag_modified(episode, "captions")
+        
+        await self.session.commit()
+
+    async def update_language_track(
+            self,
+            mini_series_code: int,
+            series_num: int,
+            language: str,
+            video_file_id: str = None,
+            caption: str = None,
+            files: dict = None,
+            name: str = None,
+            thumbnail_file_id: str = None,
+            clear_files: bool = False
+    ):
+        stmt = select(MiniSeries).where(
+            MiniSeries.code == mini_series_code,
+            MiniSeries.series == series_num
+        )
+        result = await self.session.execute(stmt)
+        episode = result.scalar_one_or_none()
+        
+        if not episode:
+            raise ValueError(f"Episode {series_num} of mini-series {mini_series_code} not found")
+
+        if isinstance(episode.files, dict):
+            current_files = dict(episode.files)
+        else:
+            current_files = {"uz": {"original": episode.video_file_id}} if episode.video_file_id else {}
+
+        if isinstance(episode.captions, dict):
+            current_captions = dict(episode.captions)
+        elif isinstance(episode.captions, str) and episode.captions.strip():
+            try:
+                import json
+                parsed = json.loads(episode.captions)
+                if isinstance(parsed, dict):
+                    current_captions = parsed
+                else:
+                    current_captions = {"uz": episode.captions}
+            except:
+                current_captions = {"uz": episode.captions}
+        else:
+            current_captions = {}
+
+        if isinstance(episode.name, dict):
+            current_names = dict(episode.name)
+        else:
+            current_names = {"uz": str(episode.name)} if episode.name else {}
+
+        if files or video_file_id:
+            if language not in current_files or not isinstance(current_files[language], dict) or clear_files:
+                current_files[language] = {}
+            
+            # Record the primary video_file_id if provided
+            if video_file_id:
+                episode.video_file_id = video_file_id
+                current_files[language]["original"] = video_file_id
+
+            if files:
+                current_files[language].update(files)
+                
+            episode.files = current_files
+            flag_modified(episode, "files")
+        
+        if caption is not None:
+            current_captions[language] = caption
+            episode.captions = current_captions
+            flag_modified(episode, "captions")
+
+        if name is not None:
+            current_names[language] = name
+            episode.name = current_names
+            flag_modified(episode, "name")
+
+        if thumbnail_file_id is not None:
+            if not isinstance(episode.thumbnails, dict):
+                episode.thumbnails = {}
+            episode.thumbnails[language] = thumbnail_file_id
+            flag_modified(episode, "thumbnails")
+
+        await self.session.commit()
+
+    async def delete_language_track(self, mini_series_code: int, series_num: int, language: str):
+        stmt = select(MiniSeries).where(
+            MiniSeries.code == mini_series_code,
+            MiniSeries.series == series_num
+        )
+        result = await self.session.execute(stmt)
+        episode = result.scalar_one_or_none()
+        
+        if not episode: return
+
+        current_files = dict(episode.files) if isinstance(episode.files, dict) else {}
+        current_captions = dict(episode.captions) if isinstance(episode.captions, dict) else {}
+        current_langs = (episode.language or "").split(",")
+
+        if language in current_files:
+            del current_files[language]
+        if language in current_captions:
+            del current_captions[language]
+        if language in current_langs:
+            current_langs.remove(language)
+
+        episode.files = current_files
+        episode.captions = current_captions
+        episode.language = ",".join(filter(None, current_langs))
+        flag_modified(episode, "files")
+        flag_modified(episode, "captions")
+
         await self.session.commit()
 
     async def get_mini_series(self, mini_series_code: int) -> list[MiniSeries]:

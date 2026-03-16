@@ -2,6 +2,7 @@ from typing import Sequence
 
 from sqlalchemy import select, delete, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 import logging
 
 from src.app.database.models import FeatureFilm
@@ -20,15 +21,227 @@ class FeatureFilmsActions:
             video_file_id: str,
             caption: str,
             genres: str = None,
+            format: str = None,
+            language: str = None,
+            files: dict = None,
+            thumbnail_file_id: str = None,
     ):
+        # Initial track setup
+        # Initial track setup
+        lang_key = language or "uz"  # default if not provided
+        
+        # Determine structured names/captions - prioritize existing dicts
+        if isinstance(film_name, dict):
+            structured_names = film_name
+        else:
+            structured_names = {lang_key: film_name}
+
+        if isinstance(caption, dict):
+            structured_captions = caption
+        else:
+            structured_captions = {lang_key: caption} if caption else {}
+
+        structured_files = {lang_key: files or {"original": video_file_id}}
+        structured_thumbnails = {lang_key: thumbnail_file_id} if thumbnail_file_id else {}
+
         film = FeatureFilm(
             code=film_code,
-            name=film_name,
-            video_file_id=video_file_id,
-            captions=caption,
-            genres=genres
+            name=structured_names,
+            video_file_id=video_file_id, 
+            captions=structured_captions,
+            genres=genres,
+            format=format,
+            language=language or lang_key, 
+            files=structured_files,
+            thumbnails=structured_thumbnails
         )
         self.session.add(film)
+        await self.session.commit()
+
+    async def add_language_track(
+            self,
+            film_code: int,
+            language: str,
+            video_file_id: str,
+            caption: str,
+            files: dict = None,
+            name: str = None,
+            thumbnail_file_id: str = None,
+    ):
+        film = await self.get_feature_film(film_code)
+        if not film:
+            raise ValueError(f"Film with code {film_code} not found")
+        
+        # Handle localized names
+        if isinstance(film.name, dict):
+            current_names = dict(film.name)
+        else:
+            current_names = {"uz": str(film.name)} if film.name else {}
+
+        if name:
+            current_names[language] = name
+            film.name = current_names
+            flag_modified(film, "name")
+
+        # Log state before update
+        logger.info(f"Adding Language Track for Film {film_code} - Language: {language}")
+        logger.info(f"Current Files: {film.files}")
+        logger.info(f"Current Captions: {film.captions}")
+
+        # Ensure we work with dictionaries and don't lose legacy string data
+        if isinstance(film.files, dict):
+            current_files = dict(film.files)
+        else:
+            # If legacy was a string or None
+            current_files = {"uz": {"original": film.video_file_id}} if film.video_file_id else {}
+
+        if isinstance(film.captions, dict):
+            current_captions = dict(film.captions)
+        elif isinstance(film.captions, str) and film.captions.strip():
+            # Try to parse as JSON in case it's a serialized dict
+            try:
+                import json
+                parsed = json.loads(film.captions)
+                if isinstance(parsed, dict):
+                    current_captions = parsed
+                else:
+                    current_captions = {"uz": film.captions}
+            except:
+                current_captions = {"uz": film.captions}
+        else:
+            current_captions = {}
+        
+        if language not in current_files or not isinstance(current_files[language], dict):
+            current_files[language] = {}
+
+        if files:
+            current_files[language].update(files)
+        else:
+            current_files[language]["original"] = video_file_id
+
+        # Ensure caption is a string, not a dict (prevents nesting)
+        if isinstance(caption, dict):
+            caption = caption.get(language, str(caption))
+        current_captions[language] = caption
+        
+        # Update language list
+        current_langs = [l for l in (film.language or "").split(",") if l]
+        if language not in current_langs:
+            current_langs.append(language)
+        
+        film.language = ",".join(current_langs)
+        film.files = current_files
+        film.captions = current_captions
+        
+        if thumbnail_file_id:
+            if not isinstance(film.thumbnails, dict):
+                film.thumbnails = {}
+            film.thumbnails[language] = thumbnail_file_id
+            flag_modified(film, "thumbnails")
+
+        # Explicitly mark as modified for SQLAlchemy JSON detection
+        flag_modified(film, "files")
+        flag_modified(film, "captions")
+        
+        logger.info(f"Updated Files: {film.files}")
+        logger.info(f"Updated Captions: {film.captions}")
+        
+        await self.session.commit()
+
+    async def update_language_track(
+            self,
+            film_code: int,
+            language: str,
+            video_file_id: str = None,
+            caption: str = None,
+            files: dict = None,
+            name: str = None,
+            thumbnail_file_id: str = None,
+            clear_files: bool = False
+    ):
+        film = await self.get_feature_film(film_code)
+        if not film:
+            raise ValueError(f"Film {film_code} not found")
+
+        if isinstance(film.files, dict):
+            current_files = dict(film.files)
+        else:
+            current_files = {"uz": {"original": film.video_file_id}} if film.video_file_id else {}
+
+        if isinstance(film.captions, dict):
+            current_captions = dict(film.captions)
+        elif isinstance(film.captions, str) and film.captions.strip():
+            try:
+                import json
+                parsed = json.loads(film.captions)
+                if isinstance(parsed, dict):
+                    current_captions = parsed
+                else:
+                    current_captions = {"uz": film.captions}
+            except:
+                current_captions = {"uz": film.captions}
+        else:
+            current_captions = {}
+
+        if isinstance(film.name, dict):
+            current_names = dict(film.name)
+        else:
+            current_names = {"uz": str(film.name)} if film.name else {}
+        
+        if files or video_file_id:
+            if language not in current_files or not isinstance(current_files[language], dict) or clear_files:
+                current_files[language] = {}
+            
+            # Record the primary video_file_id if provided
+            if video_file_id:
+                film.video_file_id = video_file_id
+                current_files[language]["original"] = video_file_id
+
+            if files:
+                current_files[language].update(files)
+                
+            film.files = current_files
+            flag_modified(film, "files")
+        
+        if caption is not None:
+            current_captions[language] = caption
+            film.captions = current_captions
+            flag_modified(film, "captions")
+
+        if name is not None:
+            current_names[language] = name
+            film.name = current_names
+            flag_modified(film, "name")
+
+        if thumbnail_file_id is not None:
+            if not isinstance(film.thumbnails, dict):
+                film.thumbnails = {}
+            film.thumbnails[language] = thumbnail_file_id
+            flag_modified(film, "thumbnails")
+
+        await self.session.commit()
+
+    async def delete_language_track(self, film_code: int, language: str):
+        film = await self.get_feature_film(film_code)
+        if not film: return
+
+        current_files = dict(film.files) if isinstance(film.files, dict) else {}
+        current_captions = dict(film.captions) if isinstance(film.captions, dict) else {}
+        current_langs = (film.language or "").split(",")
+
+        if language in current_files:
+            del current_files[language]
+        if language in current_captions:
+            del current_captions[language]
+        if language in current_langs:
+            current_langs.remove(language)
+
+        film.files = current_files
+        film.captions = current_captions
+        film.language = ",".join(filter(None, current_langs))
+        flag_modified(film, "files")
+        flag_modified(film, "captions")
+
         await self.session.commit()
 
     async def get_feature_film(self, film_code: int) -> FeatureFilm | None:

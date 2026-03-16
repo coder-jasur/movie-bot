@@ -13,6 +13,7 @@ from aiogram.types import (
 
 from src.app.database.queries.user import UserActions
 from src.app.database.models import User
+from src.app.bot.common.i18n import lazy_gettext as _
 
 logger = logging.getLogger(__name__)
 
@@ -25,23 +26,19 @@ class Broadcaster:
             session: AsyncSession,
             admin_id: int,
             broadcasting_message: Message | None = None,
+            from_chat_id: int | None = None,
+            message_id: int | None = None,
+            reply_markup: types.InlineKeyboardMarkup | None = None,
             album: list[Message] | None = None,
             batch_size: int = 5000,
-            sleep_seconds: float = 0.05  # Default: 20 messages per second (below API limit)
+            sleep_seconds: float = 0.05
     ):
-        """
-        Initialize the broadcaster
-
-        Args:
-            bot: Telegram Bot instance
-            admin_id: Admin user ID for status reports
-            broadcasting_message: Single message to broadcast
-            album: Media album to broadcast
-            sleep_seconds: Delay between messages to avoid rate limits
-        """
         self._bot = bot
         self._session = session
         self.broadcasting_message = broadcasting_message
+        self.from_chat_id = from_chat_id or (broadcasting_message.chat.id if broadcasting_message else None)
+        self.message_id = message_id or (broadcasting_message.message_id if broadcasting_message else None)
+        self.reply_markup = reply_markup or (broadcasting_message.reply_markup if broadcasting_message else None)
         self.album = album
         self.admin_id = admin_id
         self.batch_size = batch_size
@@ -66,9 +63,9 @@ class Broadcaster:
         self.total_limited_users: int = 0  # Количество пользователей, чей аккаунт временно ограничен
 
         # Validate input parameters
-        if not (broadcasting_message or album):
-            raise ValueError("Either broadcasting_message or album must be provided")
-        if broadcasting_message and album:
+        if not (self.message_id or self.album):
+            raise ValueError("Either message_id/broadcasting_message or album must be provided")
+        if self.message_id and self.album:
             raise ValueError("Only one of broadcasting_message or album should be provided")
 
     async def _send_info_message(self, info_message_text: str) -> types.Message:
@@ -112,7 +109,7 @@ class Broadcaster:
             )
 
             if include_total:
-                text += f"\n\nВсего обработано: {self.total_processed} пользователей"
+                text += f"\n\n{_('Всего обработано')}: {self.total_processed} {_('пользователей')}"
 
             await info_message.edit_text(text)
 
@@ -127,13 +124,13 @@ class Broadcaster:
             Tuple of (blocked_count, deleted_count, limited_count, deactivated_count)
         """
         info_message_text = (
-            "Отправка сообщений: {sent}\n"
-            "Не удалось отправить: {failed}\n"
-            "Заблокировали: {blocked}\n"
-            "Удаленных аккаунтов: {deleted}\n"
-            "Ограниченных: {limited}\n"
-            "Деактивированных: {deactivated}\n"
-            "Обработано пачек: {batches}"
+            f"{_('Отправка сообщений')}: {{sent}}\n"
+            f"{_('Не удалось отправить')}: {{failed}}\n"
+            f"{_('Заблокировали')}: {{blocked}}\n"
+            f"{_('Удаленных аккаунтов')}: {{deleted}}\n"
+            f"{_('Ограниченных')}: {{limited}}\n"
+            f"{_('Деактивированных')}: {{deactivated}}\n"
+            f"{_('Обработано пачек')}: {{batches}}"
         )
 
         # Инициализация сообщения со статусом
@@ -144,7 +141,7 @@ class Broadcaster:
 
             # Обрабатываем пользователей пачками
             users_actions = UserActions(self._session)
-            async for user_ids, offset in users_actions.iterate_user_ids(self.batch_size):
+            async for user_ids, offset in users_actions.iterate_user_ids(self.batch_size, exclude_vip=True):
                 # Обрабатываем текущую пачку пользователей
                 await self._process_batch(user_ids, info_message, info_message_text)
 
@@ -191,7 +188,7 @@ class Broadcaster:
             logger.error(f"Broadcasting error: {e}")
             await self._bot.send_message(
                 self.admin_id,
-                f"Ошибка при рассылке: {e}"
+                f"{_('Ошибка при рассылке')}: {e}"
             )
         finally:
             # Финальное обновление статуса
@@ -284,12 +281,12 @@ class Broadcaster:
             False otherwise
         """
         try:
-            if self.broadcasting_message:
+            if self.message_id:
                 await self._bot.copy_message(
                     chat_id=user_id,
-                    from_chat_id=self.broadcasting_message.from_user.id,
-                    message_id=self.broadcasting_message.message_id,
-                    reply_markup=self.broadcasting_message.reply_markup
+                    from_chat_id=self.from_chat_id,
+                    message_id=self.message_id,
+                    reply_markup=self.reply_markup
                 )
             else:
                 await self._bot.send_media_group(
@@ -404,10 +401,10 @@ class Broadcaster:
     async def _delete_preview(self) -> None:
         """Delete preview messages from admin chat"""
         try:
-            if self.broadcasting_message:
+            if self.message_id:
                 await self._bot.delete_message(
                     chat_id=self.admin_id,
-                    message_id=self.broadcasting_message.message_id
+                    message_id=self.message_id
                 )
             elif self.album:
                 await self._bot.delete_messages(

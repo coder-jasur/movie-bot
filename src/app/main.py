@@ -1,7 +1,15 @@
 import asyncio
 import sys
+import logging
 from pathlib import Path
 
+import uvicorn
+from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.client.telegram import TelegramAPIServer
+
+from src.app.api.app import app
+
+# Root yo'lini sozlash
 project_root = Path(__file__).resolve().parents[2]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
@@ -11,45 +19,75 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram_dialog import setup_dialogs
 
 from logs.logger_conf import setup_logging
-from src.app.settings.bot_commands import create_bot_commands
+from src.app.bot.settings.bot_commands import create_bot_commands
 from src.app.database.database_backup import daily_database_sender
-from src.app.database.database_dsn import construct_postgresql_url
-from src.app.core.config import Settings
+from src.app.core.config import load_config
 from src.app.database.core import Database, Base
-from src.app.handlers import register_all_routers
-from src.app.middleware import register_middleware
+from src.app.bot.handlers import register_all_routers
+from src.app.bot.middleware import register_middleware
 
+async def start_api():
+    config = uvicorn.Config(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        loop="asyncio",
+        log_level="info"
+    )
+    server = uvicorn.Server(config)
+    await server.serve()
 
 async def main():
-    settings = Settings()
+    try:
+        settings = load_config()
+        dp = Dispatcher()
+        dsn = settings.construct_postgresql_url()
+        db = Database(dsn)
 
-    dp = Dispatcher()
+        # DB jadvallarini tekshirish
+        async with db.engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
 
-    dsn = construct_postgresql_url(settings)
+        dp["settings"] = settings
+        dp["session_pool"] = db.session_factory
+        register_middleware(dp, db.session_factory)
+        register_all_routers(dp, settings)
+        setup_dialogs(dp)
 
-    db = Database(dsn)
+        session = AiohttpSession(
+            api=TelegramAPIServer.from_base(settings.tg_api_server_url),
+            timeout=300,
+        )
 
-    async with db.engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        bot = Bot(token=settings.bot_token, session=session, default=DefaultBotProperties(parse_mode="HTML"))
+        
+        # FastAPI state
+        app.state.bot = bot
+        app.state.dp = dp
 
-    register_all_routers(dp, settings)
-    setup_dialogs(dp)
+        from src.app.api.webhook import router as webhook_router
+        app.include_router(webhook_router, prefix=settings.webhook_path)
 
-    register_middleware(dp, db.session_factory)
+        asyncio.create_task(daily_database_sender(bot, settings.admins_ids, db.session_factory))
+        await create_bot_commands(bot, settings)
 
-    bot = Bot(settings.bot_token, default=DefaultBotProperties(parse_mode="HTML"))
-
-    asyncio.create_task(daily_database_sender(bot, settings.admins_ids, db.session_factory))
-
-    await create_bot_commands(bot, settings)
-
-    await dp.start_polling(bot)
-
+        if settings.use_webhook:
+            webhook_url = f"{settings.webhook_url}{settings.webhook_path}"
+            await bot.set_webhook(url=webhook_url, drop_pending_updates=True)
+            print(f"WEBHOOK MODE: {webhook_url}")
+            await start_api()
+        else:
+            print("POLLING MODE: Deleting webhook and starting...")
+            await bot.delete_webhook(drop_pending_updates=True)
+            # Bir vaqtning o'zida ham polling, ham API ni ishga tushiramiz
+            await asyncio.gather(
+                dp.start_polling(bot),
+                start_api()
+            )
+    except Exception as e:
+        print(f"\n❌ STARTUP ERROR: {e}")
+        logging.exception(e)
 
 if __name__ == "__main__":
-    try:
-        setup_logging("logs/logger.yml")
-
-        asyncio.run(main())
-    except Exception as e:
-        print("ERROR", e)
+    setup_logging("logs/logger.yml")
+    asyncio.run(main())
