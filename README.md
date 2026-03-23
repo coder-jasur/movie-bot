@@ -1,94 +1,93 @@
 # 🎬 Movie Bot - Advanced Telegram Movie System
 
-Professional darajadagi filmlar va epizodli filmlar (mini-series) bot tizimi. Bu tizim yuqori yuklamali video qayta ishlash jarayonlarini optimallashtirish uchun **VPS + Lokal Worker** arxitekturasidan foydalanadi.
+Professional darajadagi filmlar va seriyallar uchun Telegram bot tizimi. Bu tizim yuqori yuklamali video jarayonlarni optimallashtirish uchun **VPS + Local Path** arxitekturasidan foydalanadi.
 
 ---
 
 ## 🔥 Asosiy Imkoniyatlar
 
-- **Dual-Server Arxitekturasi**: Bot va ma'lumotlar bazasi VPSda ishlaydi, og'ir video transkodlash (FFmpeg) esa Lokal kompyuterda (Worker) amalga oshiriladi.
+- **Dual-Server Arxitekturasi**: Bot va DB VPSda, og'ir video transkodlash (FFmpeg) esa lokal serverda (Worker).
 - **Darajali Admin Tizimi (RBAC)**:
-  - **Level 1 (Admin)**: Kontent qo'shish, statistika va tahrirlash.
-  - **Level 2 (Super Admin)**: Adminlarni boshqarish (qo'shish/o'chirish/daraja o'zgartirish).
-- **Multilanguage (i18n)**: To'liq O'zbek va Rus tillari qo'llab-quvvatlanadi.
-- **Video Transcoding**: Videolarni turli sifatlarda (360p, 480p, 720p) avtomatik qayta ishlash.
-- **Webhook & Polling**: VPSda Webhook, lokal testlarda Polling rejimlari.
-- **Telegram Local API**: Katta hajmli fayllar bilan ishlash uchun xususiy Telegram API server integratsiyasi.
+  - **Super Admin**: Barcha huquqlar, adminlarni boshqarish.
+  - **Admin**: Kontent qo'shish va tahrirlash.
+- **Multilanguage (i18n)**: To'liq O'zbek, Rus va Ingliz tillari qo'llab-quvvatlanadi.
+- **Video Transcoding**: Videolarni turli sifatlarda (360p, 480p, 720p) FFmpeg orqali avtomatik qayta ishlash.
+- **To'lov Tizimlari**: Payme va Click integratsiyasi.
+- **Telegram Local API**: Katta hajmli fayllarni (2GB+) tezroq yuklash uchun integratsiya.
 
 ---
 
-## 🏗 Arxitektura Chizmasi
+## 🛠 Texnologiyalar
+
+- **Language**: Python 3.13+
+- **Framework**: [Aiogram 3.x](https://github.com/aiogram/aiogram)
+- **UI**: [Aiogram-dialog](https://github.com/Tishka17/aiogram_dialog)
+- **Database**: PostgreSQL + SQLAlchemy (Async)
+- **Caching/Queue**: Redis
+- **Background Tasks**: Celery
+- **Video Processing**: FFmpeg
+- **Package Manager**: [UV](https://github.com/astral-sh/uv)
+
+---
+
+## 🏗 Arxitektura
 
 ```mermaid
 graph TD
     User((Foydalanuvchi)) <--> Bot[VPS: Aiogram Bot]
     Bot <--> DB[(VPS: PostgreSQL)]
     Bot <--> Redis[(VPS: Redis)]
-    Bot -- Webhook/API --> LocalWorker[Lokal Kompyuter: Transcoder]
-    LocalWorker -- Upload --> TelegramAPI[Telegram Local API Server]
-    TelegramAPI -- FileID --> Bot
+    Bot -- Task Queue --> Celery[Worker: Transcoder]
+    Celery -- Processing --> FFmpeg[FFmpeg Engine]
+    Celery -- Upload --> TG_Local[Telegram Local API]
+    TG_Local -- FileID --> Bot
 ```
 
 ---
 
-## ⚙️ Sozlash (Installation)
+## ⚙️ O'rnatish (Installation)
 
-### 1. VPS Tomoni (Bot)
-1. `.env` faylini namunadagidek (`.env.example`) to'ldiring:
-   - `USE_WEBHOOK=True`
-   - `WEBHOOK_URL=https://sizning_domeningiz.com`
-2. Docker orqali ishga tushiring:
-   ```bash
-   docker-compose up --build -d
-   ```
+### 1. Muhitni sozlash
+Loyihani klon qiling va `uv` orqali muhitni yarating:
+```bash
+git clone https://github.com/coder-jasur/Movie-Bot.git
+cd Movie-Bot
+uv venv
+uv sync
+```
 
-### 2. Lokal Kompyuter Tomoni (Worker)
-1. Worker kodini yuklang va muhitni sozlang.
-2. FFmpeg o'rnatilganligiga ishonch hosil qiling.
-3. Worker'ni API serverga ulab ishga tushiring.
+### 2. Konfiguratsiya
+`.env` faylini namunadagidek yarating:
+```bash
+cp .env.example .env
+```
+Faylni ochib, quyidagi asosiy o'zgaruvchilarni to'ldiring:
+- `BOT_TOKEN`
+- `ADMINS_IDS`
+- `DATABASE_URL`
+- `REDIS_URL`
 
----
-
-## 🛡 Admin Darajalari
-
-| Huquqlar | Level 1 | Level 2 |
-| :--- | :---: | :---: |
-| Kinolar qo'shish | ✅ | ✅ |
-| Epizodli filmlarni boshqarish | ✅ | ✅ |
-| Statistikani ko'rish | ✅ | ✅ |
-| Admin qo'shish/o'chirish | ❌ | ✅ |
-| Admin darajasini o'zgartirish | ❌ | ✅ |
-
-> [!IMPORTANT]
-> `.env` faylidagi `ADMINS_IDS` ro'yxatidagi adminlar har doim "Root Super Admin" huquqiga ega bo'ladilar.
+### 3. Ishga tushirish (Docker)
+Loyiha to'liq Docker-compose bilan ta'minlangan:
+```bash
+docker-compose up --build -d
+```
 
 ---
 
-## 🌍 Multilanguage (Tarjimalar)
+## 🌍 Tarjimalar (i18n)
 
-Tarjimalarni yangilash uchun quyidagi buyruqlardan foydalaning:
-
-1. Matnlarni ajratib olish:
-   ```bash
-   pybabel extract -F babel.cfg -o translations/messages.pot .
-   ```
-2. Tarjima fayllarini yangilash:
-   ```bash
-   pybabel update -i translations/messages.pot -d translations
-   ```
-3. Kompilyatsiya qilish:
-   ```bash
-   pybabel compile -d translations
-   ```
+Tarjimalarni yangilash uchun:
+1. Matnlarni yig'ish: `pybabel extract -F babel.cfg -o translations/messages.pot .`
+2. Fayllarni yangilash: `pybabel update -i translations/messages.pot -d translations`
+3. Kompilyatsiya: `pybabel compile -d translations`
 
 ---
 
-## 🛠 Texnologiyalar
+## 🛡 Xavfsizlik va Litsenziya
 
-- **Framework**: Aiogram 3.x
-- **Dialogs**: aiogram-dialog
-- **Database**: PostgreSQL (SQLAlchemy + Asyncpg)
-- **Caching**: Redis
-- **Container**: Docker & Docker Compose
-- **Video**: FFmpeg
-- **Language**: Python 3.12+
+- Loyiha xavfsizligi uchun `.env` fayllari gitga yuklanmasligi shart.
+- Barcha maxfiy ma'lumotlar faqat server muhitida saqlanishi tavsiya etiladi.
+
+Litsenziya: **MIT**
+Muallif: **Coder Jasur**
