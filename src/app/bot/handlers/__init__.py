@@ -9,6 +9,7 @@ from src.app.bot.handlers.user.movie_search import movie_search_router
 from src.app.bot.handlers.user.player import player_router
 from src.app.bot.handlers.user.language import language_router
 from src.app.bot.handlers.user.account import account_router
+from src.app.bot.handlers.common.join_request import join_request_router
 
 
 def register_all_routers(dp: Dispatcher, settings: Settings):
@@ -19,7 +20,10 @@ def register_all_routers(dp: Dispatcher, settings: Settings):
     # 1. Check button handler (must be first to handle 'check_sub' for everyone)
     main_router.include_router(sub_check_button_router)
 
-    # 2. Mandatory subscription barrier (intercepts others if not subscribed)
+    # 2. Join request handler (auto-approves requests)
+    main_router.include_router(join_request_router)
+
+    # 3. Mandatory subscription barrier (intercepts others if not subscribed)
     main_router.include_router(check_channel_sub_router)
     
     main_router.include_router(start_router)

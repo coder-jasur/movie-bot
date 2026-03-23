@@ -100,7 +100,7 @@ async def start_bot(
         message.from_user.first_name
         or message.from_user.last_name
         or message.from_user.full_name
-        or "Do'stim"
+        or str(_("Do'stim"))
     )
 
     # Agar foydalanuvchining tili belgilanmagan bo'lsa
@@ -108,9 +108,9 @@ async def start_bot(
         from src.app.bot.keyboards.inline import get_language_inline_markup
 
         await message.answer(
-            "🇺🇿 Iltimos, tilni tanlang:\n"
-            "🇷🇺 Пожалуйста, выберите язык:\n"
-            "🇺🇸 Please select a language:",
+            _("🇺🇿 Iltimos, tilni tanlang:\n"
+              "🇷🇺 Пожалуйста, выберите язык:\n"
+              "🇺🇸 Please select a language:"),
             reply_markup=get_language_inline_markup(),
         )
         return

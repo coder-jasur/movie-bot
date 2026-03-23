@@ -1,4 +1,4 @@
-from aiogram import Router, F, Bot
+from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +14,7 @@ from src.app.core.config import Settings
 
 language_router = Router()
 
+
 @language_router.message(Command("language"))
 async def language_command(message: Message):
     await message.answer(
@@ -25,36 +26,47 @@ async def language_command(message: Message):
 
 
 @language_router.callback_query(LanguageCD.filter())
-async def set_language_callback(callback: CallbackQuery, callback_data: LanguageCD, session: AsyncSession, settings: Settings):
+async def set_language_callback(
+    callback: CallbackQuery,
+    callback_data: LanguageCD,
+    session: AsyncSession,
+    settings: Settings
+):
     user_actions = UserActions(session)
     lang_code = callback_data.code
-    
+
     await user_actions.update_user(callback.from_user.id, language_code=lang_code)
-    
-    # Context update
+
+    # Locale kontekstini yangilash
     i18n.ctx_locale.set(lang_code)
-    
-    # Update bot commands for this user
+
+    # Foydalanuvchi uchun bot komandalarini yangilash
     admin_actions = AdminActions(session)
-    is_admin = (callback.from_user.id in settings.admins_ids) or (await admin_actions.is_admin(callback.from_user.id))
+    is_admin = (
+        callback.from_user.id in settings.admins_ids
+    ) or (
+        await admin_actions.is_admin(callback.from_user.id)
+    )
     await set_user_commands(callback.bot, callback.from_user.id, lang_code, is_admin=is_admin)
-    
+
     name = (
         callback.from_user.first_name
         or callback.from_user.last_name
         or callback.from_user.full_name
-        or "Do'stim"
+        or _("Do'stim")
     )
 
     await callback.message.delete()
-    
-    # Show welcome message instead of just "Language changed"
+
     await callback.message.answer(
-        _("""<b>👋 Salom {name}</b>
-
-<b>Botimizga xush kelibsiz.</b>
-
-<b>🍿 Kino kodini yuboring:</b>""").format(name=name),
-        reply_markup=get_main_menu()
+        _(
+            "<b>👋 Salom {name}</b>\n"
+            "\n"
+            "<b>Botimizga xush kelibsiz.</b>\n"
+            "\n"
+            "<b>🍿 Kino kodini yuboring:</b>"
+        ).format(name=name),
+        reply_markup=get_main_menu(),
+        parse_mode="HTML"
     )
     await callback.answer()

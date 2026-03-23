@@ -17,6 +17,7 @@ class Settings:
     db_host: str
     db_port: int = 5432
     click_provider_token: str | None = None
+    payme_provider_token: str | None = None
     webhook_url: str | None = None
     webhook_path: str = "/webhook"
     use_webhook: bool = False
@@ -45,6 +46,7 @@ def load_config() -> Settings:
         db_port=env.int("POSTGRES_PORT"),
         redis_url=env.str("REDIS_URL"),
         click_provider_token=env.str("CLICK_PROVIDER_TOKEN", None),
+        payme_provider_token=env.str("PAYME_PROVIDER_TOKEN", None),
         webhook_url=env.str("WEBHOOK_URL", None),
         webhook_path=env.str("WEBHOOK_PATH", "/webhook"),
         use_webhook=env.bool("USE_WEBHOOK", False)

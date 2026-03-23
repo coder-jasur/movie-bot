@@ -1,19 +1,28 @@
 import asyncio
 import logging
-from typing import Union, Optional
+from typing import Optional, Union
 
+from aiogram import Bot, types
+from aiogram.exceptions import (
+    TelegramAPIError,
+    TelegramBadRequest,
+    TelegramForbiddenError,
+    TelegramRetryAfter,
+)
+from aiogram.types import (
+    InputMediaAnimation,
+    InputMediaAudio,
+    InputMediaDocument,
+    InputMediaPhoto,
+    InputMediaVideo,
+    Message,
+)
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
-from aiogram import Bot, types
-from aiogram.exceptions import TelegramForbiddenError, TelegramBadRequest, TelegramRetryAfter, TelegramAPIError
-from aiogram.types import (
-    Message, InputMediaPhoto, InputMediaVideo, InputMediaDocument, InputMediaAudio,
-    InputMediaAnimation
-)
 
-from src.app.database.queries.user import UserActions
-from src.app.database.models import User
 from src.app.bot.common.i18n import lazy_gettext as _
+from src.app.database.models import User
+from src.app.database.queries.user import UserActions
 
 logger = logging.getLogger(__name__)
 
@@ -21,29 +30,39 @@ logger = logging.getLogger(__name__)
 class Broadcaster:
 
     def __init__(
-            self,
-            bot: Bot,
-            session: AsyncSession,
-            admin_id: int,
-            broadcasting_message: Message | None = None,
-            from_chat_id: int | None = None,
-            message_id: int | None = None,
-            reply_markup: types.InlineKeyboardMarkup | None = None,
-            album: list[Message] | None = None,
-            batch_size: int = 5000,
-            sleep_seconds: float = 0.05
+        self,
+        bot: Bot,
+        session: AsyncSession,
+        admin_id: int,
+        broadcasting_message: Message | None = None,
+        from_chat_id: int | None = None,
+        message_id: int | None = None,
+        reply_markup: types.InlineKeyboardMarkup | None = None,
+        album: list[Message] | None = None,
+        batch_size: int = 5000,
+        sleep_seconds: float = 0.05,
+        exclude_vip: bool = False,
     ):
         self._bot = bot
         self._session = session
         self.broadcasting_message = broadcasting_message
-        self.from_chat_id = from_chat_id or (broadcasting_message.chat.id if broadcasting_message else None)
-        self.message_id = message_id or (broadcasting_message.message_id if broadcasting_message else None)
-        self.reply_markup = reply_markup or (broadcasting_message.reply_markup if broadcasting_message else None)
+        self.from_chat_id = from_chat_id or (
+            broadcasting_message.chat.id if broadcasting_message else None
+        )
+        self.message_id = message_id or (
+            broadcasting_message.message_id if broadcasting_message else None
+        )
+        self.reply_markup = reply_markup or (
+            broadcasting_message.reply_markup if broadcasting_message else None
+        )
         self.album = album
         self.admin_id = admin_id
         self.batch_size = batch_size
         self.sleep_seconds = sleep_seconds
-        self.message_per_second = int(1 / self.sleep_seconds) if sleep_seconds > 0 else 25
+        self.exclude_vip = exclude_vip
+        self.message_per_second = (
+            int(1 / self.sleep_seconds) if sleep_seconds > 0 else 25
+        )
 
         # Статистика для отчетов
         self.sent_messages_count = 0
@@ -54,19 +73,35 @@ class Broadcaster:
         # Списки различных типов блокировок
         self.blocked_users: list[int] = []  # Пользователи, заблокировавшие бота
         self.deleted_users: list[int] = []  # Пользователи, чей аккаунт удален
-        self.deactivated_users: list[int] = []  # Пользователи, чей аккаунт был деактивирован
-        self.limited_users: list[int] = []  # Пользователи, чей аккаунт временно ограничен
+        self.deactivated_users: list[int] = (
+            []
+        )  # Пользователи, чей аккаунт был деактивирован
+        self.limited_users: list[int] = (
+            []
+        )  # Пользователи, чей аккаунт временно ограничен
 
-        self.total_blocked_users: int = 0  # Количество пользователей, заблокировавшие бота
-        self.total_deleted_users: int = 0  # Количество пользователей, чей аккаунт удален
-        self.total_deactivated_users: int = 0  # Количество пользователей, чей аккаунт был деактивирован
-        self.total_limited_users: int = 0  # Количество пользователей, чей аккаунт временно ограничен
+        self.total_blocked_users: int = (
+            0  # Количество пользователей, заблокировавшие бота
+        )
+        self.total_deleted_users: int = (
+            0  # Количество пользователей, чей аккаунт удален
+        )
+        self.total_deactivated_users: int = (
+            0  # Количество пользователей, чей аккаунт был деактивирован
+        )
+        self.total_limited_users: int = (
+            0  # Количество пользователей, чей аккаунт временно ограничен
+        )
 
         # Validate input parameters
         if not (self.message_id or self.album):
-            raise ValueError("Either message_id/broadcasting_message or album must be provided")
+            raise ValueError(
+                "Either message_id/broadcasting_message or album must be provided"
+            )
         if self.message_id and self.album:
-            raise ValueError("Only one of broadcasting_message or album should be provided")
+            raise ValueError(
+                "Only one of broadcasting_message or album should be provided"
+            )
 
     async def _send_info_message(self, info_message_text: str) -> types.Message:
         """Send status message to admin"""
@@ -79,15 +114,12 @@ class Broadcaster:
                 deleted=0,
                 limited=0,
                 deactivated=0,
-                batches=0
-            )
+                batches=0,
+            ),
         )
 
     async def _update_info_message(
-            self,
-            info_message: Message,
-            info_message_text: str,
-            include_total: bool = False
+        self, info_message: Message, info_message_text: str, include_total: bool = False
     ) -> None:
         """
         Update status message with current progress
@@ -105,7 +137,7 @@ class Broadcaster:
                 deleted=len(self.deleted_users),
                 limited=len(self.limited_users),
                 deactivated=len(self.deactivated_users),
-                batches=self.processed_batches
+                batches=self.processed_batches,
             )
 
             if include_total:
@@ -141,7 +173,9 @@ class Broadcaster:
 
             # Обрабатываем пользователей пачками
             users_actions = UserActions(self._session)
-            async for user_ids, offset in users_actions.iterate_user_ids(self.batch_size, exclude_vip=True):
+            async for user_ids, offset in users_actions.iterate_user_ids(
+                self.batch_size, exclude_vip=self.exclude_vip
+            ):
                 # Обрабатываем текущую пачку пользователей
                 await self._process_batch(user_ids, info_message, info_message_text)
 
@@ -152,12 +186,17 @@ class Broadcaster:
                 await self._update_info_message(info_message, info_message_text)
 
                 # Если есть заблокированные пользователи, помечаем их в базе данных
-                if self.blocked_users or self.deleted_users or self.limited_users or self.deactivated_users:
+                if (
+                    self.blocked_users
+                    or self.deleted_users
+                    or self.limited_users
+                    or self.deactivated_users
+                ):
                     await self._mark_user_statuses(
                         blocked_user_ids=self.blocked_users,
                         deleted_user_ids=self.deleted_users,
                         limited_users_ids=self.limited_users,
-                        deactivated_user_ids=self.deactivated_users
+                        deactivated_user_ids=self.deactivated_users,
                     )
 
                     # Обновляем число пользователей,
@@ -187,13 +226,14 @@ class Broadcaster:
         except Exception as e:
             logger.error(f"Broadcasting error: {e}")
             await self._bot.send_message(
-                self.admin_id,
-                f"{_('Ошибка при рассылке')}: {e}"
+                self.admin_id, f"{_('Ошибка при рассылке')}: {e}"
             )
         finally:
             # Финальное обновление статуса
             try:
-                await self._update_info_message(info_message, info_message_text, include_total=True)
+                await self._update_info_message(
+                    info_message, info_message_text, include_total=True
+                )
             except Exception as e:
                 logger.error(f"Error in final update: {e}")
 
@@ -201,24 +241,28 @@ class Broadcaster:
             await self._delete_preview()
 
             # Помечаем оставшихся заблокированных пользователей
-            if self.blocked_users or self.deleted_users or self.limited_users or self.deactivated_users:
+            if (
+                self.blocked_users
+                or self.deleted_users
+                or self.limited_users
+                or self.deactivated_users
+            ):
                 await self._mark_user_statuses(
                     blocked_user_ids=self.blocked_users,
                     deleted_user_ids=self.deleted_users,
                     limited_users_ids=self.limited_users,
-                    deactivated_user_ids=self.deactivated_users
+                    deactivated_user_ids=self.deactivated_users,
                 )
 
         return (
-            self.total_blocked_users, self.total_deleted_users,
-            self.total_limited_users, self.total_deactivated_users
+            self.total_blocked_users,
+            self.total_deleted_users,
+            self.total_limited_users,
+            self.total_deactivated_users,
         )
 
     async def _process_batch(
-            self,
-            user_ids: list[int],
-            info_message: Message,
-            info_message_text: str
+        self, user_ids: list[int], info_message: Message, info_message_text: str
     ) -> None:
         """
         Process a batch of users
@@ -286,12 +330,11 @@ class Broadcaster:
                     chat_id=user_id,
                     from_chat_id=self.from_chat_id,
                     message_id=self.message_id,
-                    reply_markup=self.reply_markup
+                    reply_markup=self.reply_markup,
                 )
             else:
                 await self._bot.send_media_group(
-                    chat_id=user_id,
-                    media=self._make_sendable_album(self.album)
+                    chat_id=user_id, media=self._make_sendable_album(self.album)
                 )
             logger.debug(f"Target [ID:{user_id}]: message sent successfully")
             return True
@@ -317,7 +360,9 @@ class Broadcaster:
             return False
 
         except TelegramRetryAfter as e:
-            logger.warning(f"Target [ID:{user_id}]: Flood limit exceeded. Sleeping {e.retry_after} seconds.")
+            logger.warning(
+                f"Target [ID:{user_id}]: Flood limit exceeded. Sleeping {e.retry_after} seconds."
+            )
             await asyncio.sleep(e.retry_after)
             return await self._send_broadcasting_message(user_id)
 
@@ -329,7 +374,9 @@ class Broadcaster:
 
         return False
 
-    async def _update_user_status(self, user_ids: list[int], status: str = "blocked") -> None:
+    async def _update_user_status(
+        self, user_ids: list[int], status: str = "blocked"
+    ) -> None:
         """
         Update user status in database
 
@@ -351,11 +398,11 @@ class Broadcaster:
             raise
 
     async def _mark_user_statuses(
-            self,
-            blocked_user_ids: list[int],
-            deleted_user_ids: list[int],
-            limited_users_ids: list[int],
-            deactivated_user_ids: list[int]
+        self,
+        blocked_user_ids: list[int],
+        deleted_user_ids: list[int],
+        limited_users_ids: list[int],
+        deactivated_user_ids: list[int],
     ) -> None:
         """
         Mark users with appropriate statuses in database
@@ -369,28 +416,44 @@ class Broadcaster:
         try:
             # Обработка заблокированных пользователей
             if blocked_user_ids:
-                stmt = update(User).where(User.tg_id.in_(blocked_user_ids)).values(status="blocked")
+                stmt = (
+                    update(User)
+                    .where(User.tg_id.in_(blocked_user_ids))
+                    .values(status="blocked")
+                )
                 await self._session.execute(stmt)
                 logger.info(f"Marked {len(blocked_user_ids)} users as BLOCKED")
 
             # Обработка удаленных аккаунтов
             if deleted_user_ids:
-                stmt = update(User).where(User.tg_id.in_(deleted_user_ids)).values(status="deleted")
+                stmt = (
+                    update(User)
+                    .where(User.tg_id.in_(deleted_user_ids))
+                    .values(status="deleted")
+                )
                 await self._session.execute(stmt)
                 logger.info(f"Marked {len(deleted_user_ids)} users as DELETED")
 
             # Обработка ограниченных аккаунтов
             if limited_users_ids:
-                stmt = update(User).where(User.tg_id.in_(limited_users_ids)).values(status="limited")
+                stmt = (
+                    update(User)
+                    .where(User.tg_id.in_(limited_users_ids))
+                    .values(status="limited")
+                )
                 await self._session.execute(stmt)
                 logger.info(f"Marked {len(limited_users_ids)} users as LIMITED")
 
             # Обработка деактивированных аккаунтов
             if deactivated_user_ids:
-                stmt = update(User).where(User.tg_id.in_(deactivated_user_ids)).values(status="deactivated")
+                stmt = (
+                    update(User)
+                    .where(User.tg_id.in_(deactivated_user_ids))
+                    .values(status="deactivated")
+                )
                 await self._session.execute(stmt)
                 logger.info(f"Marked {len(deactivated_user_ids)} users as DEACTIVATED")
-            
+
             await self._session.commit()
 
         except Exception as e:
@@ -403,21 +466,23 @@ class Broadcaster:
         try:
             if self.message_id:
                 await self._bot.delete_message(
-                    chat_id=self.admin_id,
-                    message_id=self.message_id
+                    chat_id=self.admin_id, message_id=self.message_id
                 )
             elif self.album:
                 await self._bot.delete_messages(
                     chat_id=self.admin_id,
-                    message_ids=[message.message_id for message in self.album]
+                    message_ids=[message.message_id for message in self.album],
                 )
         except Exception as e:
             logger.error(f"Failed to delete preview: {e}")
 
     def _make_sendable_album(self, album: list[Message]) -> list[
         Union[
-            InputMediaPhoto, InputMediaVideo,
-            InputMediaAnimation, InputMediaDocument, InputMediaAudio
+            InputMediaPhoto,
+            InputMediaVideo,
+            InputMediaAnimation,
+            InputMediaDocument,
+            InputMediaAudio,
         ]
     ]:
         """Convert message album to sendable media group"""
@@ -436,10 +501,15 @@ class Broadcaster:
         return media_list
 
     @staticmethod
-    def _make_album_media(message: types.Message) -> Optional[
+    def _make_album_media(
+        message: types.Message,
+    ) -> Optional[
         Union[
-            InputMediaPhoto, InputMediaVideo,
-            InputMediaAnimation, InputMediaDocument, InputMediaAudio
+            InputMediaPhoto,
+            InputMediaVideo,
+            InputMediaAnimation,
+            InputMediaDocument,
+            InputMediaAudio,
         ]
     ]:
         """Convert single message to appropriate InputMedia type"""
@@ -447,30 +517,52 @@ class Broadcaster:
             if message.content_type == types.ContentType.PHOTO:
                 return InputMediaPhoto(
                     media=message.photo[-1].file_id,
-                    caption=message.html_text if hasattr(message, 'html_text') else None,
-                    has_spoiler=message.has_media_spoiler if hasattr(message, 'has_media_spoiler') else None
+                    caption=(
+                        message.html_text if hasattr(message, "html_text") else None
+                    ),
+                    has_spoiler=(
+                        message.has_media_spoiler
+                        if hasattr(message, "has_media_spoiler")
+                        else None
+                    ),
                 )
             elif message.content_type == types.ContentType.VIDEO:
                 return InputMediaVideo(
                     media=message.video.file_id,
-                    caption=message.html_text if hasattr(message, 'html_text') else None,
-                    has_spoiler=message.has_media_spoiler if hasattr(message, 'has_media_spoiler') else None
+                    caption=(
+                        message.html_text if hasattr(message, "html_text") else None
+                    ),
+                    has_spoiler=(
+                        message.has_media_spoiler
+                        if hasattr(message, "has_media_spoiler")
+                        else None
+                    ),
                 )
             elif message.content_type == types.ContentType.ANIMATION:
                 return InputMediaAnimation(
                     media=message.animation.file_id,
-                    caption=message.html_text if hasattr(message, 'html_text') else None,
-                    has_spoiler=message.has_media_spoiler if hasattr(message, 'has_media_spoiler') else None
+                    caption=(
+                        message.html_text if hasattr(message, "html_text") else None
+                    ),
+                    has_spoiler=(
+                        message.has_media_spoiler
+                        if hasattr(message, "has_media_spoiler")
+                        else None
+                    ),
                 )
             elif message.content_type == types.ContentType.DOCUMENT:
                 return InputMediaDocument(
                     media=message.document.file_id,
-                    caption=message.html_text if hasattr(message, 'html_text') else None
+                    caption=(
+                        message.html_text if hasattr(message, "html_text") else None
+                    ),
                 )
             elif message.content_type == types.ContentType.AUDIO:
                 return InputMediaAudio(
                     media=message.audio.file_id,
-                    caption=message.html_text if hasattr(message, 'html_text') else None
+                    caption=(
+                        message.html_text if hasattr(message, "html_text") else None
+                    ),
                 )
             else:
                 logger.warning(f"Unsupported content type: {message.content_type}")

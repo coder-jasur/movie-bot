@@ -65,3 +65,8 @@ venv.bak/
 .env
 *.log
 
+# Project specific
+media/
+all_users.txt
+compile_error.txt
+.env.dev

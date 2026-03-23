@@ -1,55 +1,85 @@
-from aiogram import Router, F
-from aiogram.filters import Filter
-from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
-from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 
+from aiogram import F, Router
+from aiogram.filters import Filter
+from aiogram.fsm.context import FSMContext
+from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.app.bot.common.buttons import (
+    BTN_ANIME,
+    BTN_BACK,
+    BTN_CARTOON,
+    BTN_FAVORITES,
+    BTN_GENRE_ANIME,
+    BTN_GENRE_CARTOON,
+    BTN_GENRE_MOVIES,
+    BTN_MOVIES,
+    BTN_RND_ANIME,
+    BTN_RND_ANIME_MINI,
+    BTN_RND_ANIME_SERIES,
+    BTN_RND_CARTOON,
+    BTN_RND_CARTOON_MINI,
+    BTN_RND_CARTOON_SERIES,
+    BTN_RND_FILM,
+    BTN_RND_MINI,
+    BTN_RND_SERIES,
+    BTN_TOP_ANIME,
+    BTN_TOP_CARTOON,
+    BTN_TOP_MOVIES,
+)
+from src.app.bot.common.genres import GENRES, deserialize_genres, get_genre_display_text
+from src.app.bot.common.i18n import i18n
+from src.app.bot.common.utils import (
+    get_localized_name,
+    get_thumbnail_input,
+    get_user_language,
+    resolve_movie_media,
+)
+from src.app.bot.keyboards.inline import (
+    film_kbd,
+    get_instagram_channel_kbd,
+    mini_series_player_kbd,
+    series_player_kbd,
+)
+from src.app.bot.keyboards.replay import (
+    get_anime_menu,
+    get_cartoon_menu,
+    get_cinema_menu,
+    get_main_menu,
+)
+from src.app.bot.states.user.dialogs import SearchByGenreSG
 from src.app.core.config import load_config
 from src.app.database.models import (
-    FeatureFilm, MiniSeries, Series,
-    MultiFilmFeature, MultiFilmMiniSeries, MultiFilmSeries,
-    AnimeFeature, AnimeMiniSeries, AnimeSeries
+    AnimeFeature,
+    AnimeMiniSeries,
+    AnimeSeries,
+    FeatureFilm,
+    MiniSeries,
+    MultiFilmFeature,
+    MultiFilmMiniSeries,
+    MultiFilmSeries,
+    Series,
+)
+from src.app.database.queries.movie.anime import (
+    AnimeFeatureActions,
+    AnimeMiniSeriesActions,
+    AnimeSeriesActions,
 )
 from src.app.database.queries.movie.favorite_movies import FavoriteMoviesActions
 from src.app.database.queries.movie.feature_films import FeatureFilmsActions
 from src.app.database.queries.movie.mini_series import MiniSeriesActions
-from src.app.database.queries.movie.series import SeriesActions
 from src.app.database.queries.movie.multi_films import (
-    MultiFilmFeatureActions, MultiFilmSeriesActions, MultiFilmMiniSeriesActions
+    MultiFilmFeatureActions,
+    MultiFilmMiniSeriesActions,
+    MultiFilmSeriesActions,
 )
-from src.app.database.queries.movie.anime import (
-    AnimeFeatureActions, AnimeSeriesActions, AnimeMiniSeriesActions
-)
+from src.app.database.queries.movie.series import SeriesActions
 from src.app.database.queries.movie.top_movies import TopMoviesActions
 from src.app.database.queries.user import UserActions
-from src.app.bot.keyboards.inline import (
-    film_kbd, mini_series_player_kbd, series_player_kbd, get_instagram_channel_kbd
-)
-from src.app.bot.common.buttons import (
-    BTN_MOVIES, BTN_ANIME, BTN_CARTOON, BTN_BACK,
-    BTN_RND_FILM, BTN_RND_SERIES, BTN_RND_MINI,
-    BTN_RND_ANIME, BTN_RND_ANIME_SERIES, BTN_RND_ANIME_MINI,
-    BTN_RND_CARTOON, BTN_RND_CARTOON_SERIES, BTN_RND_CARTOON_MINI,
-    BTN_TOP_MOVIES, BTN_TOP_ANIME, BTN_TOP_CARTOON,
-    BTN_GENRE_MOVIES, BTN_GENRE_ANIME, BTN_GENRE_CARTOON,
-    BTN_FAVORITES
-)
-from src.app.bot.common.genres import GENRES, get_genre_display_text, deserialize_genres
 from src.app.repositories.repository import SearchRepository
 from src.app.services.view_tracker import ViewTracker
-from src.app.bot.states.user.dialogs import SearchByGenreSG
-from src.app.bot.keyboards.replay import (
-    get_main_menu,
-    get_cinema_menu,
-    get_anime_menu,
-    get_cartoon_menu
-)
-from src.app.bot.common.i18n import i18n
-from src.app.bot.common.utils import (
-    get_user_language, get_localized_name, resolve_movie_media, get_thumbnail_input
-)
 
 _ = i18n.gettext
 
@@ -61,6 +91,7 @@ movie_search_router = Router()
 # ─────────────────────────────────────────────
 # FIX #4: IsGenreButton — Filter class (oddiy funksiya ishlamaydi)
 # ─────────────────────────────────────────────
+
 
 class IsGenreButton(Filter):
     async def __call__(self, message: Message) -> bool:
@@ -75,21 +106,25 @@ class IsGenreButton(Filter):
 # FIX #3: VIP statusni bir joyda olish
 # ─────────────────────────────────────────────
 
+
 async def get_vip_status(session: AsyncSession, user_id: int) -> bool:
+    from src.app.bot.common.utils import is_active_vip
+
     db_user = await UserActions(session).get_user(user_id)
-    return db_user.vip_status == "active" if db_user else False
+    return await is_active_vip(db_user, session)
 
 
 # ─────────────────────────────────────────────
 # NAVIGATSIYA HANDLERLARI
 # ─────────────────────────────────────────────
 
+
 @movie_search_router.message(F.text == BTN_MOVIES)
 async def cinema_category(message: Message):
     await message.answer(
         str(_("🎬 <b>Kino kategoriyasi</b>\n\nQaysi turdagi kontent kerak?")),
         reply_markup=get_cinema_menu(),
-        parse_mode="HTML"
+        parse_mode="HTML",
     )
 
 
@@ -98,7 +133,7 @@ async def anime_category(message: Message):
     await message.answer(
         str(_("🎌 <b>Anime kategoriyasi</b>\n\nQaysi turdagi anime kerak?")),
         reply_markup=get_anime_menu(),
-        parse_mode="HTML"
+        parse_mode="HTML",
     )
 
 
@@ -107,27 +142,37 @@ async def cartoon_category(message: Message):
     await message.answer(
         str(_("🎨 <b>Multfilm kategoriyasi</b>\n\nQaysi turdagi multfilm kerak?")),
         reply_markup=get_cartoon_menu(),
-        parse_mode="HTML"
+        parse_mode="HTML",
     )
 
 
-@movie_search_router.message(F.text.regexp(r"^(⬅️|🔙)\s*(Orqaga|Back|Назад)$") | (F.text == BTN_BACK))
+@movie_search_router.message(
+    F.text.regexp(r"^(⬅️|🔙)\s*(Orqaga|Back|Назад)$") | (F.text == BTN_BACK)
+)
 async def back_to_main(message: Message):
-    await message.answer(
-        str(_("🏠 Asosiy menyu")),
-        reply_markup=get_main_menu()
-    )
+    await message.answer(str(_("🏠 Asosiy menyu")), reply_markup=get_main_menu())
 
 
 # ─────────────────────────────────────────────
 # RANDOM FILM HANDLER
 # ─────────────────────────────────────────────
 
-@movie_search_router.message(F.text.in_([
-    BTN_RND_FILM, BTN_RND_SERIES, BTN_RND_MINI,
-    BTN_RND_ANIME, BTN_RND_ANIME_SERIES, BTN_RND_ANIME_MINI,
-    BTN_RND_CARTOON, BTN_RND_CARTOON_SERIES, BTN_RND_CARTOON_MINI,
-]))
+
+@movie_search_router.message(
+    F.text.in_(
+        [
+            BTN_RND_FILM,
+            BTN_RND_SERIES,
+            BTN_RND_MINI,
+            BTN_RND_ANIME,
+            BTN_RND_ANIME_SERIES,
+            BTN_RND_ANIME_MINI,
+            BTN_RND_CARTOON,
+            BTN_RND_CARTOON_SERIES,
+            BTN_RND_CARTOON_MINI,
+        ]
+    )
+)
 async def random_film_handler(message: Message, session: AsyncSession):
     random_movie = None
     actions = None
@@ -171,11 +216,22 @@ async def random_film_handler(message: Message, session: AsyncSession):
         return
 
     favorite_actions = FavoriteMoviesActions(session)
-    saved = bool(await favorite_actions.get_favorites(random_movie.code, message.from_user.id))
+    saved = bool(
+        await favorite_actions.get_favorites(random_movie.code, message.from_user.id)
+    )
     user_lang = await get_user_language(message.from_user, session)
     is_vip = await get_vip_status(session, message.from_user.id)  # FIX #3
 
-    video_to_send, name, caption, target_language, target_quality, files, _unused, thumbnail_id = resolve_movie_media(random_movie, user_lang, is_vip=is_vip)
+    (
+        video_to_send,
+        name,
+        caption,
+        target_language,
+        target_quality,
+        files,
+        _unused,
+        thumbnail_id,
+    ) = resolve_movie_media(random_movie, user_lang, is_vip=is_vip)
     thumbnail_input = await get_thumbnail_input(message.bot, thumbnail_id)
 
     bot_info = await message.bot.get_me()
@@ -190,26 +246,33 @@ async def random_film_handler(message: Message, session: AsyncSession):
             video=video_to_send,
             caption=caption,
             reply_markup=film_kbd(
-                random_movie.code, saved,
+                random_movie.code,
+                saved,
                 bot_username=bot_username,
-                files=files, current_quality=target_quality,
-                current_language=target_language, is_vip=is_vip
+                files=files,
+                current_quality=target_quality,
+                current_language=target_language,
+                is_vip=is_vip,
             ),
             protect_content=not is_vip,
-            thumbnail=thumbnail_input
+            thumbnail=thumbnail_input,
         )
         await track_and_increment_view(
             user_id=message.from_user.id,
             movie_code=_movie.code,
-            increment_func=lambda: _actions.increment_views(_movie.code)
+            increment_func=lambda: _actions.increment_views(_movie.code),
         )
 
     elif isinstance(random_movie, (MiniSeries, MultiFilmMiniSeries, AnimeMiniSeries)):
         ms_all = await actions.get_mini_series(random_movie.code)
         filtered_ms = [
-            s for s in ms_all
-            if (isinstance(s.files, dict) and target_language in s.files) or
-               (isinstance(s.language, str) and target_language in (s.language or "").split(","))
+            s
+            for s in ms_all
+            if (isinstance(s.files, dict) and target_language in s.files)
+            or (
+                isinstance(s.language, str)
+                and target_language in (s.language or "").split(",")
+            )
         ]
         if not filtered_ms:
             filtered_ms = ms_all
@@ -219,32 +282,43 @@ async def random_film_handler(message: Message, session: AsyncSession):
             video=video_to_send,
             caption=caption,
             reply_markup=mini_series_player_kbd(
-                random_movie.code, random_movie.series, serias_count, saved,
+                random_movie.code,
+                random_movie.series,
+                serias_count,
+                saved,
                 bot_username=bot_username,
-                files=files, current_quality=target_quality,
-                current_language=target_language, is_vip=is_vip
+                files=files,
+                current_quality=target_quality,
+                current_language=target_language,
+                is_vip=is_vip,
             ),
             protect_content=not is_vip,
-            thumbnail=thumbnail_input
+            thumbnail=thumbnail_input,
         )
         _series_num = _movie.series
         await track_and_increment_view(
             user_id=message.from_user.id,
             movie_code=_movie.code,
-            increment_func=lambda: _actions.increment_views(_movie.code, _series_num)
+            increment_func=lambda: _actions.increment_views(_movie.code, _series_num),
         )
 
     elif isinstance(random_movie, (Series, MultiFilmSeries, AnimeSeries)):
         s_all = await actions.get_series(random_movie.code)
         filtered_s = [
-            s for s in s_all
-            if (isinstance(s.files, dict) and target_language in s.files) or
-               (isinstance(s.language, str) and target_language in (s.language or "").split(","))
+            s
+            for s in s_all
+            if (isinstance(s.files, dict) and target_language in s.files)
+            or (
+                isinstance(s.language, str)
+                and target_language in (s.language or "").split(",")
+            )
         ]
         if not filtered_s:
             filtered_s = s_all
 
-        current_season_series = sum(1 for s in filtered_s if s.season == random_movie.season)
+        current_season_series = sum(
+            1 for s in filtered_s if s.season == random_movie.season
+        )
         series_count = len(filtered_s)
         seasons_count = len(set(s.season for s in filtered_s)) if filtered_s else 0
 
@@ -252,21 +326,31 @@ async def random_film_handler(message: Message, session: AsyncSession):
             video=video_to_send,
             caption=caption,
             reply_markup=series_player_kbd(
-                random_movie.code, 1, series_count, random_movie.season,
-                seasons_count, random_movie.series, current_season_series, saved,
+                random_movie.code,
+                1,
+                series_count,
+                random_movie.season,
+                seasons_count,
+                random_movie.series,
+                current_season_series,
+                saved,
                 bot_username=bot_username,
-                files=files, current_quality=target_quality,
-                current_language=target_language, is_vip=is_vip
+                files=files,
+                current_quality=target_quality,
+                current_language=target_language,
+                is_vip=is_vip,
             ),
             protect_content=not is_vip,
-            thumbnail=thumbnail_input
+            thumbnail=thumbnail_input,
         )
         _season = _movie.season
         _series = _movie.series
         await track_and_increment_view(
             user_id=message.from_user.id,
             movie_code=_movie.code,
-            increment_func=lambda: _actions.increment_views(_movie.code, _season, _series)
+            increment_func=lambda: _actions.increment_views(
+                _movie.code, _season, _series
+            ),
         )
 
 
@@ -274,7 +358,10 @@ async def random_film_handler(message: Message, session: AsyncSession):
 # TOP FILMS HANDLER
 # ─────────────────────────────────────────────
 
-@movie_search_router.message(F.text.in_([BTN_TOP_MOVIES, BTN_TOP_ANIME, BTN_TOP_CARTOON]))
+
+@movie_search_router.message(
+    F.text.in_([BTN_TOP_MOVIES, BTN_TOP_ANIME, BTN_TOP_CARTOON])
+)
 async def top_films_handler(message: Message, session: AsyncSession):
     text = message.text
     category = "all"
@@ -289,20 +376,29 @@ async def top_films_handler(message: Message, session: AsyncSession):
     await send_top_movies(message, session, interval="total", category=category)
 
 
-async def send_top_movies(message: Message, session: AsyncSession, interval: str = "total", category: str = "all"):
+async def send_top_movies(
+    message: Message,
+    session: AsyncSession,
+    interval: str = "total",
+    category: str = "all",
+):
     try:
         top_movies_actions = TopMoviesActions(session)
-        top_20 = await top_movies_actions.get_top_movies(interval=interval, limit=20, category=category)
+        top_20 = await top_movies_actions.get_top_movies(
+            interval=interval, limit=20, category=category
+        )
     except Exception as e:
         logger.error(f"Error getting top movies: {e}")
-        await message.answer(str(_("❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.")))
+        await message.answer(
+            str(_("❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring."))
+        )
         return
 
     cat_names = {
         "all": "",
         "cinema": _("KINO"),
         "anime": _("ANIME"),
-        "cartoon": _("MULTFILM")
+        "cartoon": _("MULTFILM"),
     }
 
     cat_title = cat_names.get(category, "")
@@ -314,7 +410,7 @@ async def send_top_movies(message: Message, session: AsyncSession, interval: str
         user_lang = await get_user_language(message.from_user, session)
         for index, m in enumerate(top_20, start=1):
             localized_name = get_localized_name(m, user_lang)
-            localized_type = _(m['type']) if m['type'] else ""
+            localized_type = _(m["type"]) if m["type"] else ""
             text += (
                 f"<b>{index}</b>. <b>{localized_name}</b>\n"
                 f"   ├─ <b>{str(_('Turi'))}</b>: <b>{localized_type}</b>\n"
@@ -330,11 +426,11 @@ async def send_top_movies(message: Message, session: AsyncSession, interval: str
 # GENRE KEYBOARD
 # ─────────────────────────────────────────────
 
+
 def get_genre_reply_keyboard(selected_genres: list[str]) -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
     builder.row(
-        KeyboardButton(text=str(_("🔍 Qidirish"))),
-        KeyboardButton(text=str(BTN_BACK))
+        KeyboardButton(text=str(_("🔍 Qidirish"))), KeyboardButton(text=str(BTN_BACK))
     )
     genre_buttons = []
     for g in GENRES:
@@ -350,7 +446,10 @@ def get_genre_reply_keyboard(selected_genres: list[str]) -> ReplyKeyboardMarkup:
 # GENRE HANDLERS
 # ─────────────────────────────────────────────
 
-@movie_search_router.message(F.text.in_([BTN_GENRE_MOVIES, BTN_GENRE_ANIME, BTN_GENRE_CARTOON]))
+
+@movie_search_router.message(
+    F.text.in_([BTN_GENRE_MOVIES, BTN_GENRE_ANIME, BTN_GENRE_CARTOON])
+)
 async def movies_by_genre(message: Message, state: FSMContext):
     text = message.text
     category = "all"
@@ -369,23 +468,25 @@ async def movies_by_genre(message: Message, state: FSMContext):
         "all": "",
         "cinema": str(_("KINO")),
         "anime": str(_("ANIME")),
-        "cartoon": str(_("MULTFILM"))
+        "cartoon": str(_("MULTFILM")),
     }
     cat_title = cat_names.get(category, "")
 
     await message.answer(
-        str(_("🎭 <b>{category} Janrlarni tanlang:</b>\n\n"
-              "Bir nechta tanlashingiz mumkin. Tanlab bo'lgach <b>🔍 Qidirish</b> tugmasini bosing.")).format(
-            category=cat_title
-        ),
+        str(
+            _(
+                "🎭 <b>{category} Janrlarni tanlang:</b>\n\n"
+                "Bir nechta tanlashingiz mumkin. Tanlab bo'lgach <b>🔍 Qidirish</b> tugmasini bosing."
+            )
+        ).format(category=cat_title),
         reply_markup=get_genre_reply_keyboard([]),
-        parse_mode="HTML"
+        parse_mode="HTML",
     )
 
 
 @movie_search_router.message(
     SearchByGenreSG.select_genres,
-    F.text.regexp(r"^(⬅️|🔙)\s*(Orqaga|Back|Назад)$") | (F.text == str(BTN_BACK))
+    F.text.regexp(r"^(⬅️|🔙)\s*(Orqaga|Back|Назад)$") | (F.text == str(BTN_BACK)),
 )
 async def genre_search_back(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -410,9 +511,12 @@ async def genre_search_back(message: Message, state: FSMContext):
 
 @movie_search_router.message(
     SearchByGenreSG.select_genres,
-    F.text.regexp(r"^(🔍|🔎)\s*(Qidirish|Search|Поиск)$") | (F.text == _("🔍 Qidirish"))
+    F.text.regexp(r"^(🔍|🔎)\s*(Qidirish|Search|Поиск)$")
+    | (F.text == _("🔍 Qidirish")),
 )
-async def genre_search_execute(message: Message, state: FSMContext, session: AsyncSession):
+async def genre_search_execute(
+    message: Message, state: FSMContext, session: AsyncSession
+):
     data = await state.get_data()
     selected = data.get("selected_genres", [])
     category = data.get("category", "all")
@@ -430,11 +534,13 @@ async def genre_search_execute(message: Message, state: FSMContext, session: Asy
         "all": "",
         "cinema": _("KINO"),
         "anime": _("ANIME"),
-        "cartoon": _("MULTFILM")
+        "cartoon": _("MULTFILM"),
     }
     cat_title = cat_names.get(category, "")
 
-    text = str(_("🎭 {category} Janrlar bo'yicha qidiruv\n\n")).format(category=cat_title)
+    text = str(_("🎭 {category} Janrlar bo'yicha qidiruv\n\n")).format(
+        category=cat_title
+    )
     text += str(_("🔍 <b>Janrlar:</b> {genres}\n\n")).format(genres=genre_header)
 
     if results:
@@ -442,7 +548,7 @@ async def genre_search_execute(message: Message, state: FSMContext, session: Asy
         user_lang = await get_user_language(message.from_user, session)
         for index, m in enumerate(results, start=1):
             localized_name = get_localized_name(m, user_lang)
-            localized_type = _(m['type']) if m['type'] else ""
+            localized_type = _(m["type"]) if m["type"] else ""
             text += (
                 f"<b>{index}. {localized_name}</b>\n"
                 f"   ├─ <b>{str(_('Turi'))}</b>: {localized_type}\n"
@@ -484,7 +590,7 @@ async def genre_search_toggle(message: Message, state: FSMContext):
     await message.answer(
         str(_("🎭 <b>Tanlangan janrlar:</b> {genres}")).format(genres=selected_display),
         reply_markup=get_genre_reply_keyboard(selected),
-        parse_mode="HTML"
+        parse_mode="HTML",
     )
 
 
@@ -492,9 +598,16 @@ async def genre_search_toggle(message: Message, state: FSMContext):
 # ASOSIY QIDIRUV HANDLER
 # ─────────────────────────────────────────────
 
+
 @movie_search_router.message(F.text & ~F.text.startswith("/"))
 async def movie_search_handler(message: Message, session: AsyncSession):
-    if message.text in [str(BTN_BACK), str(BTN_MOVIES), str(BTN_ANIME), str(BTN_CARTOON), str(BTN_FAVORITES)]:
+    if message.text in [
+        str(BTN_BACK),
+        str(BTN_MOVIES),
+        str(BTN_ANIME),
+        str(BTN_CARTOON),
+        str(BTN_FAVORITES),
+    ]:
         return
 
     query = message.text.strip()
@@ -559,8 +672,12 @@ async def movie_search_handler(message: Message, session: AsyncSession):
 
         if not found_movie:
             await message.answer(
-                str(_("😔 Hechnima topilmadi.\n\nKiritilgan kod bo'yicha film topilmadi va shu nomdagi film ham yo'q.")),
-                reply_markup=get_instagram_channel_kbd()
+                str(
+                    _(
+                        "😔 Hechnima topilmadi.\n\nKiritilgan kod bo'yicha film topilmadi va shu nomdagi film ham yo'q."
+                    )
+                ),
+                reply_markup=get_instagram_channel_kbd(),
             )
             return
 
@@ -571,7 +688,16 @@ async def movie_search_handler(message: Message, session: AsyncSession):
 
         # FIX #1: FeatureFilm — bitta object
         if isinstance(found_movie, (FeatureFilm, MultiFilmFeature, AnimeFeature)):
-            video_to_send, name, caption, target_language, target_quality, files, _captions, thumbnail_id = resolve_movie_media(found_movie, user_lang, is_vip=is_vip)
+            (
+                video_to_send,
+                name,
+                caption,
+                target_language,
+                target_quality,
+                files,
+                _captions,
+                thumbnail_id,
+            ) = resolve_movie_media(found_movie, user_lang, is_vip=is_vip)
             thumbnail_input = await get_thumbnail_input(message.bot, thumbnail_id)
 
             bot_info = await message.bot.get_me()
@@ -581,35 +707,55 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                 video=video_to_send,
                 caption=caption,
                 reply_markup=film_kbd(
-                    code, saved, 
+                    code,
+                    saved,
                     bot_username=bot_username,
                     files=files,
                     current_quality=target_quality,
                     current_language=target_language,
-                    is_vip=is_vip
+                    is_vip=is_vip,
                 ),
                 protect_content=not is_vip,
-                thumbnail=thumbnail_input
+                thumbnail=thumbnail_input,
             )
             # FIX #2: closure
             _actions, _code = actions, code
             await track_and_increment_view(
                 user_id=message.from_user.id,
                 movie_code=_code,
-                increment_func=lambda: _actions.increment_views(_code)
+                increment_func=lambda: _actions.increment_views(_code),
             )
             return
 
         # FIX #1: MiniSeries — list qaytaradi
-        elif isinstance(found_movie, list) and found_movie and isinstance(found_movie[0], (MiniSeries, MultiFilmMiniSeries, AnimeMiniSeries)):
+        elif (
+            isinstance(found_movie, list)
+            and found_movie
+            and isinstance(
+                found_movie[0], (MiniSeries, MultiFilmMiniSeries, AnimeMiniSeries)
+            )
+        ):
             ms = found_movie
-            video_to_send, name, caption, target_language, target_quality, files, _captions, thumbnail_id = resolve_movie_media(ms[0], user_lang, is_vip=is_vip)
+            (
+                video_to_send,
+                name,
+                caption,
+                target_language,
+                target_quality,
+                files,
+                _captions,
+                thumbnail_id,
+            ) = resolve_movie_media(ms[0], user_lang, is_vip=is_vip)
             thumbnail_input = await get_thumbnail_input(message.bot, thumbnail_id)
 
             filtered_ms = [
-                s for s in ms
-                if (isinstance(s.files, dict) and target_language in s.files) or
-                   (isinstance(s.language, str) and target_language in (s.language or "").split(","))
+                s
+                for s in ms
+                if (isinstance(s.files, dict) and target_language in s.files)
+                or (
+                    isinstance(s.language, str)
+                    and target_language in (s.language or "").split(",")
+                )
             ]
             if not filtered_ms:
                 filtered_ms = ms
@@ -622,39 +768,63 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                 video=video_to_send,
                 caption=caption,
                 reply_markup=mini_series_player_kbd(
-                    code, 1, serias_count, saved,
+                    code,
+                    1,
+                    serias_count,
+                    saved,
                     bot_username=bot_username,
-                    files=files, current_quality=target_quality,
-                    current_language=target_language, is_vip=is_vip
+                    files=files,
+                    current_quality=target_quality,
+                    current_language=target_language,
+                    is_vip=is_vip,
                 ),
                 protect_content=not is_vip,
-                thumbnail=thumbnail_input
+                thumbnail=thumbnail_input,
             )
             # FIX #2: closure
             _actions, _code = actions, code
             await track_and_increment_view(
                 user_id=message.from_user.id,
                 movie_code=_code,
-                increment_func=lambda: _actions.increment_views(_code, 1)
+                increment_func=lambda: _actions.increment_views(_code, 1),
             )
             return
 
         # FIX #1: Series — list qaytaradi
-        elif isinstance(found_movie, list) and found_movie and isinstance(found_movie[0], (Series, MultiFilmSeries, AnimeSeries)):
+        elif (
+            isinstance(found_movie, list)
+            and found_movie
+            and isinstance(found_movie[0], (Series, MultiFilmSeries, AnimeSeries))
+        ):
             series = found_movie
             first_ep = series[0]
-            video_to_send, name, caption, target_language, target_quality, files, _captions, thumbnail_id = resolve_movie_media(first_ep, user_lang, is_vip=is_vip)
+            (
+                video_to_send,
+                name,
+                caption,
+                target_language,
+                target_quality,
+                files,
+                _captions,
+                thumbnail_id,
+            ) = resolve_movie_media(first_ep, user_lang, is_vip=is_vip)
             thumbnail_input = await get_thumbnail_input(message.bot, thumbnail_id)
 
             filtered_s = [
-                s for s in series
-                if (isinstance(s.files, dict) and target_language in s.files) or
-                   (isinstance(s.language, str) and target_language in (s.language or "").split(","))
+                s
+                for s in series
+                if (isinstance(s.files, dict) and target_language in s.files)
+                or (
+                    isinstance(s.language, str)
+                    and target_language in (s.language or "").split(",")
+                )
             ]
             if not filtered_s:
                 filtered_s = series
 
-            current_season_series = sum(1 for s in filtered_s if s.season == first_ep.season)
+            current_season_series = sum(
+                1 for s in filtered_s if s.season == first_ep.season
+            )
             series_count = len(filtered_s)
             seasons_count = len(set(s.season for s in filtered_s)) if filtered_s else 0
 
@@ -665,14 +835,22 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                 video=video_to_send,
                 caption=caption,
                 reply_markup=series_player_kbd(
-                    code, 1, series_count, first_ep.season,
-                    seasons_count, first_ep.series, current_season_series, saved,
+                    code,
+                    1,
+                    series_count,
+                    first_ep.season,
+                    seasons_count,
+                    first_ep.series,
+                    current_season_series,
+                    saved,
                     bot_username=bot_username,
-                    files=files, current_quality=target_quality,
-                    current_language=target_language, is_vip=is_vip
+                    files=files,
+                    current_quality=target_quality,
+                    current_language=target_language,
+                    is_vip=is_vip,
                 ),
                 protect_content=not is_vip,
-                thumbnail=thumbnail_input
+                thumbnail=thumbnail_input,
             )
             # FIX #2: closure
             _actions, _code = actions, code
@@ -680,7 +858,9 @@ async def movie_search_handler(message: Message, session: AsyncSession):
             await track_and_increment_view(
                 user_id=message.from_user.id,
                 movie_code=_code,
-                increment_func=lambda: _actions.increment_views(_code, _season, _series)
+                increment_func=lambda: _actions.increment_views(
+                    _code, _season, _series
+                ),
             )
             return
 
@@ -709,27 +889,36 @@ async def movie_search_handler(message: Message, session: AsyncSession):
 
     if not results:
         await message.answer(
-            str(_("😔 Kechirasiz, bu nomdagi film topilmadi.\n\n"
-                  "Nomini to'g'ri yozganingizni tekshiring yoki kod orqali qidiring.")),
-            reply_markup=get_instagram_channel_kbd()
+            str(
+                _(
+                    "😔 Kechirasiz, bu nomdagi film topilmadi.\n\n"
+                    "Nomini to'g'ri yozganingizni tekshiring yoki kod orqali qidiring."
+                )
+            ),
+            reply_markup=get_instagram_channel_kbd(),
         )
     else:
         max_result = 20
         shown_results = results[:max_result]
-        response_text = str(_("🔍 <b>Qidiruv natijalari:</b>\n\n")) + "\n".join(shown_results)
+        response_text = str(_("🔍 <b>Qidiruv natijalari:</b>\n\n")) + "\n".join(
+            shown_results
+        )
 
         if len(results) > max_result:
-            response_text += str(_("\n\n<i>... va yana {count} ta natija. Aniqroq qidiring.</i>")).format(
-                count=len(results) - max_result
-            )
+            response_text += str(
+                _("\n\n<i>... va yana {count} ta natija. Aniqroq qidiring.</i>")
+            ).format(count=len(results) - max_result)
 
-        response_text += str(_("\n\n<b>Ko'rish uchun kerakli filmni kodini yuboring.</b>"))
+        response_text += str(
+            _("\n\n<b>Ko'rish uchun kerakli filmni kodini yuboring.</b>")
+        )
         await message.answer(str(response_text), parse_mode="HTML")
 
 
 # ─────────────────────────────────────────────
 # VIEW TRACKER
 # ─────────────────────────────────────────────
+
 
 async def track_and_increment_view(
     user_id: int,
@@ -742,4 +931,3 @@ async def track_and_increment_view(
             await increment_func()
     except Exception as e:
         logger.error(f"Error tracking view: {e}")
-        

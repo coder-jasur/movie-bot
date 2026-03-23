@@ -117,6 +117,9 @@ async def on_code_input(m: Message, widget: Any, manager: DialogManager):
 
     found = await _get_existing_by_code(session, code)
     if not found:
+        # Yangi film — keshni tozalaymiz
+        manager.dialog_data["genres"] = []
+        manager.dialog_data["existing_langs"] = []
         await manager.switch_to(AddMovieWizardSG.input_name)
         return
 
@@ -147,6 +150,8 @@ async def on_code_input(m: Message, widget: Any, manager: DialogManager):
     )
     if genres_raw:
         manager.dialog_data["genres"] = deserialize_genres(genres_raw)
+    else:
+        manager.dialog_data["genres"] = []
 
     await manager.switch_to(AddMovieWizardSG.quick_add)
 
@@ -163,6 +168,13 @@ async def on_add_language(c: CallbackQuery, widget: Any, manager: DialogManager)
     )
     manager.dialog_data["movie_type"] = current_type
     manager.dialog_data["category"] = current_cat
+
+    last_lang = manager.dialog_data.get("language")
+    if last_lang:
+        if "existing_langs" not in manager.dialog_data:
+            manager.dialog_data["existing_langs"] = []
+        if last_lang not in manager.dialog_data["existing_langs"]:
+            manager.dialog_data["existing_langs"].append(last_lang)
 
     _reset_keys(
         manager.dialog_data,
@@ -383,7 +395,18 @@ async def on_skip_thumbnail(c: CallbackQuery, widget: Any, manager: DialogManage
 
 
 async def _handle_language_chosen(manager: DialogManager, lang_value: str):
-    manager.dialog_data["language"] = lang_value
+    # Normalize language value if it matches a label or contains an emoji
+    normalized_lang = lang_value.strip().lower()
+    for l in LANGUAGES:
+        if (
+            normalized_lang == l["id"]
+            or normalized_lang == l["label"].lower()
+            or l["flag"] in normalized_lang
+        ):
+            normalized_lang = l["id"]
+            break
+
+    manager.dialog_data["language"] = normalized_lang
     manager.dialog_data.pop("lang_mode", None)
 
     if manager.dialog_data.get("editing_field") == "e_language":
@@ -489,15 +512,17 @@ async def on_confirm(c: CallbackQuery, widget: Any, manager: DialogManager):
 
         # Transcoder o'rniga Celery task ishlatamiz
         from src.app.services.tasks import process_video_task
-        
+
         status_msg = await c.message.answer(
             str(lazy_gettext("⏳ Video tayyorlanmoqda (Local Worker)..."))
         )
 
         # Task uchun ma'lumotlarni yig'amiz
+        admin_locale = manager.middleware_data.get("i18n").current_locale
         task_data = {
             "admin_id": c.from_user.id,
             "status_msg_id": status_msg.message_id,
+            "admin_locale": admin_locale,
             "file_id": file_id,
             "thumbnail_file_id": data.get("thumbnail_file_id"),
             "category": category,
@@ -512,11 +537,17 @@ async def on_confirm(c: CallbackQuery, widget: Any, manager: DialogManager):
             "season": data.get("season"),
             "series": data.get("series"),
         }
-        
+
         # Celery taskini fon rejimida ishga tushuramiz
         process_video_task.delay(task_data)
-        
-        await c.message.answer(str(_("🚀 Transkodlash vazifasi navbatga qo'shildi. Jarayon tugagach sizga xabar yuboriladi.")))
+
+        await c.message.answer(
+            str(
+                _(
+                    "🚀 Transkodlash vazifasi navbatga qo'shildi. Jarayon tugagach sizga xabar yuboriladi."
+                )
+            )
+        )
         await manager.switch_to(AddMovieWizardSG.success)
         return
 
@@ -970,7 +1001,13 @@ async def get_genre_data(dialog_manager: DialogManager, **kwargs):
 async def get_language_data(dialog_manager: DialogManager, **kwargs):
     all_langs = LANGUAGES
     raw_existing = dialog_manager.dialog_data.get("existing_langs", [])
-    existing = [get_lang_code(l.strip()) for l in raw_existing if l and l.strip()]
+    # Normalize and filter out non-empty codes.
+    existing = set()
+    for l in raw_existing:
+        if l and l.strip():
+            code = get_lang_code(l.strip())
+            if code:
+                existing.add(code)
     lang_mode = dialog_manager.dialog_data.get("lang_mode", "new")
 
     if lang_mode == "all":
@@ -983,7 +1020,14 @@ async def get_language_data(dialog_manager: DialogManager, **kwargs):
         available_langs = [l for l in all_langs if l["id"] not in existing]
         prompt_text = _("🌍 <b>Yangi til tanlang:</b>")
 
-    return {"languages": available_langs, "language_mode_prompt": str(prompt_text)}
+    uz_match = next((l for l in LANGUAGES if l["id"] == "uz"), None)
+    lang_label = uz_match["label"] if uz_match else "O'zbekcha"
+
+    return {
+        "languages": available_langs,
+        "language_mode_prompt": str(prompt_text),
+        "lang_label": lang_label,
+    }
 
 
 async def get_category_selection_data(dialog_manager: DialogManager, **kwargs):
@@ -1020,9 +1064,9 @@ async def get_type_specific_prompts(dialog_manager: DialogManager, **kwargs):
     movie_type = dialog_manager.dialog_data.get("movie_type")
 
     cat_prefix = ""
-    if category == "anime":
+    if category == "cat_anime":
         cat_prefix = _("anime-")
-    elif category == "multi_film":
+    elif category == "cat_multi":
         cat_prefix = _("mult-")
 
     target_film = _("film")
@@ -1118,8 +1162,14 @@ async def get_quick_add_data(dialog_manager: DialogManager, **kwargs):
         if match:
             lang_info_list.append(f"{match['flag']} {match['label']}")
         else:
-            lang_info_list.append(l_id.upper())
-    lang_info = " | ".join(lang_info_list) if lang_info_list else str(_("mavjud emas"))
+            # If code is unrecognized (like 'sd' or 'SD'), try to normalize or show as is
+            norm_code = get_lang_code(l_id)
+            match_norm = next((l for l in LANGUAGES if l["id"] == norm_code), None)
+            if match_norm:
+                lang_info_list.append(f"{match_norm['flag']} {match_norm['label']}")
+            else:
+                lang_info_list.append(f"❓ {l_id.upper()}")
+    lang_info = " | ".join(lang_info_list) if lang_info_list else str(_("Yo'q"))
 
     from src.app.bot.common.utils import format_multi_name
 
@@ -1127,10 +1177,10 @@ async def get_quick_add_data(dialog_manager: DialogManager, **kwargs):
 
     text = (
         f"━━━━━━━━━━━━━━━\n"
-        f"📁 <b>Kategoriya:</b> {cat_label}\n"
-        f"📂 <b>Tur:</b> {display_type}\n"
-        f"🎬 <b>Nomi:</b> {display_name}\n"
-        f"🌍 <b>Mavjud tillar:</b> {lang_info}\n"
+        f"<b>{_('SUM_CATEGORY')}</b> {cat_label}\n"
+        f"<b>{_('SUM_TYPE')}</b> {display_type}\n"
+        f"<b>{_('SUM_NAME')}</b> {display_name}\n"
+        f"<b>{_('Mavjud tillar:')}</b> {lang_info}\n"
         f"━━━━━━━━━━━━━━━\n"
     )
     if can_continue:
@@ -1188,7 +1238,12 @@ async def get_success_data(dialog_manager: DialogManager, **kwargs):
             "📊 <b>Formatlar:</b> {formats}\n"
             "━━━━━━━━━━━━━━━\n\n"
             "{action_prompt}"
-        ).format(info=save_info, lang=lang_info, formats=fmt_text, action_prompt=_("Nima qilamiz?"))
+        ).format(
+            info=save_info,
+            lang=lang_info,
+            formats=fmt_text,
+            action_prompt=_("Nima qilamiz?"),
+        )
     )
 
     return {
@@ -1515,7 +1570,9 @@ add_movie_dialog = Dialog(
             width=2,
         ),
         MessageInput(on_language_input, content_types=ContentType.TEXT),
-        Button(Format(_("Skip » (O'zbek)")), id="skip_lang", on_click=on_skip_language),
+        Button(
+            Format(_("Skip » {lang_label}")), id="skip_lang", on_click=on_skip_language
+        ),
         Row(
             SwitchTo(
                 Format(_("🔙 Ortga")),

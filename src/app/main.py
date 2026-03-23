@@ -73,7 +73,11 @@ async def main():
 
         if settings.use_webhook:
             webhook_url = f"{settings.webhook_url}{settings.webhook_path}"
-            await bot.set_webhook(url=webhook_url, drop_pending_updates=True)
+            await bot.set_webhook(
+                url=webhook_url, 
+                drop_pending_updates=True,
+                allowed_updates=dp.resolve_used_update_types()
+            )
             print(f"WEBHOOK MODE: {webhook_url}")
             await start_api()
         else:

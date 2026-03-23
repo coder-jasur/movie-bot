@@ -3,18 +3,19 @@ from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram_dialog import DialogManager
 
+from src.app.bot.common.i18n import lazy_gettext as gettext_
 from src.app.database.queries.bots import BotActions
 from src.app.database.queries.channels import ChannelActions
 
 
 # ==================== OP MENU GETTERS ====================
 
-async def get_op_menu_data(dialog_manager: DialogManager, **_) -> Dict[str, Any]:
+async def get_op_menu_data(dialog_manager: DialogManager, **kwargs) -> Dict[str, Any]:
     """
     Получает данные для главного меню ОП (список каналов и ботов).
 
     Returns:
-        Dict с данными каналов, ботов и типом сообщения
+       Dict с данными каналов, ботов и типом сообщения
     """
     session: AsyncSession = dialog_manager.middleware_data["session"]
 
@@ -40,7 +41,7 @@ async def get_op_menu_data(dialog_manager: DialogManager, **_) -> Dict[str, Any]
 
 # ==================== CHANNEL GETTERS ====================
 
-async def get_add_channel_data(dialog_manager: DialogManager, **_) -> Dict[str, str]:
+async def get_add_channel_data(dialog_manager: DialogManager, **kwargs) -> Dict[str, str]:
     """
     Получает данные для окна добавления канала.
 
@@ -52,7 +53,7 @@ async def get_add_channel_data(dialog_manager: DialogManager, **_) -> Dict[str, 
     }
 
 
-async def get_channel_info_data(dialog_manager: DialogManager, **_) -> Dict[str, str]:
+async def get_channel_info_data(dialog_manager: DialogManager, **kwargs) -> Dict[str, str]:
     """
     Получает полную информацию о канале для отображения.
 
@@ -71,22 +72,22 @@ async def get_channel_info_data(dialog_manager: DialogManager, **_) -> Dict[str,
 
     if not channel_data:
         return {
-            "channel_data": "❌ Канал не найден",
+            "channel_data": gettext_("❌ Канал не найден"),
             "op_button": "—"
         }
 
     # Определяем текст кнопки в зависимости от статуса
     is_in_op = channel_data.channel_status == "True"
-    op_button = "🚫 Убрать из ОП" if is_in_op else "➕ Добавить в ОП"
+    op_button = gettext_("🚫 Убрать из ОП") if is_in_op else gettext_("➕ Добавить в ОП")
 
     # Форматируем данные для отображения
     channel_info = (
-        "📢 <b>Полная информация о канале</b>\n\n"
-        f"🆔 <b>ID:</b> <code>{channel_data.channel_id}</code>\n"
-        f"📛 <b>Название:</b> {channel_data.channel_name}\n"
-        f"🔗 <b>Username:</b> @{channel_data.channel_username or 'не указан'}\n"
-        f"📶 <b>Статус в ОП:</b> {'✅ Активен' if is_in_op else '❌ Неактивен'}\n"
-        f"🔗 <b>Ссылка:</b> {channel_data.channel_url}\n"
+        f"📢 <b>{gettext_('Полная информация о канале')}</b>\n\n"
+        f"🆔 <b>{gettext_('ID:')}</b> <code>{channel_data.channel_id}</code>\n"
+        f"📛 <b>{gettext_('Название:')}</b> {channel_data.channel_name}\n"
+        f"🔗 <b>{gettext_('Username:')}</b> @{channel_data.channel_username or gettext_('не указан')}\n"
+        f"📶 <b>{gettext_('Статус в ОП:')}</b> {'✅ ' + gettext_('Активен') if is_in_op else '❌ ' + gettext_('Неактивен')}\n"
+        f"🔗 <b>{gettext_('Ссылка:')}</b> {channel_data.channel_url}\n"
     )
 
     return {
@@ -97,7 +98,7 @@ async def get_channel_info_data(dialog_manager: DialogManager, **_) -> Dict[str,
 
 # ==================== BOT GETTERS ====================
 
-async def get_add_bot_data(dialog_manager: DialogManager, **_) -> Dict[str, str]:
+async def get_add_bot_data(dialog_manager: DialogManager, **kwargs) -> Dict[str, str]:
     """
     Получает данные для окна добавления бота.
 
@@ -109,7 +110,7 @@ async def get_add_bot_data(dialog_manager: DialogManager, **_) -> Dict[str, str]
     }
 
 
-async def get_bot_info_data(dialog_manager: DialogManager, **_) -> Dict[str, str]:
+async def get_bot_info_data(dialog_manager: DialogManager, **kwargs) -> Dict[str, str]:
     """
     Получает полную информацию о боте для отображения.
 
@@ -128,21 +129,21 @@ async def get_bot_info_data(dialog_manager: DialogManager, **_) -> Dict[str, str
 
     if not bot_data:
         return {
-            "bot_data": "❌ Бот не найден",
+            "bot_data": gettext_("❌ Бот не найден"),
             "op_button": "—"
         }
 
     # Определяем текст кнопки в зависимости от статуса
     is_in_op = bot_data.bot_status == "True"
-    op_button = "🚫 Убрать из ОП" if is_in_op else "➕ Добавить в ОП"
+    op_button = gettext_("🚫 Убрать из ОП") if is_in_op else gettext_("➕ Добавить в ОП")
 
     # Форматируем данные для отображения
     bot_info = (
-        "🤖 <b>Полная информация о боте</b>\n\n"
-        f"📛 <b>Название:</b> {bot_data.bot_name}\n"
-        f"🔗 <b>Username:</b> @{bot_data.bot_username}\n"
-        f"📶 <b>Статус в ОП:</b> {'✅ Активен' if is_in_op else '❌ Неактивен'}\n"
-        f"🔗 <b>Ссылка:</b> {bot_data.bot_url}\n"
+        f"🤖 <b>{gettext_('Полная информация о боте')}</b>\n\n"
+        f"📛 <b>{gettext_('Название:')}</b> {bot_data.bot_name}\n"
+        f"🔗 <b>{gettext_('Username:')}</b> @{bot_data.bot_username}\n"
+        f"📶 <b>{gettext_('Статус в ОП:')}</b> {'✅ ' + gettext_('Активен') if is_in_op else '❌ ' + gettext_('Неактивен')}\n"
+        f"🔗 <b>{gettext_('Ссылка:')}</b> {bot_data.bot_url}\n"
     )
 
     return {

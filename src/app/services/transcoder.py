@@ -4,11 +4,11 @@ import os
 import shutil
 import tempfile
 from asyncio import subprocess
-from typing import Awaitable, Callable, Dict, Optional
+from typing import Awaitable, Callable, Dict, List, Optional, Tuple
 
 from aiogram import Bot
-from aiogram.types import BufferedInputFile, FSInputFile
 
+from src.app.bot.common.i18n import i18n
 from src.app.bot.common.i18n import lazy_gettext as gt
 
 logger = logging.getLogger(__name__)
@@ -20,369 +20,460 @@ TARGET_QUALITIES = {
     "360p": 360,
 }
 
-MAX_PARALLEL_WORKERS = 2
-BASE_DIR = "/app"
+MAX_PARALLEL_WORKERS = 3
 
+BASE_DIR = "/app"
 INTRO_MKV = os.path.join(BASE_DIR, "media/videos/intro.mkv")
 INTRO_MP4 = os.path.join(BASE_DIR, "media/videos/intro.mp4")
 INTRO_PATH = INTRO_MKV if os.path.exists(INTRO_MKV) else INTRO_MP4
-
 WATERMARK_PATH = os.path.join(BASE_DIR, "media/photos/bot_watermark.png")
-
 TMP_BASE = "/var/lib/telegram-bot-api/temp"
 
 StatusCallback = Optional[Callable[[str], Awaitable[None]]]
+QualityCallback = Optional[Callable[[str, str], Awaitable[None]]]
+
+# ─── Encoder ──────────────────────────────────────────────────────────────────
+_NVENC_CACHE: Optional[bool] = None
+
+
+async def _check_nvenc() -> bool:
+    global _NVENC_CACHE
+    if _NVENC_CACHE is not None:
+        return _NVENC_CACHE
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "ffmpeg",
+            "-hide_banner",
+            "-encoders",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        out, _ = await proc.communicate()
+        _NVENC_CACHE = "h264_nvenc" in out.decode()
+    except Exception:
+        _NVENC_CACHE = False
+    logger.info(f"Encoder: {'h264_nvenc (GPU)' if _NVENC_CACHE else 'libx264 (CPU)'}")
+    return _NVENC_CACHE
+
+
+def _enc(nvenc: bool, quality: str = "base") -> list:
+    if nvenc:
+        return [
+            "-c:v",
+            "h264_nvenc",
+            "-preset",
+            "p2",
+            "-cq",
+            "18" if quality == "base" else "28",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "128k",
+        ]
+    return [
+        "-c:v",
+        "libx264",
+        "-preset",
+        "fast",
+        "-crf",
+        "18" if quality == "base" else "28",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+    ]
+
+
+# ─── Thumbnail + watermark ────────────────────────────────────────────────────
+async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
+    """
+    Thumbnail o'ng pastki burchagiga bot_watermark qo'yadi (kenglik 30%).
+    """
+    if not os.path.isfile(WATERMARK_PATH):
+        shutil.copy2(thumb_in, thumb_out)
+        return True
+    try:
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            thumb_in,
+            "-i",
+            WATERMARK_PATH,
+            "-filter_complex",
+            "[1:v]scale=iw*0.30:-1[wm];[0:v][wm]overlay=W-w-10:H-h-10",
+            "-frames:v",
+            "1",
+            "-q:v",
+            "2",
+            thumb_out,
+        ]
+        proc = await asyncio.create_subprocess_exec(*cmd, stderr=subprocess.PIPE)
+        _, stderr = await proc.communicate()
+        if proc.returncode != 0:
+            logger.error(f"Thumb watermark xato: {stderr.decode()[-200:]}")
+            shutil.copy2(thumb_in, thumb_out)
+            return False
+        return True
+    except Exception as e:
+        logger.error(f"Thumb watermark exception: {e}")
+        shutil.copy2(thumb_in, thumb_out)
+        return False
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 
 
 class Transcoder:
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    # ═══════════════════════════════════════════
-    # PUBLIC
-    # ═══════════════════════════════════════════
-
     async def process_video(
         self,
         file_id: str,
         user_id: int,
-        status_callback: StatusCallback = None,
-        thumbnail_file_id: str = None,
-    ) -> Dict[str, str]:
-
-        try:
-            file_info = await self.bot.get_file(file_id)
-        except Exception as e:
-            logger.error(f"get_file failed: {e}")
-            return {"original": file_id}
-
-        os.makedirs(TMP_BASE, exist_ok=True)
-
+        status_callback: StatusCallback,
+        on_quality_ready: Optional[QualityCallback] = None,
+        thumbnail_file_id: Optional[str] = None,
+        locale: str = "uz",
+    ) -> Tuple[Dict[str, str], List[str]]:
+        """
+        Videoni transkod qiladi va natijalarni qaytaradi.
+        Qaytaradi: (results_dict, list_of_local_paths_to_cleanup)
+        """
+        local_to_cleanup = []
         with tempfile.TemporaryDirectory(dir=TMP_BASE, prefix="tc_") as tmp:
             source = os.path.join(tmp, "source.mp4")
-
-            # 1. Video yuklab olish
-            await self._notify(status_callback, str(gt("📥 Video yuklanmoqda...")))
             try:
-                await self._download(file_info.file_path, source)
+                file_info = await self.bot.get_file(file_id)
+            except Exception as e:
+                logger.error(f"get_file failed: {e}")
+                return {"original": file_id}, []
+
+            await self._notify(
+                status_callback, str(gt("📥 Video yuklanmoqda...")), locale
+            )
+            try:
+                local_src = await self._download(file_id, file_info.file_path, source)
+                if local_src:
+                    local_to_cleanup.append(local_src)
             except Exception as e:
                 logger.error(f"Download failed: {e}")
-                return {"original": file_id}
+                return {"original": file_id}, []
 
-            # 2. Thumbnail tayyorlash (watermark qo'shilgan, 320x180 JPEG)
-            thumb_path: Optional[str] = None
+            # ── Thumbnail: yuklab olib, watermark qo'yamiz ──────────────────
+            thumb_wm_path: Optional[str] = None  # send_video ga beriladigan thumb
+
             if thumbnail_file_id:
-                thumb_path = await self._prepare_thumbnail(thumbnail_file_id, tmp)
-                if thumb_path:
-                    logger.info(
-                        f"Thumbnail tayyor: {thumb_path} ({os.path.getsize(thumb_path)} bytes)"
-                    )
+                thumb_raw = await self._prepare_thumbnail(thumbnail_file_id, tmp)
+                if thumb_raw:
+                    thumb_wm = os.path.join(tmp, "thumb_wm.jpg")
+                    await _make_thumb_with_watermark(thumb_raw, thumb_wm)
+                    thumb_wm_path = thumb_wm if os.path.exists(thumb_wm) else thumb_raw
 
-            # 3. Original o'lcham
+            # ── Video parametrlari ───────────────────────────────────────────
             orig_h = await self._get_height(source)
             if not orig_h:
-                return {"original": file_id}
+                return {"original": file_id}, local_to_cleanup
 
-            logger.info(f"Original height: {orig_h}px")
-            orig_key = f"{orig_h}p"
+            a_main = await self._has_audio(source)
+            a_intro = (
+                await self._has_audio(INTRO_PATH)
+                if os.path.isfile(INTRO_PATH)
+                else False
+            )
+            logger.info(f"Original: {orig_h}px | audio={a_main}")
+
+            # ── Base video: intro + watermark qo'shish ───────────────────────
+            await self._notify(
+                status_callback, str(gt("🎬 Base video tayyorlanmoqda...")), locale
+            )
+            base_path = os.path.join(tmp, "base.mp4")
+            try:
+                await self._make_base(source, base_path, orig_h, a_main, a_intro)
+            except Exception as e:
+                logger.error(f"Base video xato: {e}", exc_info=True)
+                base_path = source
+
             results: Dict[str, str] = {}
 
-            # 4. Original transcoding
+            # ── Original sifat ───────────────────────────────────────────────
             await self._notify(
-                status_callback, str(gt("💾 Original tayyorlanmoqda..."))
+                status_callback, str(gt("💾 Original tayyorlanmoqda...")), locale
             )
             try:
                 out_orig = os.path.join(tmp, "orig.mp4")
-                await self._transcode(source, out_orig, orig_h)
-                fid = await self._upload(
-                    out_orig, user_id, f"Original ({orig_key})", thumb_path
-                )
-                results["original"] = fid or file_id
-                results[orig_key] = fid or file_id
+                await self._scale_only(base_path, out_orig, orig_h)
+                res = await self._upload(out_orig, user_id, "Original", thumb_wm_path)
+                results["original"] = res if res else file_id
+                if res:
+                    # Agar original sifat Target sifatlardan biriga mos kelsa, uni o'sha nom bilan ham saqlaymiz
+                    for name, q_h in TARGET_QUALITIES.items():
+                        if q_h == orig_h:
+                            results[name] = res
+                            if on_quality_ready:
+                                await on_quality_ready(name, res)
+                            break
+                    if on_quality_ready:
+                        await on_quality_ready("original", res)
             except Exception as e:
-                logger.error(f"Original failed: {e}", exc_info=True)
-                await self._notify(
-                    status_callback, str(gt("⚠️ Xato: {e}")).format(e=str(e)[:80])
-                )
-                try:
-                    fid = await self._upload(
-                        source, user_id, f"Original ({orig_key})", thumb_path
-                    )
-                    results["original"] = fid or file_id
-                    results[orig_key] = fid or file_id
-                except Exception:
-                    results["original"] = file_id
-                    results[orig_key] = file_id
+                logger.error(f"Original upload failed: {e}")
+                results["original"] = file_id
+            finally:
+                p = os.path.join(tmp, "orig.mp4")
+                if os.path.exists(p):
+                    try:
+                        os.remove(p)
+                    except Exception:
+                        pass
 
-            # 5. Qo'shimcha sifatlar
-            to_do = sorted(
-                [(n, h) for n, h in TARGET_QUALITIES.items() if h < orig_h],
-                key=lambda x: x[1],
-                reverse=True,
-            )
-            if not to_do:
-                return results
+            # ── Kichik sifatlar ──────────────────────────────────────────────
+            to_do = [(name, h) for name, h in TARGET_QUALITIES.items() if h < orig_h]
+
+            if to_do:
+                await self._notify(
+                    status_callback,
+                    str(gt("⚙️ {n} ta sifat tayyorlanmoqda...")).format(n=len(to_do)),
+                    locale,
+                )
+                sem = asyncio.Semaphore(MAX_PARALLEL_WORKERS)
+                tasks = [
+                    self._scale_and_upload(
+                        base_path,
+                        tmp,
+                        h,
+                        name,
+                        user_id,
+                        i,
+                        len(to_do),
+                        sem,
+                        status_callback,
+                        on_quality_ready,
+                        thumb_wm_path,
+                        locale,
+                    )
+                    for i, (name, h) in enumerate(to_do, 1)
+                ]
+                for name, res in zip(
+                    [t[0] for t in to_do], await asyncio.gather(*tasks)
+                ):
+                    if res:
+                        results[name] = res
+
+            if base_path != source and os.path.exists(base_path):
+                try:
+                    os.remove(base_path)
+                except Exception:
+                    pass
 
             await self._notify(
                 status_callback,
-                str(gt("⚙️ {n} ta sifat tayyorlanmoqda...")).format(n=len(to_do)),
+                str(gt("✅ Tayyor! {n} ta format.")).format(n=len(results)),
+                locale,
             )
+            logger.info(f"process_video done: {list(results.keys())}")
+            return results, local_to_cleanup
 
-            sem = asyncio.Semaphore(MAX_PARALLEL_WORKERS)
-            tasks = [
-                self._transcode_and_upload(
-                    sem,
-                    source,
-                    tmp,
-                    name,
-                    h,
-                    user_id,
-                    i,
-                    len(to_do),
-                    status_callback,
-                    thumb_path,
-                )
-                for i, (name, h) in enumerate(to_do, 1)
-            ]
-            for (name, _h), res in zip(
-                to_do, await asyncio.gather(*tasks, return_exceptions=True)
-            ):
-                if isinstance(res, Exception):
-                    logger.error(f"[{name}] failed: {res}")
-                elif res:
-                    results[name] = res
-
-        await self._notify(
-            status_callback, str(gt("✅ Tayyor! {n} ta format.")).format(n=len(results))
-        )
-        logger.info(f"process_video done: {list(results.keys())}")
-        return results
-
-    # ═══════════════════════════════════════════
-    # THUMBNAIL TAYYORLASH
-    # ═══════════════════════════════════════════
-
-    async def _prepare_thumbnail(self, file_id: str, tmp: str) -> Optional[str]:
-        """
-        Telegram dan thumbnail yuklab, ustiga bot_watermark qo'yib,
-        320x180 JPEG qaytaradi.
-        Watermark: pastki chap burchak, thumbnail kengligining ~25%.
-        """
-        raw = os.path.join(tmp, "thumb_raw.jpg")
+    async def _prepare_thumbnail(self, file_id: str, tmp_dir: str) -> Optional[str]:
+        path = os.path.join(tmp_dir, "thumb.jpg")
         try:
-            info = await self.bot.get_file(file_id)
-            await self._download(info.file_path, raw)
+            file_info = await self.bot.get_file(file_id)
+            await self._download(file_id, file_info.file_path, path)
+            return path
         except Exception as e:
-            logger.warning(f"Thumbnail yuklanmadi: {e}")
+            logger.error(f"Thumb prepare failed: {e}")
             return None
 
-        out = os.path.join(tmp, "thumb_wm.jpg")
-
-        has_wm = os.path.isfile(WATERMARK_PATH)
-        if has_wm:
-            # 320x180 ga crop-fill, watermark pastki chap (~25% kenglik = 80px)
-            flt = (
-                "[0:v]scale=320:180:force_original_aspect_ratio=increase,"
-                "crop=320:180,setsar=1[bg];"
-                "[1:v]scale=80:-1[wm];"
-                "[bg][wm]overlay=8:main_h-overlay_h-8[out]"
-            )
-            cmd = [
-                "ffmpeg",
-                "-y",
-                "-i",
-                raw,
-                "-i",
-                WATERMARK_PATH,
-                "-filter_complex",
-                flt,
-                "-map",
-                "[out]",
-                "-vframes",
-                "1",
-                "-pix_fmt",
-                "yuvj420p",
-                "-q:v",
-                "2",
-                out,
-            ]
-        else:
-            # Watermark yo'q — faqat resize
-            cmd = [
-                "ffmpeg",
-                "-y",
-                "-i",
-                raw,
-                "-vf",
-                "scale=320:180:force_original_aspect_ratio=increase,crop=320:180",
-                "-vframes",
-                "1",
-                "-pix_fmt",
-                "yuvj420p",
-                "-q:v",
-                "2",
-                out,
-            ]
-
-        proc = await asyncio.create_subprocess_exec(
-            *cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        _, err = await proc.communicate()
-        if proc.returncode != 0:
-            logger.error(f"thumbnail ffmpeg xato: {err.decode()[-300:]}")
-            return raw  # xato bo'lsa watermarksiz original qaytaradi
-        return out
-
-    # ═══════════════════════════════════════════
-    # VIDEO TRANSCODING
-    # ═══════════════════════════════════════════
-
-    async def _transcode(self, src: str, dst: str, height: int) -> None:
+    async def _make_base(
+        self, source: str, dest: str, h: int, a_main: bool, a_intro: bool
+    ):
         """
-        1. Intro (agar mavjud) videoning o'lchamiga moslanib qo'shiladi
-           (intro kesiladi/kengaytiriladi — videoning width/height asosiy)
-        2. bot_watermark.png pastki chap burchakda (video kengligining 12%)
-        3. Faqat video encode — thumbnail alohida _upload da beriladi
+        Video ga intro + watermark qo'shadi.
+        SAR normalizatsiya: barcha streamlar scale={w}:{h},setsar=1 bilan
+        bir xil o'lchamga keltiriladi — concat xatosi bo'lmaydi.
+        Watermark: o'ng yuqori burchak, video kengligining 8%.
         """
-        w = (height * 16 // 9) & ~1
-        h = height & ~1
-
-        # Video uchun scale (aspect ratio saqlanadi, qora padding)
-        video_scale = (
-            f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
-            f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p"
-        )
-        # Intro uchun scale (videoning o'lchamiga to'liq moslanadi, crop)
-        intro_scale = (
-            f"scale={w}:{h}:force_original_aspect_ratio=increase,"
-            f"crop={w}:{h},setsar=1,format=yuv420p"
-        )
-
         has_intro = os.path.isfile(INTRO_PATH)
         has_wm = os.path.isfile(WATERMARK_PATH)
+        nvenc = await _check_nvenc()
 
-        # Watermark o'lchami: video kengligining 12% (minimum 60px)
-        wm_w = max(60, w * 12 // 100) & ~1
-        wm_f = f"scale={wm_w}:-1"
-        wm_o = "overlay=10:main_h-overlay_h-10"
+        # Aniq o'lchamni olish (SAR hisobga olinmagan raw pixel o'lcham)
+        w_raw = await self._get_width(source)
+        h_raw = await self._get_height(source)
+        if w_raw and h_raw:
+            # Aspekt nisbatni saqlagan holda target height ga hisoblash
+            w = int(w_raw * h / h_raw)
+            w = w if w % 2 == 0 else w + 1
+        else:
+            w = int(h * 16 / 9)
+            w = w if w % 2 == 0 else w + 1
 
-        logger.info(
-            f"_transcode [{height}p] {w}x{h} intro={has_intro} wm={has_wm} wm_w={wm_w}px"
+        cmd = ["ffmpeg", "-y"]
+        if nvenc:
+            cmd.extend(["-hwaccel", "cuda"])
+        cmd.extend(["-i", source])
+        if has_intro:
+            cmd.extend(["-i", INTRO_PATH])
+        wm_idx = 2 if has_intro else 1
+        if has_wm:
+            cmd.extend(["-i", WATERMARK_PATH])
+
+        fp = []
+        ma = []
+
+        # Har ikkala video uchun bir xil normalize filter
+        # force_original_aspect_ratio=decrease + pad — intro har qanday o'lchamda bo'lsa ham ishlaydi
+        norm_main = (
+            f"[0:v]scale={w}:{h}:force_original_aspect_ratio=decrease,"
+            f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[main_v]"
+        )
+        norm_intro = (
+            f"[1:v]scale={w}:{h}:force_original_aspect_ratio=decrease,"
+            f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[intro_v]"
         )
 
-        if has_intro:
-            a_intro = await self._has_audio(INTRO_PATH)
-            a_main = await self._has_audio(src)
-
-            # Input: 0=intro, 1=video, 2=watermark(agar bor)
-            inputs = ["-i", INTRO_PATH, "-i", src]
-            pre = f"[0:v]{intro_scale}[v0];[1:v]{video_scale}[v1];"
-
+        if has_intro and has_wm:
+            fp.append(norm_intro)
+            fp.append(norm_main)
+            # Watermark: video kengligiga to'liq yoyiladi, pastga joylashadi
+            # scale={w}:-2 → video kengligi bilan bir xil, balandlik proporsional
+            # overlay=(W-w)/2:H-h-15 → markazda, pastdan 15px yuqori
+            fp.append(f"[{wm_idx}:v]scale={w}*0.15:-2[wm_s];[wm_s]split[wm1][wm2]")
+            fp.append("[intro_v][wm1]overlay=W-w-15:H-h-30[intro_wm]")
+            fp.append("[main_v][wm2]overlay=W-w-15:H-h-30[main_wm]")
             if a_intro and a_main:
-                concat = "[v0][0:a][v1][1:a]concat=n=2:v=1:a=1[vc][ac]"
-                audio_map = ["-map", "[ac]"]
+                fp.append("[intro_wm][1:a][main_wm][0:a]concat=n=2:v=1:a=1[v][a]")
+                ma = ["-map", "[v]", "-map", "[a]"]
             elif a_main:
-                concat = "anullsrc=r=44100:cl=stereo[a0];[v0][a0][v1][1:a]concat=n=2:v=1:a=1[vc][ac]"
-                audio_map = ["-map", "[ac]"]
+                fp.append("aevalsrc=0:c=stereo:s=44100:d=1[intro_sil]")
+                fp.append("[intro_wm][intro_sil][main_wm][0:a]concat=n=2:v=1:a=1[v][a]")
+                ma = ["-map", "[v]", "-map", "[a]"]
             else:
-                concat = "[v0][v1]concat=n=2:v=1:a=0[vc]"
-                audio_map = []
+                fp.append("[intro_wm][main_wm]concat=n=2:v=1:a=0[v]")
+                ma = ["-map", "[v]"]
 
-            if has_wm:
-                inputs += ["-i", WATERMARK_PATH]
-                fc = pre + concat + f";[2:v]{wm_f}[wm];[vc][wm]{wm_o}[vout]"
-                vm = ["-map", "[vout]"]
+        elif has_intro and not has_wm:
+            fp.append(norm_intro)
+            fp.append(norm_main)
+            if a_intro and a_main:
+                fp.append("[intro_v][1:a][main_v][0:a]concat=n=2:v=1:a=1[v][a]")
+                ma = ["-map", "[v]", "-map", "[a]"]
+            elif a_main:
+                fp.append("aevalsrc=0:c=stereo:s=44100:d=1[intro_sil]")
+                fp.append("[intro_v][intro_sil][main_v][0:a]concat=n=2:v=1:a=1[v][a]")
+                ma = ["-map", "[v]", "-map", "[a]"]
             else:
-                fc = pre + concat.replace("[vc]", "[vout]").replace("[vc]", "[vout]")
-                # concat da [vc] ni [vout] ga rename
-                fc = pre + concat
-                vm = ["-map", "[vc]"]
+                fp.append("[intro_v][main_v]concat=n=2:v=1:a=0[v]")
+                ma = ["-map", "[v]"]
 
-            cmd = (
-                ["ffmpeg", "-y"]
-                + inputs
-                + ["-filter_complex", fc]
-                + vm
-                + audio_map
-                + [
-                    "-c:v",
-                    "libx264",
-                    "-crf",
-                    "28",
-                    "-preset",
-                    "veryfast",
-                    "-c:a",
-                    "aac",
-                    "-b:a",
-                    "128k",
-                    dst,
-                ]
-            )
+        elif not has_intro and has_wm:
+            fp.append(norm_main)
+            fp.append(f"[{wm_idx}:v]scale={w}*0.22:-2[wm]")
+            fp.append("[main_v][wm]overlay=W-w-15:H-h-30[v]")
+            ma = ["-map", "[v]", "-map", "0:a?"]
 
         else:
-            # Intro yo'q
-            if has_wm:
-                inputs = ["-i", src, "-i", WATERMARK_PATH]
-                fc = (
-                    f"[0:v]{video_scale}[vs];"
-                    f"[1:v]{wm_f}[wm];"
-                    f"[vs][wm]{wm_o}[vout]"
-                )
-                cmd = (
-                    ["ffmpeg", "-y"]
-                    + inputs
-                    + [
-                        "-filter_complex",
-                        fc,
-                        "-map",
-                        "[vout]",
-                        "-map",
-                        "0:a?",
-                        "-c:v",
-                        "libx264",
-                        "-crf",
-                        "28",
-                        "-preset",
-                        "veryfast",
-                        "-c:a",
-                        "copy",
-                        dst,
-                    ]
-                )
-            else:
-                cmd = [
-                    "ffmpeg",
-                    "-y",
-                    "-i",
-                    src,
-                    "-vf",
-                    video_scale,
-                    "-map",
-                    "0:v",
-                    "-map",
-                    "0:a?",
-                    "-c:v",
-                    "libx264",
-                    "-crf",
-                    "28",
-                    "-preset",
-                    "veryfast",
-                    "-c:a",
-                    "copy",
-                    dst,
-                ]
+            cmd.extend(["-c", "copy", dest])
+            proc = await asyncio.create_subprocess_exec(*cmd, stderr=subprocess.PIPE)
+            _, stderr = await proc.communicate()
+            if proc.returncode != 0:
+                raise Exception(f"FFmpeg copy error: {stderr.decode()[-500:]}")
+            return
 
-        logger.info(f"ffmpeg cmd: {' '.join(cmd)}")
-        proc = await asyncio.create_subprocess_exec(
-            *cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        _, err = await proc.communicate()
+        cmd.extend(["-filter_complex", ";".join(fp)])
+        cmd.extend(ma)
+        cmd.extend(_enc(nvenc, "base"))
+        cmd.append(dest)
+
+        proc = await asyncio.create_subprocess_exec(*cmd, stderr=subprocess.PIPE)
+        _, stderr = await proc.communicate()
         if proc.returncode != 0:
-            raise RuntimeError(f"ffmpeg [{height}p] xato:\n{err.decode()[-800:]}")
+            raise Exception(f"FFmpeg base error: {stderr.decode()[-500:]}")
 
-    # ═══════════════════════════════════════════
-    # UPLOAD
-    # ═══════════════════════════════════════════
+    async def _scale_only(self, base: str, dest: str, h: int):
+        """
+        Faqat scale — thumbnail qo'shilmaydi.
+        Thumbnail send_video ga alohida beriladi.
+        """
+        w_orig = await self._get_width(base)
+        h_orig = await self._get_height(base)
+        nvenc = await _check_nvenc()
+
+        if w_orig and h_orig and h_orig > 0:
+            w = int(w_orig * h / h_orig)
+            w = w if w % 2 == 0 else w + 1
+        else:
+            w = -2
+
+        w_str = str(w) if w > 0 else "-2"
+        cmd = ["ffmpeg", "-y"]
+        if nvenc:
+            cmd.extend(["-hwaccel", "cuda"])
+        cmd.extend(["-i", base])
+        cmd.extend(
+            [
+                "-vf",
+                f"scale={w_str}:{h},format=yuv420p",
+                "-map",
+                "0:v",
+                "-map",
+                "0:a?",
+            ]
+        )
+        cmd.extend(_enc(nvenc, "scale"))
+        cmd.append(dest)
+
+        proc = await asyncio.create_subprocess_exec(*cmd, stderr=subprocess.PIPE)
+        _, stderr = await proc.communicate()
+        if proc.returncode != 0:
+            raise Exception(f"FFmpeg scale error: {stderr.decode()[-500:]}")
+
+    async def _scale_and_upload(
+        self,
+        base: str,
+        tmp_dir: str,
+        height: int,
+        name: str,
+        user_id: int,
+        idx: int,
+        total: int,
+        sem: asyncio.Semaphore,
+        status_callback: StatusCallback,
+        on_quality_ready: QualityCallback,
+        thumb_wm_path: Optional[str],
+        locale: str,
+    ) -> Optional[str]:
+        async with sem:
+            out = os.path.join(tmp_dir, f"v_{height}p.mp4")
+            try:
+                await self._notify(
+                    status_callback,
+                    str(gt("🔄 {n} tayyorlanmoqda ({i}/{t})...")).format(
+                        n=name, i=idx, t=total
+                    ),
+                    locale,
+                )
+                await self._scale_only(base, out, height)
+                await self._notify(
+                    status_callback,
+                    str(gt("📤 {n} yuklanmoqda ({i}/{t})...")).format(
+                        n=name, i=idx, t=total
+                    ),
+                    locale,
+                )
+                res = await self._upload(out, user_id, name, thumb_wm_path)
+                if res and on_quality_ready:
+                    await on_quality_ready(name, res)
+                return res
+            except Exception as e:
+                logger.error(f"Scale/Upload {name} failed: {e}")
+                return None
+            finally:
+                if os.path.exists(out):
+                    try:
+                        os.remove(out)
+                    except Exception:
+                        pass
 
     async def _upload(
         self,
@@ -392,99 +483,74 @@ class Transcoder:
         thumb_path: Optional[str] = None,
     ) -> Optional[str]:
         """
-        Videoni Telegram ga yuklaydi.
-        thumb_path berilsa — BufferedInputFile orqali thumbnail beradi.
-        (FSInputFile thumbnail uchun ba'zi aiogram versiyalarida ishlamaydi)
+        send_video ga thumbnail (watermark qo'yilgan) yuboradi.
+        Thumbnail videoga QO'SHILMAYDI — alohida thumb parametri sifatida beriladi.
+        Telegram: thumbnail max 320px, JPEG format.
         """
-        thumb_input = None
-        if thumb_path and os.path.isfile(thumb_path):
-            try:
-                with open(thumb_path, "rb") as f:
-                    data = f.read()
-                thumb_input = BufferedInputFile(data, filename="thumb.jpg")
-                logger.info(f"Thumbnail yuborilmoqda: {len(data)} bytes")
-            except Exception as e:
-                logger.error(f"Thumbnail o'qilmadi: {e}")
+        try:
+            from aiogram.types import FSInputFile
 
-        async def send(thumb):
-            return await self.bot.send_video(
+            tg_thumb = None
+            thumb_tg_path = None
+
+            if thumb_path and os.path.exists(thumb_path):
+                # Telegram uchun 320px ga resize
+                thumb_tg_path = path.replace(".mp4", "_tgthumb.jpg")
+                resize_cmd = [
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    thumb_path,
+                    "-vf",
+                    "scale=320:320:force_original_aspect_ratio=decrease",
+                    "-frames:v",
+                    "1",
+                    "-q:v",
+                    "5",
+                    thumb_tg_path,
+                ]
+                proc = await asyncio.create_subprocess_exec(
+                    *resize_cmd, stderr=subprocess.PIPE
+                )
+                await proc.communicate()
+                if os.path.exists(thumb_tg_path):
+                    tg_thumb = FSInputFile(thumb_tg_path)
+
+            send_kwargs = dict(
                 chat_id=user_id,
                 video=FSInputFile(path),
-                thumbnail=thumb,
-                caption=f"🎞 {label}",
+                caption=f"✅ {label} tayyor.",
                 disable_notification=True,
             )
+            if tg_thumb:
+                send_kwargs["thumbnail"] = tg_thumb
 
-        try:
-            msg = await send(thumb_input)
-            return msg.video.file_id if msg.video else None
-        except Exception as e:
-            logger.error(f"send_video failed: {e}")
-            if thumb_input is not None:
-                logger.warning("Thumbnail bilan xato — thumbnailsiz qayta urinish...")
+            msg = await self.bot.send_video(**send_kwargs)
+
+            if thumb_tg_path and os.path.exists(thumb_tg_path):
                 try:
-                    msg = await send(None)
-                    return msg.video.file_id if msg.video else None
-                except Exception as e2:
-                    logger.error(f"send_video retry failed: {e2}")
-                    raise e2
-            raise e
+                    os.remove(thumb_tg_path)
+                except Exception:
+                    pass
 
-    # ═══════════════════════════════════════════
-    # HELPERS
-    # ═══════════════════════════════════════════
+            if msg.video:
+                return msg.video.file_id
+            logger.error(f"Upload {label}: msg.video is None")
+            return None
 
-    async def _transcode_and_upload(
-        self,
-        sem: asyncio.Semaphore,
-        src: str,
-        tmp: str,
-        name: str,
-        height: int,
-        user_id: int,
-        idx: int,
-        total: int,
-        cb: StatusCallback,
-        thumb_path: Optional[str],
-    ) -> Optional[str]:
-        async with sem:
-            out = os.path.join(tmp, f"v_{height}p.mp4")
-            try:
-                await self._notify(
-                    cb,
-                    str(gt("🔄 {n} tayyorlanmoqda ({i}/{t})...")).format(
-                        n=name, i=idx, t=total
-                    ),
-                )
-                await self._transcode(src, out, height)
-                await self._notify(
-                    cb,
-                    str(gt("📤 {n} yuklanmoqda ({i}/{t})...")).format(
-                        n=name, i=idx, t=total
-                    ),
-                )
-                return await self._upload(out, user_id, name, thumb_path)
-            except Exception as e:
-                logger.error(f"[{name}] failed: {e}", exc_info=True)
-                await self._notify(
-                    cb, str(gt("❌ {n} o'tkazib yuborildi.")).format(n=name)
-                )
-                return None
-            finally:
-                if os.path.exists(out):
-                    try:
-                        os.remove(out)
-                    except Exception:
-                        pass
+        except Exception as e:
+            logger.error(f"Upload {label} failed: {e}")
+            return None
 
-    async def _download(self, file_path: str, dest: str) -> None:
+    async def _download(self, file_id: str, file_path: str, dest: str) -> Optional[str]:
+        """
+        Local API bo'lsa, kopiya qiladi va asl fayl yo'lini qaytaradi.
+        Aks holda download qiladi va None qaytaradi.
+        """
         token = self.bot.token
         bot_id = token.split(":")[0] if ":" in token else token
         local = "/var/lib/telegram-bot-api"
 
-        if os.path.isfile(file_path):
-            await asyncio.to_thread(shutil.copy2, file_path, dest)
-            return
         for candidate in [
             os.path.join(local, token, file_path.lstrip("/")),
             os.path.join(local, bot_id, file_path.lstrip("/")),
@@ -492,8 +558,24 @@ class Transcoder:
         ]:
             if os.path.isfile(candidate):
                 await asyncio.to_thread(shutil.copy2, candidate, dest)
-                return
-        await self.bot.download_file(file_path, dest)
+                return candidate
+
+        try:
+            await self.bot.download_file(file_path, dest)
+        except Exception as e:
+            logger.warning(f"Local API failure: {e}")
+            from aiogram.client.session.aiohttp import AiohttpSession
+
+            async with AiohttpSession() as session:
+                temp_bot = Bot(token=token, session=session)
+                try:
+                    fi = await temp_bot.get_file(file_id)
+                    await temp_bot.download_file(fi.file_path, dest)
+                except Exception as e2:
+                    logger.error(f"Global API failure: {e2}")
+                    raise
+                finally:
+                    await temp_bot.session.close()
 
     async def _get_height(self, path: str) -> int:
         cmd = [
@@ -504,6 +586,28 @@ class Transcoder:
             "v:0",
             "-show_entries",
             "stream=height",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            path,
+        ]
+        proc = await asyncio.create_subprocess_exec(
+            *cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        out, _ = await proc.communicate()
+        try:
+            return int(out.decode().strip())
+        except Exception:
+            return 0
+
+    async def _get_width(self, path: str) -> int:
+        cmd = [
+            "ffprobe",
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=width",
             "-of",
             "default=noprint_wrappers=1:nokey=1",
             path,
@@ -537,9 +641,10 @@ class Transcoder:
         return "audio" in out.decode().lower()
 
     @staticmethod
-    async def _notify(cb: StatusCallback, text: str) -> None:
+    async def _notify(cb: StatusCallback, text: str, locale: str = "uz"):
         if cb:
             try:
-                await cb(text)
+                translated = i18n.gettext(str(text), locale=locale)
+                await cb(translated)
             except Exception:
                 pass
