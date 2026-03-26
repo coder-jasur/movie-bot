@@ -1,257 +1,272 @@
-from datetime import datetime, timedelta
-from sqlalchemy import select, func, literal, union_all, or_
-from sqlalchemy.ext.asyncio import AsyncSession
 import logging
+from datetime import datetime, timedelta
+
+from sqlalchemy import Text, and_, func, literal, or_, select, union_all
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.app.database.models import (
-    FeatureFilm, Series, MiniSeries, Favorite,
-    MultiFilmFeature, MultiFilmSeries, MultiFilmMiniSeries,
-    AnimeFeature, AnimeSeries, AnimeMiniSeries
+    AnimeFeature,
+    AnimeMiniSeries,
+    AnimeSeries,
+    Favorite,
+    FeatureFilm,
+    MiniSeries,
+    MultiFilmFeature,
+    MultiFilmMiniSeries,
+    MultiFilmSeries,
+    Series,
 )
 
 logger = logging.getLogger(__name__)
 
 
+# Tarjima kerak bo'lmagan, faqat DB'da saqlanadigan type labellar
+TYPE_LABELS = {
+    "film_feature": "Film",
+    "film_series": "Serial",
+    "film_mini": "Epizodli film",
+    "multi_feature": "Multfilm",
+    "multi_series": "Multserial",
+    "multi_mini": "Epizodli multfilm",
+    "anime_feature": "Anime (film)",
+    "anime_series": "Anime (serial)",
+    "anime_mini": "Anime (mini)",
+}
+
+
 class TopMoviesActions:
-    """Top filmlar uchun optimallashtirilgan query'lar"""
-    
     def __init__(self, session: AsyncSession):
         self.session = session
-    
-    async def get_top_movies(self, interval: str = "total", limit: int = 20, category: str = "all") -> list[dict]:
-        """Top filmlarni olish - database darajasida agregatsiya
-        
-        Args:
-            interval: 'day' | 'week' | 'month' | 'total'
-            limit: Nechta film qaytarish
-            category: 'all' | 'cinema' | 'anime' | 'cartoon'
-            
-        Returns:
-            List of dicts with movie info and stats
-        """
+
+    async def get_top_movies(
+        self, interval: str = "total", limit: int = 20, category: str = "all"
+    ) -> list[dict]:
         try:
-            # Interval uchun filter
             start_date = self._get_start_date(interval)
-            
-            # Helpers for movie type labels
-            types = {
-                "film": ("Film", "Serial", "Epizodli film"),
-                "multi_film": ("Multfilm", "Multserial", "Epizodli multfilm"),
-                "anime": ("Anime (film)", "Anime (serial)", "Anime (mini)")
-            }
 
-            def get_feature_query(model, label):
-                q = select(
-                    model.code.label("code"),
-                    model.name.label("name"),
-                    literal(label).label("type"),
-                    func.coalesce(func.count(func.distinct(Favorite.user_id)), 0).label("favs"),
-                    model.views_count.label("views"),
-                    (func.coalesce(func.count(func.distinct(Favorite.user_id)), 0) * 10 + model.views_count).label("score")
-                ).outerjoin(Favorite, model.code == Favorite.movie_code)
-                if start_date: q = q.where(Favorite.created_at >= start_date)
-                return q.group_by(model.code, model.name, model.views_count)
+            def feature_query(model, type_key):
+                fav_filter = [model.code == Favorite.movie_code]
+                if start_date:
+                    fav_filter.append(Favorite.created_at >= start_date)
 
-            def get_series_query(model, label):
-                q = select(
-                    model.code.label("code"),
-                    func.max(model.name).label("name"),
-                    literal(label).label("type"),
-                    func.coalesce(func.count(func.distinct(Favorite.user_id)), 0).label("favs"),
-                    func.sum(model.views_count).label("views"),
-                    (func.coalesce(func.count(func.distinct(Favorite.user_id)), 0) * 10 + func.sum(model.views_count)).label("score")
-                ).outerjoin(Favorite, model.code == Favorite.movie_code)
-                if start_date: q = q.where(Favorite.created_at >= start_date)
-                return q.group_by(model.code)
+                fav_count = func.coalesce(
+                    func.count(func.distinct(Favorite.user_id)), 0
+                )
+                views = func.coalesce(model.views_count, 0)
+                name_as_text = model.name.cast(Text)
+                return (
+                    select(
+                        model.code.label("code"),
+                        name_as_text.label("name"),
+                        literal(type_key).label("type"),
+                        fav_count.label("favs"),
+                        views.label("views"),
+                        (fav_count * 10 + views).label("score"),
+                    )
+                    .outerjoin(Favorite, and_(*fav_filter))
+                    .group_by(model.code, name_as_text, model.views_count)
+                )
 
-            # Define queries for each category
+            def series_query(model, type_key):
+                fav_filter = [model.code == Favorite.movie_code]
+                if start_date:
+                    fav_filter.append(Favorite.created_at >= start_date)
+
+                fav_count = func.coalesce(
+                    func.count(func.distinct(Favorite.user_id)), 0
+                )
+                views = func.coalesce(func.sum(model.views_count), 0)
+                # Series uchun: bir code'da ko'p qatorlar bor, max(name::text) ishlatamiz
+                return (
+                    select(
+                        model.code.label("code"),
+                        func.max(model.name.cast(Text)).label("name"),
+                        literal(type_key).label("type"),
+                        fav_count.label("favs"),
+                        views.label("views"),
+                        (fav_count * 10 + views).label("score"),
+                    )
+                    .outerjoin(Favorite, and_(*fav_filter))
+                    .group_by(model.code)
+                )
+
             queries = []
-            
-            # Cinema
-            if category in ["all", "cinema"]:
-                queries.extend([
-                    get_feature_query(FeatureFilm, types["film"][0]),
-                    get_series_query(Series, types["film"][1]),
-                    get_series_query(MiniSeries, types["film"][2]),
-                ])
+            if category in ("all", "cinema"):
+                queries += [
+                    feature_query(FeatureFilm, "film_feature"),
+                    series_query(Series, "film_series"),
+                    series_query(MiniSeries, "film_mini"),
+                ]
+            if category in ("all", "cartoon"):
+                queries += [
+                    feature_query(MultiFilmFeature, "multi_feature"),
+                    series_query(MultiFilmSeries, "multi_series"),
+                    series_query(MultiFilmMiniSeries, "multi_mini"),
+                ]
+            if category in ("all", "anime"):
+                queries += [
+                    feature_query(AnimeFeature, "anime_feature"),
+                    series_query(AnimeSeries, "anime_series"),
+                    series_query(AnimeMiniSeries, "anime_mini"),
+                ]
 
-            # Cartoon
-            if category in ["all", "cartoon"]:
-                queries.extend([
-                    get_feature_query(MultiFilmFeature, types["multi_film"][0]),
-                    get_series_query(MultiFilmSeries, types["multi_film"][1]),
-                    get_series_query(MultiFilmMiniSeries, types["multi_film"][2]),
-                ])
-                
-            # Anime
-            if category in ["all", "anime"]:
-                queries.extend([
-                    get_feature_query(AnimeFeature, types["anime"][0]),
-                    get_series_query(AnimeSeries, types["anime"][1]),
-                    get_series_query(AnimeMiniSeries, types["anime"][2]),
-                ])
-            
             if not queries:
                 return []
-            
-            combined_query = union_all(*queries).subquery()
-            
-            # Final query - sorting va limit
-            final_query = (
-                select(combined_query)
-                .order_by(combined_query.c.score.desc())
-                .limit(limit)
-            )
-            
-            result = await self.session.execute(final_query)
+
+            combined = union_all(*queries).subquery()
+            final_q = select(combined).order_by(combined.c.score.desc()).limit(limit)
+
+            result = await self.session.execute(final_q)
             rows = result.all()
-            
-            # Dict'ga konvertatsiya
-            movies = []
-            for row in rows:
-                movies.append({
-                    "code": row.code,
-                    "name": row.name,
-                    "type": row.type,
-                    "favs": row.favs,
-                    "views": row.views,
-                    "score": row.score
-                })
-            
-            return movies
-            
+
+            return [
+                {
+                    "code": r.code,
+                    "name": _parse_json_name(r.name),
+                    "type": TYPE_LABELS.get(r.type, r.type),
+                    "favs": r.favs,
+                    "views": r.views,
+                    "score": r.score,
+                }
+                for r in rows
+            ]
+
         except Exception as e:
-            logger.error(f"Error getting top movies: {e}")
+            logger.exception("Error getting top movies: %s", e)
             return []
-    
-    async def get_top_by_genres(self, genres: list[str], limit: int = 10, category: str = "all") -> list[dict]:
-        """Janrlar bo'yicha top filmlarni olish
-        
-        Args:
-            genres: Tanlangan janrlar ro'yxati
-            limit: Natijalar soni
-            category: 'all' | 'cinema' | 'anime' | 'cartoon'
-            
-        Returns:
-            List of dicts with movie info
-        """
+
+    async def get_top_by_genres(
+        self, genres: list[str], limit: int = 10, category: str = "all"
+    ) -> list[dict]:
         try:
             if not genres:
                 return []
-            
-            # LIKE operatori uchun filterlarni tayyorlash
-            # JSON array ichidan qidirish: %"JanrName"%
-            genre_filters = [f'%"{g}"%' for g in genres]
-            
-            types = {
-                "film": ("Film", "Serial", "Epizodli film"),
-                "multi_film": ("Multfilm", "Multserial", "Epizodli multfilm"),
-                "anime": ("Anime (film)", "Anime (serial)", "Anime (mini)")
-            }
 
-            def get_feature_genres_query(model, label):
+            # JSON array ichida qidirish — DB '"Комедия"' ko'rinishida saqlaydi
+            # Har bir janr uchun ikkala variant (qo'shtirnoqli va qo'shtirnoqsiz) qidiramiz
+            genre_filters = []
+            for g in genres:
+                genre_filters.append(f'%"{g}"%')  # exact JSON match: ["Комедия"]
+                genre_filters.append(f"%{g}%")     # fallback: just the word
+
+            def feature_genres_query(model, type_key):
+                fav_count = func.coalesce(
+                    func.count(func.distinct(Favorite.user_id)), 0
+                )
+                views = func.coalesce(model.views_count, 0)
+                name_as_text = model.name.cast(Text)
                 return (
                     select(
                         model.code.label("code"),
-                        model.name.label("name"),
-                        literal(label).label("type"),
+                        name_as_text.label("name"),
+                        literal(type_key).label("type"),
                         model.genres.label("genres"),
-                        func.coalesce(func.count(func.distinct(Favorite.user_id)), 0).label("favs"),
-                        model.views_count.label("views"),
-                        (func.coalesce(func.count(func.distinct(Favorite.user_id)), 0) * 10 + model.views_count).label("score")
-                    ).outerjoin(Favorite, model.code == Favorite.movie_code)
-                    .where(or_(*[model.genres.like(f) for f in genre_filters]))
-                    .group_by(model.code, model.name, model.views_count, model.genres)
+                        fav_count.label("favs"),
+                        views.label("views"),
+                        (fav_count * 10 + views).label("score"),
+                    )
+                    .outerjoin(Favorite, model.code == Favorite.movie_code)
+                    .where(or_(*[model.genres.ilike(f) for f in genre_filters]))
+                    .group_by(model.code, name_as_text, model.views_count, model.genres)
                 )
 
-            def get_series_genres_query(model, label):
+            def series_genres_query(model, type_key):
+                fav_count = func.coalesce(
+                    func.count(func.distinct(Favorite.user_id)), 0
+                )
+                views = func.coalesce(func.sum(model.views_count), 0)
                 return (
                     select(
                         model.code.label("code"),
-                        func.max(model.name).label("name"),
-                        literal(label).label("type"),
-                        model.genres.label("genres"),
-                        func.coalesce(func.count(func.distinct(Favorite.user_id)), 0).label("favs"),
-                        func.sum(model.views_count).label("views"),
-                        (func.coalesce(func.count(func.distinct(Favorite.user_id)), 0) * 10 + func.sum(model.views_count)).label("score")
-                    ).outerjoin(Favorite, model.code == Favorite.movie_code)
-                    .where(or_(*[model.genres.like(f) for f in genre_filters]))
-                    .group_by(model.code, model.genres)
+                        func.max(model.name.cast(Text)).label("name"),
+                        literal(type_key).label("type"),
+                        func.max(model.genres).label("genres"),
+                        fav_count.label("favs"),
+                        views.label("views"),
+                        (fav_count * 10 + views).label("score"),
+                    )
+                    .outerjoin(Favorite, model.code == Favorite.movie_code)
+                    .where(or_(*[model.genres.ilike(f) for f in genre_filters]))
+                    .group_by(model.code)
                 )
 
-            # Define queries for each category
             queries = []
-            
-            # Cinema
-            if category in ["all", "cinema"]:
-                queries.extend([
-                    get_feature_genres_query(FeatureFilm, types["film"][0]),
-                    get_series_genres_query(Series, types["film"][1]),
-                    get_series_genres_query(MiniSeries, types["film"][2]),
-                ])
-
-            # Cartoon
-            if category in ["all", "cartoon"]:
-                queries.extend([
-                    get_feature_genres_query(MultiFilmFeature, types["multi_film"][0]),
-                    get_series_genres_query(MultiFilmSeries, types["multi_film"][1]),
-                    get_series_genres_query(MultiFilmMiniSeries, types["multi_film"][2]),
-                ])
-                
-            # Anime
-            if category in ["all", "anime"]:
-                queries.extend([
-                    get_feature_genres_query(AnimeFeature, types["anime"][0]),
-                    get_series_genres_query(AnimeSeries, types["anime"][1]),
-                    get_series_genres_query(AnimeMiniSeries, types["anime"][2]),
-                ])
+            if category in ("all", "cinema"):
+                queries += [
+                    feature_genres_query(FeatureFilm, "film_feature"),
+                    series_genres_query(Series, "film_series"),
+                    series_genres_query(MiniSeries, "film_mini"),
+                ]
+            if category in ("all", "cartoon"):
+                queries += [
+                    feature_genres_query(MultiFilmFeature, "multi_feature"),
+                    series_genres_query(MultiFilmSeries, "multi_series"),
+                    series_genres_query(MultiFilmMiniSeries, "multi_mini"),
+                ]
+            if category in ("all", "anime"):
+                queries += [
+                    feature_genres_query(AnimeFeature, "anime_feature"),
+                    series_genres_query(AnimeSeries, "anime_series"),
+                    series_genres_query(AnimeMiniSeries, "anime_mini"),
+                ]
 
             if not queries:
-                 return []
-            
-            combined_query = union_all(*queries).subquery()
-            
-            final_query = (
-                select(combined_query)
-                .order_by(combined_query.c.score.desc())
-                .limit(limit)
-            )
-            
-            result = await self.session.execute(final_query)
+                return []
+
+            combined = union_all(*queries).subquery()
+            final_q = select(combined).order_by(combined.c.score.desc()).limit(limit)
+
+            result = await self.session.execute(final_q)
             rows = result.all()
-            
-            movies = []
-            for row in rows:
-                movies.append({
-                    "code": row.code,
-                    "name": row.name,
-                    "type": row.type,
-                    "favs": row.favs,
-                    "views": row.views,
-                    "score": row.score,
-                    "genres": row.genres
-                })
-            
-            return movies
-            
+
+            return [
+                {
+                    "code": r.code,
+                    "name": _parse_json_name(r.name),
+                    "type": TYPE_LABELS.get(r.type, r.type),
+                    "genres": r.genres,
+                    "favs": r.favs,
+                    "views": r.views,
+                    "score": r.score,
+                }
+                for r in rows
+            ]
+
         except Exception as e:
-            logger.error(f"Error getting top by genres: {e}")
+            logger.exception("Error getting top by genres: %s", e)
             return []
 
     def _get_start_date(self, interval: str) -> datetime | None:
-        """Interval uchun start date hisoblash"""
         if interval == "total":
             return None
-        
         now = datetime.now()
-        
-        if interval == "day":
-            return now - timedelta(days=1)
-        elif interval == "week":
-            return now - timedelta(days=7)
-        elif interval == "month":
-            return now - timedelta(days=30)
-        elif interval == "year":
-            return now - timedelta(days=365)
-        
-        return None
+        deltas = {
+            "day": timedelta(days=1),
+            "week": timedelta(days=7),
+            "month": timedelta(days=30),
+            "year": timedelta(days=365),
+        }
+        return now - deltas.get(interval, timedelta(days=0))
+
+
+# ─── Helper ───────────────────────────────────────────────────────────────────
+
+
+def _parse_json_name(raw: str | dict | None) -> dict | str:
+    """
+    DB dan kelgan name: JSON string yoki dict bo'lishi mumkin.
+    movie_search.py dagi get_localized_name(m, lang) dict kutadi.
+    """
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str):
+        import json
+
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, dict):
+                return parsed
+            return str(parsed)
+        except (json.JSONDecodeError, ValueError):
+            return raw
+    return raw or ""

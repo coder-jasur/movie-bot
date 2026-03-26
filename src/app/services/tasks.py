@@ -48,188 +48,66 @@ async def _save_to_db(data: dict, files: dict, is_incremental: bool = False):
         thumbnail_id = data.get("thumbnail_file_id")
         code = data.get("code")
 
-        # BUG FIX #1: category qiymatlari "cat_film"/"cat_multi"/"cat_anime" emas
-        # add_movie.py da category = widget.widget_id = "cat_film" / "cat_multi" / "cat_anime"
-        # Lekin edit_movie.py da category = "film" / "multi_film" / "anime"
-        # tasks.py da ikkalasini ham qo'llab-quvvatlash kerak
-        # Normalize qilamiz:
-        cat_map = {
-            "cat_film": "film",
-            "cat_multi": "multi_film",
-            "cat_anime": "anime",
-        }
-        category = cat_map.get(
-            category, category
-        )  # agar allaqachon "film" bo'lsa o'zgarmaydi
+        # Normalize category
+        cat_map = {"cat_film": "film", "cat_multi": "multi_film", "cat_anime": "anime"}
+        category = cat_map.get(category, category)
 
-        if category == "film":
+        # Pre-process name and caption if they are dicts (common when adding track)
+        name = data.get("name")
+        if isinstance(name, dict):
+            name = name.get(lang_id) or next(iter(name.values()), None)
+        
+        caption = data.get("caption")
+        if isinstance(caption, dict):
+            caption = caption.get(lang_id) or next(iter(caption.values()), None)
+
+        primary_video_id = files.get("original") or (next(iter(files.values())) if files else None)
+
+        # Helper to get the right actions class
+        from src.app.bot.dialog.admin.edit_movie import get_actions
+        actions = get_actions(session, category, movie_type)
+
+        if not actions:
+            logger.error(f"Unknown category/type: {category}/{movie_type}")
+            return
+
+        # Case 1: Incremental update or adding a new track
+        if is_adding or is_incremental:
             if movie_type == "feature_film":
-                actions = FeatureFilmsActions(session)
-                if is_adding or is_incremental:
-                    await actions.update_language_track(code, lang_id, files=files)
-                else:
-                    await actions.add_feature_film(
-                        film_code=code,
-                        film_name=data["name"],
-                        video_file_id=files.get("original"),
-                        caption=data.get("caption"),
-                        genres=genres_serialized,
-                        format=data.get("format"),
-                        language=lang_id,
-                        files=files,
-                        thumbnail_file_id=thumbnail_id,
-                    )
-
+                await actions.update_language_track(
+                    code, lang_id, files=files, name=name, caption=caption, thumbnail_file_id=thumbnail_id
+                )
             elif movie_type == "series":
-                actions = SeriesActions(session)
-                if is_adding or is_incremental:
-                    await actions.update_language_track(code, data["season"], data["series"], lang_id, files=files)
-                else:
-                    await actions.add_series(
-                        series_code=code,
-                        series_name=data["name"],
-                        series_num=data["series"],
-                        season=data["season"],
-                        video_file_id=files.get("original"),
-                        caption=data.get("caption"),
-                        genres=genres_serialized,
-                        format=data.get("format"),
-                        language=lang_id,
-                        files=files,
-                        thumbnail_file_id=thumbnail_id,
-                    )
-
+                await actions.update_language_track(
+                    code, data["season"], data["series"], lang_id, files=files, 
+                    name=name, caption=caption, thumbnail_file_id=thumbnail_id
+                )
             elif movie_type == "mini_series":
-                actions = MiniSeriesActions(session)
-                if is_adding or is_incremental:
-                    await actions.update_language_track(code, data["series"], lang_id, files=files)
-                else:
-                    await actions.add_mini_series(
-                        mini_series_code=code,
-                        mini_series_name=data["name"],
-                        series=data["series"],
-                        video_file_id=files.get("original"),
-                        caption=data.get("caption"),
-                        genres=genres_serialized,
-                        format=data.get("format"),
-                        language=lang_id,
-                        files=files,
-                        thumbnail_file_id=thumbnail_id,
-                    )
-
-        elif category == "multi_film":
-            if movie_type == "feature_film":
-                actions = MultiFilmFeatureActions(session)
-                if is_adding or is_incremental:
-                    await actions.update_language_track(code, lang_id, files=files)
-                else:
-                    await actions.add_feature_film(
-                        film_code=code,
-                        film_name=data["name"],
-                        video_file_id=files.get("original"),
-                        caption=data.get("caption"),
-                        genres=genres_serialized,
-                        format=data.get("format"),
-                        language=lang_id,
-                        files=files,
-                        thumbnail_file_id=thumbnail_id,
-                    )
-
-            elif movie_type == "series":
-                actions = MultiFilmSeriesActions(session)
-                if is_adding or is_incremental:
-                    await actions.update_language_track(code, data["season"], data["series"], lang_id, files=files)
-                else:
-                    await actions.add_series(
-                        series_code=code,
-                        series_name=data["name"],
-                        series_num=data["series"],
-                        season=data["season"],
-                        video_file_id=files.get("original"),
-                        caption=data.get("caption"),
-                        genres=genres_serialized,
-                        format=data.get("format"),
-                        language=lang_id,
-                        files=files,
-                        thumbnail_file_id=thumbnail_id,
-                    )
-
-            elif movie_type == "mini_series":
-                actions = MultiFilmMiniSeriesActions(session)
-                if is_adding or is_incremental:
-                    await actions.update_language_track(code, data["series"], lang_id, files=files)
-                else:
-                    await actions.add_mini_series(
-                        mini_series_code=code,
-                        mini_series_name=data["name"],
-                        series=data["series"],
-                        video_file_id=files.get("original"),
-                        caption=data.get("caption"),
-                        genres=genres_serialized,
-                        format=data.get("format"),
-                        language=lang_id,
-                        files=files,
-                        thumbnail_file_id=thumbnail_id,
-                    )
-
-        elif category == "anime":
-            if movie_type == "feature_film":
-                actions = AnimeFeatureActions(session)
-                if is_adding or is_incremental:
-                    await actions.update_language_track(code, lang_id, files=files)
-                else:
-                    await actions.add_feature_film(
-                        film_code=code,
-                        film_name=data["name"],
-                        video_file_id=files.get("original"),
-                        caption=data.get("caption"),
-                        genres=genres_serialized,
-                        format=data.get("format"),
-                        language=lang_id,
-                        files=files,
-                        thumbnail_file_id=thumbnail_id,
-                    )
-
-            elif movie_type == "series":
-                actions = AnimeSeriesActions(session)
-                if is_adding or is_incremental:
-                    await actions.update_language_track(code, data["season"], data["series"], lang_id, files=files)
-                else:
-                    await actions.add_series(
-                        series_code=code,
-                        series_name=data["name"],
-                        series_num=data["series"],
-                        season=data["season"],
-                        video_file_id=files.get("original"),
-                        caption=data.get("caption"),
-                        genres=genres_serialized,
-                        format=data.get("format"),
-                        language=lang_id,
-                        files=files,
-                        thumbnail_file_id=thumbnail_id,
-                    )
-
-            elif movie_type == "mini_series":
-                actions = AnimeMiniSeriesActions(session)
-                if is_adding or is_incremental:
-                    await actions.update_language_track(code, data["series"], lang_id, files=files)
-                else:
-                    await actions.add_mini_series(
-                        mini_series_code=code,
-                        mini_series_name=data["name"],
-                        series=data["series"],
-                        video_file_id=files.get("original"),
-                        caption=data.get("caption"),
-                        genres=genres_serialized,
-                        format=data.get("format"),
-                        language=lang_id,
-                        files=files,
-                        thumbnail_file_id=thumbnail_id,
-                    )
+                await actions.update_language_track(
+                    code, data["series"], lang_id, files=files, 
+                    name=name, caption=caption, thumbnail_file_id=thumbnail_id
+                )
+        # Case 2: Adding a brand new film (very first quality)
         else:
-            logger.error(f"Unknown category: {category}")
-            raise ValueError(f"Unknown category: {category}")
-
+            if movie_type == "feature_film":
+                await actions.add_feature_film(
+                    film_code=code, film_name=name, video_file_id=primary_video_id,
+                    caption=caption, genres=genres_serialized, format=data.get("format"),
+                    language=lang_id, files=files, thumbnail_file_id=thumbnail_id,
+                )
+            elif movie_type == "series":
+                await actions.add_series(
+                    series_code=code, series_name=name, series_num=data["series"], season=data["season"],
+                    video_file_id=primary_video_id, caption=caption, genres=genres_serialized,
+                    format=data.get("format"), language=lang_id, files=files, thumbnail_file_id=thumbnail_id
+                )
+            elif movie_type == "mini_series":
+                await actions.add_mini_series(
+                    mini_series_code=code, mini_series_name=name, series=data["series"],
+                    video_file_id=primary_video_id, caption=caption, genres=genres_serialized,
+                    format=data.get("format"), language=lang_id, files=files, thumbnail_file_id=thumbnail_id
+                )
+        
         await session.commit()
 
 
@@ -258,8 +136,14 @@ async def _update_db_files(data: dict, files: dict):
 
         actions = get_actions(session, category, movie_type)
 
-        if not actions:
-            raise ValueError(f"Unknown category/type: {category}/{movie_type}")
+        # Pre-process name and caption if they are dicts 
+        name = data.get("name")
+        if isinstance(name, dict):
+            name = name.get(lang_id)
+        
+        caption = data.get("caption")
+        if isinstance(caption, dict):
+            caption = caption.get(lang_id)
 
         new_file_id = files.get("original")
 
@@ -269,6 +153,9 @@ async def _update_db_files(data: dict, files: dict):
                 lang_id,
                 video_file_id=new_file_id,
                 files=files,
+                name=name,
+                caption=caption,
+                thumbnail_file_id=data.get("thumbnail_file_id")
             )
         elif movie_type == "series" and ep_id:
             s, n = map(int, ep_id.split(":"))
@@ -279,6 +166,9 @@ async def _update_db_files(data: dict, files: dict):
                 lang_id,
                 video_file_id=new_file_id,
                 files=files,
+                name=name,
+                caption=caption,
+                thumbnail_file_id=data.get("thumbnail_file_id")
             )
         elif movie_type == "mini_series" and ep_id:
             n = int(ep_id)
@@ -288,6 +178,9 @@ async def _update_db_files(data: dict, files: dict):
                 lang_id,
                 video_file_id=new_file_id,
                 files=files,
+                name=name,
+                caption=caption,
+                thumbnail_file_id=data.get("thumbnail_file_id")
             )
         else:
             logger.error(
@@ -306,20 +199,14 @@ async def _update_db_files(data: dict, files: dict):
 @shared_task(
     name="src.app.services.tasks.process_video_task",
     bind=True,
-    max_retries=2,
-    default_retry_delay=60,
+    max_retries=0,
 )
 def process_video_task(self, data: dict):
-    # BUG FIX #2: asyncio.get_event_loop() Celery worker da deprecated va xato beradi
-    # asyncio.run() ishlatish kerak
     try:
         return asyncio.run(_run_task(data))
     except Exception as exc:
-        logger.error(
-            f"Task failed (attempt {self.request.retries + 1}): {exc}", exc_info=True
-        )
-        # BUG FIX #3: retry qilganda data ni ham uzatamiz
-        raise self.retry(exc=exc)
+        logger.error(f"Task failed: {exc}", exc_info=True)
+        raise
 
 
 async def _run_task(data: dict):
@@ -396,14 +283,10 @@ async def _run_task(data: dict):
                 locale=admin_locale,
             )
 
-            # BUG FIX #5: files bo'sh dict yoki faqat file_id qaytarsa xato berardi
+            # on_quality_ready orqali har sifat allaqachon incremental saqlangan.
+            # Oxirida qayta saqlash shart emas — duplicate avoid.
             if not files or not isinstance(files, dict):
                 raise ValueError("Transcoder bo'sh natija qaytardi")
-
-            if data.get("is_editing"):
-                await _update_db_files(data, files)
-            else:
-                await _save_to_db(data, files)
 
             # BUG FIX #6: gt() funksiyasi locale parametrini qo'llab-quvvatlamaydi
             # i18n.gettext() ishlatish kerak

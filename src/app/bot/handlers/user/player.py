@@ -75,7 +75,6 @@ async def series_player(
         return
 
     from src.app.bot.common.utils import (
-        get_thumbnail_input,
         get_user_language,
         resolve_movie_media,
     )
@@ -167,6 +166,14 @@ async def series_player(
         current_series, target_language_req, callback_data.quality, is_vip=is_vip
     )
 
+    # If no sub-480p quality available for non-VIP, show VIP prompt
+    if not is_vip and target_quality is None:
+        from src.app.bot.handlers.user.account import vip_tarif_handler
+
+        await call.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")), show_alert=True)
+        await vip_tarif_handler(call.message)
+        return
+
     show_quality_menu = callback_data.action == ActionType.open_quality_menu
     show_language_menu = callback_data.action == ActionType.open_language_menu
 
@@ -251,10 +258,9 @@ async def series_player(
             )
         return
 
-    thumbnail_input = await get_thumbnail_input(call.bot, thumbnail_id)
     with suppress(TelegramBadRequest):
         await call.message.edit_media(
-            InputMediaVideo(media=file_id, caption=caption, thumbnail=thumbnail_input),
+            InputMediaVideo(media=file_id, caption=caption),
             reply_markup=series_player_kbd(
                 code=callback_data.code,
                 current_series=current_index,
@@ -333,7 +339,6 @@ async def feature_movies_player(
         return
 
     from src.app.bot.common.utils import (
-        get_thumbnail_input,
         get_user_language,
         resolve_movie_media,
     )
@@ -344,7 +349,7 @@ async def feature_movies_player(
     if (
         callback_data.actions == ActionType.set_quality
         and not is_vip
-        and callback_data.quality in ["720p", "1080p"]
+        and callback_data.quality in ["480p", "720p", "1080p"]
     ):
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
@@ -364,6 +369,14 @@ async def feature_movies_player(
     ) = resolve_movie_media(
         movie, target_language_req, callback_data.quality, is_vip=is_vip
     )
+
+    # If no sub-480p quality available for non-VIP, show VIP prompt
+    if not is_vip and target_quality is None:
+        from src.app.bot.handlers.user.account import vip_tarif_handler
+
+        await call.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")), show_alert=True)
+        await vip_tarif_handler(call.message)
+        return
 
     # files is now the parsed dictionary
 
@@ -394,11 +407,10 @@ async def feature_movies_player(
         return
 
     if callback_data.actions in [ActionType.set_quality, ActionType.set_language]:
-        thumbnail_input = await get_thumbnail_input(call.bot, thumbnail_id)
         with suppress(TelegramBadRequest):
             await call.message.edit_media(
                 InputMediaVideo(
-                    media=file_id, caption=caption, thumbnail=thumbnail_input
+                    media=file_id, caption=caption
                 ),
                 reply_markup=film_kbd(
                     code=callback_data.code,
@@ -471,7 +483,6 @@ async def mini_series_player(
     saved = bool(saved)
 
     from src.app.bot.common.utils import (
-        get_thumbnail_input,
         get_user_language,
         resolve_movie_media,
     )
@@ -531,6 +542,14 @@ async def mini_series_player(
         current_series, target_language_req, callback_data.quality, is_vip=is_vip
     )
 
+    # If no sub-480p quality available for non-VIP, show VIP prompt
+    if not is_vip and target_quality is None:
+        from src.app.bot.handlers.user.account import vip_tarif_handler
+
+        await call.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")), show_alert=True)
+        await vip_tarif_handler(call.message)
+        return
+
     # files is now the parsed dictionary
 
     show_quality_menu = callback_data.action == ActionType.open_quality_menu
@@ -585,10 +604,9 @@ async def mini_series_player(
             )
         return
 
-    thumbnail_input = await get_thumbnail_input(call.bot, thumbnail_id)
     with suppress(TelegramBadRequest):
         await call.message.edit_media(
-            InputMediaVideo(media=file_id, caption=caption, thumbnail=thumbnail_input),
+            InputMediaVideo(media=file_id, caption=caption),
             reply_markup=mini_series_player_kbd(
                 code=callback_data.code,
                 current_seria=current_series.series,

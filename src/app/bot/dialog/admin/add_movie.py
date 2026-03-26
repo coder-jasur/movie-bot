@@ -335,6 +335,16 @@ async def on_file_input(m: Message, widget: Any, manager: DialogManager):
     else:
         await m.answer(str(_("❌ Video yoki fayl yuboring!")))
         return
+    await manager.switch_to(AddMovieWizardSG.input_format)
+async def on_format_input(m: Message, widget: Any, manager: DialogManager):
+    manager.dialog_data["format"] = m.text
+    await manager.switch_to(AddMovieWizardSG.input_caption)
+
+
+async def on_skip_format(c: CallbackQuery, widget: Any, manager: DialogManager):
+    # Keep auto-detected or set to Original if missing
+    if not manager.dialog_data.get("format"):
+        manager.dialog_data["format"] = "Original"
     await manager.switch_to(AddMovieWizardSG.input_caption)
 
 
@@ -1111,6 +1121,7 @@ async def get_edit_data(dialog_manager: DialogManager, **kwargs):
         "e_caption": _("📄 Yangi tavsifni kiriting:"),
         "e_video": _("📹 Yangi video fayl yuboring:"),
         "e_thumbnail": _("🖼 Yangi muqova (thumbnail) yuboring:"),
+        "e_format": _("💿 Yangi format kiriting (masalan: HD, 4K):"),
         "e_season": _("📅 Yangi sezon raqamini kiriting:"),
         "e_series": _("🔢 Yangi qism raqamini kiriting:"),
     }
@@ -1517,6 +1528,27 @@ add_movie_dialog = Dialog(
         getter=get_type_specific_prompts,
     ),
     Window(
+        Format("{format_prompt}"),
+        MessageInput(on_format_input, content_types=ContentType.TEXT),
+        Button(
+            Format(_("⏭ O'tkazib yuborish")),
+            id="skip_format",
+            on_click=on_skip_format,
+        ),
+        Row(
+            SwitchTo(
+                Format(_("🔙 Ortga")),
+                id="back_to_file_step",
+                state=AddMovieWizardSG.input_file,
+            ),
+            Button(
+                Format(_("❌ Bekor")), id="cancel_to_type_fmt", on_click=on_cancel_to_type
+            ),
+        ),
+        state=AddMovieWizardSG.input_format,
+        getter=get_type_specific_prompts,
+    ),
+    Window(
         Format("{caption_prompt}"),
         MessageInput(on_caption_input, content_types=ContentType.TEXT),
         Button(
@@ -1527,8 +1559,8 @@ add_movie_dialog = Dialog(
         Row(
             SwitchTo(
                 Format(_("🔙 Ortga")),
-                id="back_to_file",
-                state=AddMovieWizardSG.input_file,
+                id="back_to_format",
+                state=AddMovieWizardSG.input_format,
             ),
             Button(
                 Format(_("❌ Bekor")), id="cancel_to_type_c", on_click=on_cancel_to_type
@@ -1570,9 +1602,6 @@ add_movie_dialog = Dialog(
             width=2,
         ),
         MessageInput(on_language_input, content_types=ContentType.TEXT),
-        Button(
-            Format(_("Skip » {lang_label}")), id="skip_lang", on_click=on_skip_language
-        ),
         Row(
             SwitchTo(
                 Format(_("🔙 Ortga")),
@@ -1678,6 +1707,9 @@ add_movie_dialog = Dialog(
             ),
             Button(
                 Format(_("📹 Video")), id="e_video", on_click=on_edit_field_selected
+            ),
+            Button(
+                Format(_("💿 Format")), id="e_format", on_click=on_edit_field_selected
             ),
             Button(Format(_("🌍 Til")), id="e_language", on_click=on_edit_language),
             Button(

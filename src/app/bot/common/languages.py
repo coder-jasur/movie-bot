@@ -4,4 +4,6 @@ LANGUAGES = [
     {"id": "uz", "flag": "🇺🇿", "label": _("O'zbekcha")},
     {"id": "ru", "flag": "🇷🇺", "label": _("Ruscha")},
     {"id": "en", "flag": "🇺🇸", "label": _("Inglizcha")},
+    {"id": "tr", "flag": "🇹🇷", "label": _("Turkcha")},
+    {"id": "in", "flag": "🇮🇳", "label": _("Hindcha")},
 ]

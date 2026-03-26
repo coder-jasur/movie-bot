@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from aiogram.utils.i18n import I18n
 
 _I18N_PATH = Path(__file__).resolve().parents[4] / "translations"

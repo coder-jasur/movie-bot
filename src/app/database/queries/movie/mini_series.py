@@ -221,6 +221,12 @@ class MiniSeriesActions:
             episode.name = current_names
             flag_modified(episode, "name")
 
+        # Ensure language is added to the language list
+        current_langs = [l for l in (episode.language or "").split(",") if l]
+        if language not in current_langs:
+            current_langs.append(language)
+            episode.language = ",".join(current_langs)
+
         if thumbnail_file_id is not None:
             if not isinstance(episode.thumbnails, dict):
                 episode.thumbnails = {}

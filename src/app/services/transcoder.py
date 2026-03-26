@@ -9,7 +9,6 @@ from typing import Awaitable, Callable, Dict, List, Optional, Tuple
 from aiogram import Bot
 
 from src.app.bot.common.i18n import i18n
-from src.app.bot.common.i18n import lazy_gettext as gt
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +30,14 @@ TMP_BASE = "/var/lib/telegram-bot-api/temp"
 
 StatusCallback = Optional[Callable[[str], Awaitable[None]]]
 QualityCallback = Optional[Callable[[str, str], Awaitable[None]]]
+
+
+# ─── gt() O'RNIGA to'g'ridan-to'g'ri i18n.gettext() ishlatamiz ──────────────
+def _t(key: str, locale: str, **kwargs) -> str:
+    """Locale bilan tarjima qiluvchi yordamchi funksiya."""
+    text = i18n.gettext(key, locale=locale)
+    return text.format(**kwargs) if kwargs else text
+
 
 # ─── Encoder ──────────────────────────────────────────────────────────────────
 _NVENC_CACHE: Optional[bool] = None
@@ -56,7 +63,16 @@ async def _check_nvenc() -> bool:
     return _NVENC_CACHE
 
 
-def _enc(nvenc: bool, quality: str = "base") -> list:
+def _enc(nvenc: bool, h: int) -> list:
+    if h >= 1080:
+        crf = "18"
+    elif h >= 720:
+        crf = "24"
+    elif h >= 480:
+        crf = "30"
+    else:
+        crf = "40"
+
     if nvenc:
         return [
             "-c:v",
@@ -64,7 +80,7 @@ def _enc(nvenc: bool, quality: str = "base") -> list:
             "-preset",
             "p2",
             "-cq",
-            "18" if quality == "base" else "28",
+            crf,
             "-c:a",
             "aac",
             "-b:a",
@@ -76,7 +92,7 @@ def _enc(nvenc: bool, quality: str = "base") -> list:
         "-preset",
         "fast",
         "-crf",
-        "18" if quality == "base" else "28",
+        crf,
         "-c:a",
         "aac",
         "-b:a",
@@ -84,11 +100,7 @@ def _enc(nvenc: bool, quality: str = "base") -> list:
     ]
 
 
-# ─── Thumbnail + watermark ────────────────────────────────────────────────────
 async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
-    """
-    Thumbnail o'ng pastki burchagiga bot_watermark qo'yadi (kenglik 30%).
-    """
     if not os.path.isfile(WATERMARK_PATH):
         shutil.copy2(thumb_in, thumb_out)
         return True
@@ -121,9 +133,6 @@ async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
         return False
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-
-
 class Transcoder:
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -137,11 +146,8 @@ class Transcoder:
         thumbnail_file_id: Optional[str] = None,
         locale: str = "uz",
     ) -> Tuple[Dict[str, str], List[str]]:
-        """
-        Videoni transkod qiladi va natijalarni qaytaradi.
-        Qaytaradi: (results_dict, list_of_local_paths_to_cleanup)
-        """
         local_to_cleanup = []
+        os.makedirs(TMP_BASE, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=TMP_BASE, prefix="tc_") as tmp:
             source = os.path.join(tmp, "source.mp4")
             try:
@@ -150,9 +156,9 @@ class Transcoder:
                 logger.error(f"get_file failed: {e}")
                 return {"original": file_id}, []
 
-            await self._notify(
-                status_callback, str(gt("📥 Video yuklanmoqda...")), locale
-            )
+            # ── _t() bilan to'g'ri locale uzatiladi ──────────────────────────
+            await self._notify(status_callback, _t("📥 Video yuklanmoqda...", locale))
+
             try:
                 local_src = await self._download(file_id, file_info.file_path, source)
                 if local_src:
@@ -161,9 +167,7 @@ class Transcoder:
                 logger.error(f"Download failed: {e}")
                 return {"original": file_id}, []
 
-            # ── Thumbnail: yuklab olib, watermark qo'yamiz ──────────────────
-            thumb_wm_path: Optional[str] = None  # send_video ga beriladigan thumb
-
+            thumb_wm_path: Optional[str] = None
             if thumbnail_file_id:
                 thumb_raw = await self._prepare_thumbnail(thumbnail_file_id, tmp)
                 if thumb_raw:
@@ -171,9 +175,10 @@ class Transcoder:
                     await _make_thumb_with_watermark(thumb_raw, thumb_wm)
                     thumb_wm_path = thumb_wm if os.path.exists(thumb_wm) else thumb_raw
 
-            # ── Video parametrlari ───────────────────────────────────────────
             orig_h = await self._get_height(source)
+            logger.info(f"Detected video height: {orig_h} (source: {source})")
             if not orig_h:
+                logger.warning("Could not detect video height, skipping scaling.")
                 return {"original": file_id}, local_to_cleanup
 
             a_main = await self._has_audio(source)
@@ -182,11 +187,10 @@ class Transcoder:
                 if os.path.isfile(INTRO_PATH)
                 else False
             )
-            logger.info(f"Original: {orig_h}px | audio={a_main}")
 
-            # ── Base video: intro + watermark qo'shish ───────────────────────
             await self._notify(
-                status_callback, str(gt("🎬 Base video tayyorlanmoqda...")), locale
+                status_callback,
+                _t("🎬 Base video tayyorlanmoqda...", locale),
             )
             base_path = os.path.join(tmp, "base.mp4")
             try:
@@ -197,9 +201,9 @@ class Transcoder:
 
             results: Dict[str, str] = {}
 
-            # ── Original sifat ───────────────────────────────────────────────
             await self._notify(
-                status_callback, str(gt("💾 Original tayyorlanmoqda...")), locale
+                status_callback,
+                _t("💾 Original tayyorlanmoqda...", locale),
             )
             try:
                 out_orig = os.path.join(tmp, "orig.mp4")
@@ -207,7 +211,6 @@ class Transcoder:
                 res = await self._upload(out_orig, user_id, "Original", thumb_wm_path)
                 results["original"] = res if res else file_id
                 if res:
-                    # Agar original sifat Target sifatlardan biriga mos kelsa, uni o'sha nom bilan ham saqlaymiz
                     for name, q_h in TARGET_QUALITIES.items():
                         if q_h == orig_h:
                             results[name] = res
@@ -227,14 +230,13 @@ class Transcoder:
                     except Exception:
                         pass
 
-            # ── Kichik sifatlar ──────────────────────────────────────────────
             to_do = [(name, h) for name, h in TARGET_QUALITIES.items() if h < orig_h]
+            logger.info(f"Qualities to process: {to_do}")
 
             if to_do:
                 await self._notify(
                     status_callback,
-                    str(gt("⚙️ {n} ta sifat tayyorlanmoqda...")).format(n=len(to_do)),
-                    locale,
+                    _t("⚙️ {n} ta sifat tayyorlanmoqda...", locale, n=len(to_do)),
                 )
                 sem = asyncio.Semaphore(MAX_PARALLEL_WORKERS)
                 tasks = [
@@ -268,8 +270,7 @@ class Transcoder:
 
             await self._notify(
                 status_callback,
-                str(gt("✅ Tayyor! {n} ta format.")).format(n=len(results)),
-                locale,
+                _t("✅ Tayyor! {n} ta format.", locale, n=len(results)),
             )
             logger.info(f"process_video done: {list(results.keys())}")
             return results, local_to_cleanup
@@ -287,21 +288,13 @@ class Transcoder:
     async def _make_base(
         self, source: str, dest: str, h: int, a_main: bool, a_intro: bool
     ):
-        """
-        Video ga intro + watermark qo'shadi.
-        SAR normalizatsiya: barcha streamlar scale={w}:{h},setsar=1 bilan
-        bir xil o'lchamga keltiriladi — concat xatosi bo'lmaydi.
-        Watermark: o'ng yuqori burchak, video kengligining 8%.
-        """
         has_intro = os.path.isfile(INTRO_PATH)
         has_wm = os.path.isfile(WATERMARK_PATH)
         nvenc = await _check_nvenc()
 
-        # Aniq o'lchamni olish (SAR hisobga olinmagan raw pixel o'lcham)
         w_raw = await self._get_width(source)
         h_raw = await self._get_height(source)
         if w_raw and h_raw:
-            # Aspekt nisbatni saqlagan holda target height ga hisoblash
             w = int(w_raw * h / h_raw)
             w = w if w % 2 == 0 else w + 1
         else:
@@ -321,8 +314,6 @@ class Transcoder:
         fp = []
         ma = []
 
-        # Har ikkala video uchun bir xil normalize filter
-        # force_original_aspect_ratio=decrease + pad — intro har qanday o'lchamda bo'lsa ham ishlaydi
         norm_main = (
             f"[0:v]scale={w}:{h}:force_original_aspect_ratio=decrease,"
             f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[main_v]"
@@ -335,9 +326,6 @@ class Transcoder:
         if has_intro and has_wm:
             fp.append(norm_intro)
             fp.append(norm_main)
-            # Watermark: video kengligiga to'liq yoyiladi, pastga joylashadi
-            # scale={w}:-2 → video kengligi bilan bir xil, balandlik proporsional
-            # overlay=(W-w)/2:H-h-15 → markazda, pastdan 15px yuqori
             fp.append(f"[{wm_idx}:v]scale={w}*0.15:-2[wm_s];[wm_s]split[wm1][wm2]")
             fp.append("[intro_v][wm1]overlay=W-w-15:H-h-30[intro_wm]")
             fp.append("[main_v][wm2]overlay=W-w-15:H-h-30[main_wm]")
@@ -382,7 +370,7 @@ class Transcoder:
 
         cmd.extend(["-filter_complex", ";".join(fp)])
         cmd.extend(ma)
-        cmd.extend(_enc(nvenc, "base"))
+        cmd.extend(_enc(nvenc, h))
         cmd.append(dest)
 
         proc = await asyncio.create_subprocess_exec(*cmd, stderr=subprocess.PIPE)
@@ -391,10 +379,6 @@ class Transcoder:
             raise Exception(f"FFmpeg base error: {stderr.decode()[-500:]}")
 
     async def _scale_only(self, base: str, dest: str, h: int):
-        """
-        Faqat scale — thumbnail qo'shilmaydi.
-        Thumbnail send_video ga alohida beriladi.
-        """
         w_orig = await self._get_width(base)
         h_orig = await self._get_height(base)
         nvenc = await _check_nvenc()
@@ -411,16 +395,9 @@ class Transcoder:
             cmd.extend(["-hwaccel", "cuda"])
         cmd.extend(["-i", base])
         cmd.extend(
-            [
-                "-vf",
-                f"scale={w_str}:{h},format=yuv420p",
-                "-map",
-                "0:v",
-                "-map",
-                "0:a?",
-            ]
+            ["-vf", f"scale={w_str}:{h},format=yuv420p", "-map", "0:v", "-map", "0:a?"]
         )
-        cmd.extend(_enc(nvenc, "scale"))
+        cmd.extend(_enc(nvenc, h))
         cmd.append(dest)
 
         proc = await asyncio.create_subprocess_exec(*cmd, stderr=subprocess.PIPE)
@@ -448,18 +425,24 @@ class Transcoder:
             try:
                 await self._notify(
                     status_callback,
-                    str(gt("🔄 {n} tayyorlanmoqda ({i}/{t})...")).format(
-                        n=name, i=idx, t=total
+                    _t(
+                        "🔄 {n} tayyorlanmoqda ({i}/{t})...",
+                        locale,
+                        n=name,
+                        i=idx,
+                        t=total,
                     ),
-                    locale,
                 )
                 await self._scale_only(base, out, height)
                 await self._notify(
                     status_callback,
-                    str(gt("📤 {n} yuklanmoqda ({i}/{t})...")).format(
-                        n=name, i=idx, t=total
+                    _t(
+                        "📤 {n} yuklanmoqda ({i}/{t})...",
+                        locale,
+                        n=name,
+                        i=idx,
+                        t=total,
                     ),
-                    locale,
                 )
                 res = await self._upload(out, user_id, name, thumb_wm_path)
                 if res and on_quality_ready:
@@ -482,11 +465,6 @@ class Transcoder:
         label: str,
         thumb_path: Optional[str] = None,
     ) -> Optional[str]:
-        """
-        send_video ga thumbnail (watermark qo'yilgan) yuboradi.
-        Thumbnail videoga QO'SHILMAYDI — alohida thumb parametri sifatida beriladi.
-        Telegram: thumbnail max 320px, JPEG format.
-        """
         try:
             from aiogram.types import FSInputFile
 
@@ -494,7 +472,6 @@ class Transcoder:
             thumb_tg_path = None
 
             if thumb_path and os.path.exists(thumb_path):
-                # Telegram uchun 320px ga resize
                 thumb_tg_path = path.replace(".mp4", "_tgthumb.jpg")
                 resize_cmd = [
                     "ffmpeg",
@@ -543,10 +520,10 @@ class Transcoder:
             return None
 
     async def _download(self, file_id: str, file_path: str, dest: str) -> Optional[str]:
-        """
-        Local API bo'lsa, kopiya qiladi va asl fayl yo'lini qaytaradi.
-        Aks holda download qiladi va None qaytaradi.
-        """
+        if os.path.isabs(file_path) and os.path.isfile(file_path):
+            await asyncio.to_thread(shutil.copy2, file_path, dest)
+            return file_path
+
         token = self.bot.token
         bot_id = token.split(":")[0] if ":" in token else token
         local = "/var/lib/telegram-bot-api"
@@ -640,11 +617,13 @@ class Transcoder:
         out, _ = await proc.communicate()
         return "audio" in out.decode().lower()
 
+    # ── _notify endi faqat tayyor matnni qabul qiladi ────────────────────────
+    # Tarjima _t() orqali CHAQIRUVCHI JOYDA amalga oshiriladi,
+    # shuning uchun bu method locale parametriga endi muhtoj emas.
     @staticmethod
-    async def _notify(cb: StatusCallback, text: str, locale: str = "uz"):
+    async def _notify(cb: StatusCallback, text: str):
         if cb:
             try:
-                translated = i18n.gettext(str(text), locale=locale)
-                await cb(translated)
+                await cb(text)
             except Exception:
                 pass

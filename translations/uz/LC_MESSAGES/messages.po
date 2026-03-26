@@ -1,242 +1,337 @@
-# Uzbek translations for the bot
+# Uzbek translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-03-19 02:45+0500\n"
-"PO-Revision-Date: 2026-03-21 00:00+0500\n"
+"PO-Revision-Date: 2026-03-24 08:08+0500\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: uz\n"
 "Language-Team: uz <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: uz\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: src/app/bot/common/buttons.py:4
 msgid "🎬 Kino"
-msgstr "🎬 Kinolar"
+msgstr "🎬 Kino"
 
+#: src/app/bot/common/buttons.py:5
 msgid "🎌 Anime"
-msgstr "🎌 Animelar"
+msgstr "🎌 Anime"
 
+#: src/app/bot/common/buttons.py:6
 msgid "🎨 Multfilm"
-msgstr "🎨 Multfilmlar"
+msgstr "🎨 Multfilm"
 
+#: src/app/bot/common/buttons.py:7
 msgid "⭐ Sevimlilar"
 msgstr "⭐ Sevimlilar"
 
+#: src/app/bot/common/buttons.py:8
 msgid "💎 VIP tarif"
 msgstr "💎 VIP tarif"
 
+#: src/app/bot/common/buttons.py:9
 msgid "👤 Shaxsiy kabinet"
 msgstr "👤 Shaxsiy kabinet"
 
+#: src/app/bot/common/buttons.py:12 src/app/bot/handlers/user/account.py:202
+#: src/app/bot/keyboards/inline.py:591
 msgid "⬅️ Orqaga"
 msgstr "⬅️ Orqaga"
 
+#: src/app/bot/common/buttons.py:15
 msgid "🎥 Tasodifiy film"
 msgstr "🎥 Tasodifiy film"
 
+#: src/app/bot/common/buttons.py:16
 msgid "📺 Tasodifiy serial"
 msgstr "📺 Tasodifiy serial"
 
+#: src/app/bot/common/buttons.py:17
 msgid "🎞️ Tasodifiy epizodli film"
 msgstr "🎞️ Tasodifiy epizodli film"
 
+#: src/app/bot/common/buttons.py:18
 msgid "🔝 Top filmlar"
 msgstr "🔝 Top filmlar"
 
+#: src/app/bot/common/buttons.py:19
 msgid "🎭 Janr bo'yicha filmlar"
 msgstr "🎭 Janr bo'yicha filmlar"
 
+#: src/app/bot/common/buttons.py:22
 msgid "🎥 Tasodifiy anime"
 msgstr "🎥 Tasodifiy anime"
 
+#: src/app/bot/common/buttons.py:23
 msgid "📺 Tasodifiy anime serial"
 msgstr "📺 Tasodifiy anime serial"
 
+#: src/app/bot/common/buttons.py:24
 msgid "🎞️ Tasodifiy epizodli anime"
 msgstr "🎞️ Tasodifiy epizodli anime"
 
+#: src/app/bot/common/buttons.py:25
 msgid "🔝 Top animelar"
 msgstr "🔝 Top animelar"
 
+#: src/app/bot/common/buttons.py:26
 msgid "🎭 Janr bo'yicha anime"
 msgstr "🎭 Janr bo'yicha anime"
 
+#: src/app/bot/common/buttons.py:29
 msgid "🎥 Tasodifiy Multfilm"
-msgstr "🎥 Tasodifiy multfilm"
+msgstr "🎥 Tasodifiy Multfilm"
 
+#: src/app/bot/common/buttons.py:30
 msgid "📺 Tasodifiy Mult-Serial"
-msgstr "📺 Tasodifiy mult-serial"
+msgstr "📺 Tasodifiy Mult-Serial"
 
+#: src/app/bot/common/buttons.py:31
 msgid "🎞️ Tasodifiy Epizodli Multfilm"
-msgstr "🎞️ Tasodifiy epizodli multfilm"
+msgstr "🎞️ Tasodifiy Epizodli Multfilm"
 
+#: src/app/bot/common/buttons.py:32
 msgid "🔝 Top Multfilmlar"
 msgstr "🔝 Top Multfilmlar"
 
+#: src/app/bot/common/buttons.py:33
 msgid "🎭 Janr bo'yicha multfilm"
 msgstr "🎭 Janr bo'yicha multfilm"
 
+#: src/app/bot/common/genres.py:15
 msgid "🎭 Драма"
 msgstr "🎭 Drama"
 
+#: src/app/bot/common/genres.py:16
 msgid "😂 Комедия"
 msgstr "😂 Komediya"
 
+#: src/app/bot/common/genres.py:17
 msgid "💥 Боевик"
-msgstr "💥 Jangovar"
+msgstr "💥 Jangari"
 
+#: src/app/bot/common/genres.py:18
 msgid "😱 Триллер"
 msgstr "😱 Triller"
 
+#: src/app/bot/common/genres.py:19
 msgid "👻 Ужасы"
-msgstr "👻 Dahshat"
+msgstr "👻 Qo'rqinchli"
 
+#: src/app/bot/common/genres.py:20
 msgid "🚀 Фантастика"
 msgstr "🚀 Fantastika"
 
+#: src/app/bot/common/genres.py:21
 msgid "🧙 Фэнтези"
 msgstr "🧙 Fentezi"
 
+#: src/app/bot/common/genres.py:22
 msgid "❤️ Мелодрама"
 msgstr "❤️ Melodrama"
 
+#: src/app/bot/common/genres.py:23
 msgid "🕵️ Детектив"
 msgstr "🕵️ Detektiv"
 
+#: src/app/bot/common/genres.py:24
 msgid "🗺️ Приключения"
 msgstr "🗺️ Sarguzasht"
 
+#: src/app/bot/common/genres.py:25
 msgid "👨‍👩‍👧 Семейный"
-msgstr "👨‍👩‍👧 Oilaviy"
+msgstr "👨‍👩‍👧 Oila uchun"
 
+#: src/app/bot/common/genres.py:26
 msgid "🐭 Мультфильм"
 msgstr "🐭 Multfilm"
 
+#: src/app/bot/common/genres.py:27
 msgid "🏛️ Исторический"
 msgstr "🏛️ Tarixiy"
 
+#: src/app/bot/common/genres.py:28
 msgid "📚 Документальный"
 msgstr "📚 Hujjatli"
 
+#: src/app/bot/common/genres.py:29
 msgid "⚔️ Военный"
 msgstr "⚔️ Harbiy"
 
+#: src/app/bot/common/genres.py:65
 msgid "Janr tanlanmagan"
 msgstr "Janr tanlanmagan"
 
+#: src/app/bot/common/languages.py:4
 msgid "O'zbekcha"
 msgstr "O'zbekcha"
 
+#: src/app/bot/common/languages.py:5
 msgid "Ruscha"
 msgstr "Ruscha"
 
+#: src/app/bot/common/languages.py:6
 msgid "Inglizcha"
 msgstr "Inglizcha"
 
+#: src/app/bot/common/languages.py:7
+msgid "Turkcha"
+msgstr "Turkcha"
+
+#: src/app/bot/common/languages.py:8
+msgid "Hindcha"
+msgstr "Hindcha"
+
+#: src/app/bot/common/utils.py:637
 msgid "Нет"
 msgstr "Yo'q"
 
+#: src/app/bot/dialog/dialogs.py:36
 msgid "Выберите действие"
-msgstr "Amalni tanlang"
+msgstr "Harakatni tanlang"
 
+#: src/app/bot/dialog/dialogs.py:37
 msgid "Вы еще ничего не добавили"
-msgstr "Siz hali hech narsa qo'shmadingiz"
+msgstr "Siz hali hech nima qo'shmadingiz"
 
+#: src/app/bot/dialog/dialogs.py:42
 msgid "🗂 Каналы"
 msgstr "🗂 Kanallar"
 
+#: src/app/bot/dialog/dialogs.py:54
 msgid "🤖 Боты"
 msgstr "🤖 Botlar"
 
+#: src/app/bot/dialog/dialogs.py:66
 msgid "➕ Добавить канал"
 msgstr "➕ Kanal qo'shish"
 
+#: src/app/bot/dialog/dialogs.py:67
 msgid "➕ Добавить бота"
 msgstr "➕ Bot qo'shish"
 
+#: src/app/bot/dialog/dialogs.py:69 src/app/bot/dialog/dialogs.py:89
+#: src/app/bot/dialog/dialogs.py:103 src/app/bot/dialog/dialogs.py:120
+#: src/app/bot/dialog/dialogs.py:149 src/app/bot/dialog/dialogs.py:163
+#: src/app/bot/dialog/dialogs.py:176 src/app/bot/dialog/dialogs.py:193
 msgid "◄ Назад"
-msgstr "◄ Orqaga"
+msgstr "⬅️ Orqaga"
 
+#: src/app/bot/dialog/dialogs.py:82
 msgid ""
-"🔗 Чтобы добавить канал или группу, перешлите любой пост с канала и "
-"добавьте бота в канал."
+"🔗 Чтобы добавить канал или группу, перешлите любой пост с канала и добавьте "
+"бота в канал."
 msgstr ""
-"🔗 Kanal yoki guruh qo'shish uchun, kanaldan istalgan postni yo'llang va "
-"botni kanalga qo'shing."
+"🔗 Kanal yoki guruh qo'shish uchun kanaldan istalgan postni uzating va botni "
+"kanalga qo'shing."
 
+#: src/app/bot/dialog/dialogs.py:84
 msgid "❌ Отправьте пост с канала!"
 msgstr "❌ Kanaldan post yuboring!"
 
+#: src/app/bot/dialog/dialogs.py:96
 msgid "🔗 Отправьте ссылку на канал"
 msgstr "🔗 Kanal havolasini yuboring"
 
+#: src/app/bot/dialog/dialogs.py:97
 msgid "❌ Произошла ошибка при добавлении канала!"
 msgstr "❌ Kanal qo'shishda xatolik yuz berdi!"
 
+#: src/app/bot/dialog/dialogs.py:98
 msgid "⚠️ Канал уже существует!"
 msgstr "⚠️ Kanal allaqachon mavjud!"
 
+#: src/app/bot/dialog/dialogs.py:116
 msgid "🗑 Удалить канал"
 msgstr "🗑 Kanalni o'chirish"
 
+#: src/app/bot/dialog/dialogs.py:127
 msgid "⚠️ Вы уверены, что хотите удалить канал?"
-msgstr "⚠️ Kanalni o'chirishni xohlaysizmi?"
+msgstr "⚠️ Kanalni o'chirishga ishonchingiz komilmi?"
 
+#: src/app/bot/dialog/dialogs.py:129 src/app/bot/dialog/dialogs.py:202
 msgid "❌ Нет"
 msgstr "❌ Yo'q"
 
+#: src/app/bot/dialog/dialogs.py:130 src/app/bot/dialog/dialogs.py:203
 msgid "✅ Да"
 msgstr "✅ Ha"
 
+#: src/app/bot/dialog/dialogs.py:142
 msgid "👤 Отправьте username бота (без @)"
-msgstr "👤 Bot usernameni yuboring (@ belgisisiz)"
+msgstr "👤 Bot username'ini yuboring (@ belgisiz)"
 
+#: src/app/bot/dialog/dialogs.py:143
 msgid "❌ Отправьте текстовое сообщение с username бота!"
-msgstr "❌ Bot usernamesi bilan matn xabar yuboring!"
+msgstr "❌ Bot username'i bilan matnlik xabar yuboring!"
 
+#: src/app/bot/dialog/dialogs.py:144
 msgid "⚠️ Бот с таким username уже существует!"
-msgstr "⚠️ Bunday username bilan bot allaqachon mavjud!"
+msgstr "⚠️ Bunday username'li bot allaqachon mavjud!"
 
+#: src/app/bot/dialog/dialogs.py:156
 msgid "🔗 Отправьте ссылку на бота"
 msgstr "🔗 Bot havolasini yuboring"
 
+#: src/app/bot/dialog/dialogs.py:157
 msgid "❌ Неправильный формат ссылки!"
 msgstr "❌ Havola formati noto'g'ri!"
 
+#: src/app/bot/dialog/dialogs.py:162
 msgid "🔗 Использовать стандартную ссылку"
 msgstr "🔗 Standart havoladan foydalanish"
 
+#: src/app/bot/dialog/dialogs.py:170
 msgid "📝 Отправьте отображаемое имя бота"
-msgstr "📝 Bot ko'rsatiladigan nomini yuboring"
+msgstr "📝 Botning ko'rinadigan nomini yuboring"
 
+#: src/app/bot/dialog/dialogs.py:171
 msgid "❌ Отправьте текстовое сообщение!"
-msgstr "❌ Matn xabar yuboring!"
+msgstr "❌ Matnlik xabar yuboring!"
 
+#: src/app/bot/dialog/dialogs.py:189
 msgid "🗑 Удалить бота"
 msgstr "🗑 Botni o'chirish"
 
+#: src/app/bot/dialog/dialogs.py:200
 msgid "⚠️ Вы уверены, что хотите удалить бота?"
-msgstr "⚠️ Botni o'chirishni xohlaysizmi?"
+msgstr "⚠️ Botni o'chirishga ishonchingiz komilmi?"
 
+#: src/app/bot/dialog/admin/add_movie.py:111
 msgid "❌ Faqat raqam kiriting!"
 msgstr "❌ Faqat raqam kiriting!"
 
+#: src/app/bot/dialog/admin/add_movie.py:275
+#: src/app/bot/dialog/admin/add_movie.py:283
+#: src/app/bot/dialog/admin/edit_movie.py:146
+#: src/app/bot/dialog/admin/edit_movie.py:439
+#: src/app/bot/dialog/admin/edit_movie.py:668
+#: src/app/bot/dialog/admin/edit_movie.py:711
 msgid "❌ Raqam kiriting!"
 msgstr "❌ Raqam kiriting!"
 
+#: src/app/bot/dialog/admin/add_movie.py:324
 msgid "❌ Video yoki fayl yuboring!"
 msgstr "❌ Video yoki fayl yuboring!"
 
+#: src/app/bot/dialog/admin/add_movie.py:365
 msgid "❌ Rasm yuboring (JPG, PNG)!"
 msgstr "❌ Rasm yuboring (JPG, PNG)!"
 
+#: src/app/bot/dialog/admin/add_movie.py:482
 msgid "❌ Video fayl topilmadi! Qaytadan video yuboring."
 msgstr "❌ Video fayl topilmadi! Qaytadan video yuboring."
 
+#: src/app/bot/dialog/admin/add_movie.py:521
 msgid ""
 "🚀 Transkodlash vazifasi navbatga qo'shildi. Jarayon tugagach sizga xabar "
 "yuboriladi."
@@ -244,156 +339,264 @@ msgstr ""
 "🚀 Transkodlash vazifasi navbatga qo'shildi. Jarayon tugagach sizga xabar "
 "yuboriladi."
 
+#: src/app/bot/dialog/admin/add_movie.py:528
+#: src/app/bot/dialog/admin/edit_movie.py:272
+#: src/app/bot/dialog/admin/edit_movie.py:318
+#: src/app/bot/dialog/admin/edit_movie.py:340
+#: src/app/bot/dialog/admin/edit_movie.py:363
+#: src/app/bot/dialog/admin/edit_movie.py:428
+#: src/app/bot/dialog/admin/edit_movie.py:466
+#: src/app/bot/dialog/admin/edit_movie.py:586
+#: src/app/bot/dialog/admin/edit_movie.py:620
+#: src/app/bot/dialog/admin/edit_movie.py:701
+#: src/app/bot/dialog/admin/edit_movie.py:749
+#: src/app/bot/dialog/admin/edit_movie.py:781
+#: src/app/bot/dialog/admin/edit_movie.py:802
+#: src/app/bot/dialog/admin/edit_movie.py:817 src/app/services/tasks.py:156
+#, python-brace-format
 msgid "❌ Xato: {error}"
 msgstr "❌ Xato: {error}"
 
+#: src/app/bot/dialog/admin/add_movie.py:819
 msgid "❌ Faqat raqam!"
 msgstr "❌ Faqat raqam!"
 
+#: src/app/bot/dialog/admin/add_movie.py:826
 msgid "⚠️ Bu kod band. Boshqa raqam kiriting!"
 msgstr "⚠️ Bu kod band. Boshqa raqam kiriting!"
 
+#: src/app/bot/dialog/admin/add_movie.py:879
+#: src/app/bot/dialog/admin/add_movie.py:896
+#, python-brace-format
 msgid "⚠️ Sezon {s}, qism {e} allaqachon mavjud!"
 msgstr "⚠️ Sezon {s}, qism {e} allaqachon mavjud!"
 
+#: src/app/bot/dialog/admin/add_movie.py:905
+#, python-brace-format
 msgid "⚠️ {n}-qism allaqachon mavjud!"
 msgstr "⚠️ {n}-qism allaqachon mavjud!"
 
+#: src/app/bot/dialog/admin/add_movie.py:980
 msgid "🌍 <b>Qaysi tilda qo'shmoqchisiz?</b>"
 msgstr "🌍 <b>Qaysi tilda qo'shmoqchisiz?</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:983
 msgid "🌍 <b>Qaysi tilda davom etasiz?</b>"
 msgstr "🌍 <b>Qaysi tilda davom etasiz?</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:986
 msgid "🌍 <b>Yangi til tanlang:</b>"
 msgstr "🌍 <b>Yangi til tanlang:</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:993
+#: src/app/bot/dialog/admin/add_movie.py:1108
+#: src/app/bot/dialog/admin/add_movie.py:1234
 msgid "CAT_MOVIES"
-msgstr "🎞 Filmlar"
+msgstr "🎥 Kino"
 
+#: src/app/bot/dialog/admin/add_movie.py:994
+#: src/app/bot/dialog/admin/add_movie.py:1109
+#: src/app/bot/dialog/admin/add_movie.py:1235
 msgid "CAT_CARTOONS"
-msgstr "🧸 Multfilmlar"
+msgstr "🎨 Multfilm"
 
+#: src/app/bot/dialog/admin/add_movie.py:995
+#: src/app/bot/dialog/admin/add_movie.py:1110
+#: src/app/bot/dialog/admin/add_movie.py:1236
 msgid "CAT_ANIME"
-msgstr "🏮 Anime"
+msgstr "🎌 Anime"
 
+#: src/app/bot/dialog/admin/add_movie.py:1003
+#: src/app/bot/dialog/admin/add_movie.py:1102
+#: src/app/bot/dialog/admin/add_movie.py:1228
 msgid "TYPE_ANIME_MOVIE"
-msgstr "🎞 Anime film"
+msgstr "🎥 Anime Film"
 
+#: src/app/bot/dialog/admin/add_movie.py:1004
+#: src/app/bot/dialog/admin/add_movie.py:1103
+#: src/app/bot/dialog/admin/add_movie.py:1229
 msgid "TYPE_ANIME_SERIES"
-msgstr "📺 Anime serial"
+msgstr "📺 Anime Serial"
 
+#: src/app/bot/dialog/admin/add_movie.py:1005
+#: src/app/bot/dialog/admin/add_movie.py:1104
+#: src/app/bot/dialog/admin/add_movie.py:1230
 msgid "TYPE_ANIME_MINI_SERIES"
-msgstr "🧩 Epizodli anime"
+msgstr "🎞️ Anime Mini-serial"
 
+#: src/app/bot/dialog/admin/add_movie.py:1009
+#: src/app/bot/dialog/admin/add_movie.py:1097
+#: src/app/bot/dialog/admin/add_movie.py:1223
 msgid "TYPE_CARTOON_MOVIE"
-msgstr "🧸 Mult film"
+msgstr "🎥 Multfilm"
 
+#: src/app/bot/dialog/admin/add_movie.py:1010
+#: src/app/bot/dialog/admin/add_movie.py:1098
+#: src/app/bot/dialog/admin/add_movie.py:1224
 msgid "TYPE_CARTOON_SERIES"
-msgstr "📺 Mult serial"
+msgstr "📺 Mult-Serial"
 
+#: src/app/bot/dialog/admin/add_movie.py:1011
+#: src/app/bot/dialog/admin/add_movie.py:1099
+#: src/app/bot/dialog/admin/add_movie.py:1225
 msgid "TYPE_CARTOON_MINI_SERIES"
-msgstr "🧩 Epizodli multfilm"
+msgstr "🎞️ Mult Mini-serial"
 
+#: src/app/bot/dialog/admin/add_movie.py:1014
+#: src/app/bot/dialog/admin/add_movie.py:1092
+#: src/app/bot/dialog/admin/add_movie.py:1218
 msgid "TYPE_MOVIE"
-msgstr "🎞 Film"
+msgstr "🎥 Kino"
 
+#: src/app/bot/dialog/admin/add_movie.py:1015
+#: src/app/bot/dialog/admin/add_movie.py:1093
+#: src/app/bot/dialog/admin/add_movie.py:1219
 msgid "TYPE_SERIES"
 msgstr "📺 Serial"
 
+#: src/app/bot/dialog/admin/add_movie.py:1016
+#: src/app/bot/dialog/admin/add_movie.py:1094
+#: src/app/bot/dialog/admin/add_movie.py:1220
 msgid "TYPE_MINI_SERIES"
-msgstr "🧩 Epizodli film"
+msgstr "🎞️ Mini-serial"
 
+#: src/app/bot/dialog/admin/add_movie.py:1026
+#: src/app/bot/dialog/admin/edit_movie.py:1092
 msgid "anime-"
 msgstr "anime-"
 
+#: src/app/bot/dialog/admin/add_movie.py:1028
+#: src/app/bot/dialog/admin/edit_movie.py:1093
 msgid "mult-"
 msgstr "mult-"
 
+#: src/app/bot/dialog/admin/add_movie.py:1030
+#: src/app/bot/dialog/admin/edit_movie.py:1095
 msgid "film"
 msgstr "film"
 
+#: src/app/bot/dialog/admin/add_movie.py:1031
+#: src/app/bot/dialog/admin/edit_movie.py:1095
 msgid "serial"
 msgstr "serial"
 
+#: src/app/bot/dialog/admin/add_movie.py:1032
+#: src/app/bot/dialog/admin/edit_movie.py:1097
 msgid "qism"
 msgstr "qism"
 
+#: src/app/bot/dialog/admin/add_movie.py:1036
+#, python-brace-format
 msgid "📝 <b>{prefix}{target} nomini kiriting:</b>"
 msgstr "📝 <b>{prefix}{target} nomini kiriting:</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:1042
+#, python-brace-format
 msgid "🔢 <b>{prefix}Sezon raqamini kiriting:</b>"
 msgstr "🔢 <b>{prefix}Sezon raqamini kiriting:</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:1045
+#, python-brace-format
 msgid "🔢 <b>{prefix}Qism raqamini kiriting:</b>"
 msgstr "🔢 <b>{prefix}Qism raqamini kiriting:</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:1048
+#, python-brace-format
 msgid "📹 <b>{prefix}{target} video faylini yuboring:</b>"
 msgstr "📹 <b>{prefix}{target} video faylini yuboring:</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:1054
+#, python-brace-format
 msgid "📄 <b>{prefix}{target} tavsifini kiriting:</b>"
 msgstr "📄 <b>{prefix}{target} tavsifini kiriting:</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:1059
 msgid "💿 <b>Format kiriting (masalan: HD, 4K):</b>"
 msgstr "💿 <b>Format kiriting (masalan: HD, 4K):</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:1060
 msgid "🌍 <b>Til kiriting:</b>"
 msgstr "🌍 <b>Til kiriting:</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:1067
 msgid "🔢 Yangi kod (ID) kiriting:"
 msgstr "🔢 Yangi kod (ID) kiriting:"
 
+#: src/app/bot/dialog/admin/add_movie.py:1068
 msgid "📛 Yangi nomini kiriting:"
 msgstr "📛 Yangi nomini kiriting:"
 
+#: src/app/bot/dialog/admin/add_movie.py:1069
 msgid "📄 Yangi tavsifni kiriting:"
 msgstr "📄 Yangi tavsifni kiriting:"
 
+#: src/app/bot/dialog/admin/add_movie.py:1070
 msgid "📹 Yangi video fayl yuboring:"
 msgstr "📹 Yangi video fayl yuboring:"
 
+#: src/app/bot/dialog/admin/add_movie.py:1071
 msgid "🖼 Yangi muqova (thumbnail) yuboring:"
 msgstr "🖼 Yangi muqova (thumbnail) yuboring:"
 
+#: src/app/bot/dialog/admin/add_movie.py:1072
 msgid "📅 Yangi sezon raqamini kiriting:"
 msgstr "📅 Yangi sezon raqamini kiriting:"
 
+#: src/app/bot/dialog/admin/add_movie.py:1073
 msgid "🔢 Yangi qism raqamini kiriting:"
 msgstr "🔢 Yangi qism raqamini kiriting:"
 
+#: src/app/bot/dialog/admin/add_movie.py:1075
 msgid "O'zgartirish kiriting:"
 msgstr "O'zgartirish kiriting:"
 
+#: src/app/bot/dialog/admin/add_movie.py:1124
 msgid "mavjud emas"
 msgstr "mavjud emas"
 
+#: src/app/bot/dialog/admin/add_movie.py:1132
+#: src/app/bot/dialog/admin/add_movie.py:1280
 msgid "SUM_CATEGORY"
-msgstr "<b>📁 Kategoriya:</b>"
+msgstr "Kategoriya"
 
+#: src/app/bot/dialog/admin/add_movie.py:1133
+#: src/app/bot/dialog/admin/add_movie.py:1281
 msgid "SUM_TYPE"
-msgstr "<b>📂 Tur:</b>"
+msgstr "Tur"
 
+#: src/app/bot/dialog/admin/add_movie.py:1134
+#: src/app/bot/dialog/admin/add_movie.py:1284
 msgid "SUM_NAME"
-msgstr "<b>🎬 Nomi:</b>"
+msgstr "Nomi"
 
+#: src/app/bot/dialog/admin/add_movie.py:1135
 msgid "Mavjud tillar:"
 msgstr "Mavjud tillar:"
 
+#: src/app/bot/dialog/admin/add_movie.py:1139
 msgid "✅ Tur mos. Yangi qism qo'shishingiz mumkin."
 msgstr "✅ Tur mos. Yangi qism qo'shishingiz mumkin."
 
+#: src/app/bot/dialog/admin/add_movie.py:1142
 msgid "⚠️ Bu kod boshqa turga tegishli. Faqat yangi til qo'shish mumkin."
 msgstr "⚠️ Bu kod boshqa turga tegishli. Faqat yangi til qo'shish mumkin."
 
+#: src/app/bot/dialog/admin/add_movie.py:1170
 msgid "Film"
 msgstr "Film"
 
+#: src/app/bot/dialog/admin/add_movie.py:1175
+#, python-brace-format
 msgid "Sezon {sn}, Qism {ep}"
 msgstr "Sezon {sn}, Qism {ep}"
 
+#: src/app/bot/dialog/admin/add_movie.py:1177
+#, python-brace-format
 msgid "Qism {ep}"
 msgstr "Qism {ep}"
 
+#: src/app/bot/dialog/admin/add_movie.py:1186
+#, python-brace-format
 msgid ""
 "✅ <b>Muvaffaqiyatli saqlandi!</b>\n"
 "━━━━━━━━━━━━━━━\n"
@@ -413,54 +616,74 @@ msgstr ""
 "\n"
 "{action_prompt}"
 
+#: src/app/bot/dialog/admin/add_movie.py:1193
 msgid "Nima qilamiz?"
 msgstr "Nima qilamiz?"
 
+#: src/app/bot/dialog/admin/add_movie.py:1278
 msgid "SUM_TITLE"
-msgstr "📑 <b>XULOSA:</b>"
+msgstr "Sarlavha"
 
+#: src/app/bot/dialog/admin/add_movie.py:1282
 msgid "SUM_CODE"
-msgstr "<b>🔢 Kod:</b>"
+msgstr "Kod"
 
+#: src/app/bot/dialog/admin/add_movie.py:1283
 msgid "SUM_LANG"
-msgstr "<b>🌍 Til:</b>"
+msgstr "Til"
 
+#: src/app/bot/dialog/admin/add_movie.py:1285
 msgid "SUM_GENRES"
-msgstr "<b>🎭 Janrlar:</b>"
+msgstr "Janrlar"
 
+#: src/app/bot/dialog/admin/add_movie.py:1287
 msgid "SUM_FORMAT"
-msgstr "<b>💿 Format:</b>"
+msgstr "Format"
 
+#: src/app/bot/dialog/admin/add_movie.py:1289
 msgid "SUM_SEASON"
-msgstr "<b>📅 Sezon:</b>"
+msgstr "Sezon"
 
+#: src/app/bot/dialog/admin/add_movie.py:1290
+#: src/app/bot/dialog/admin/add_movie.py:1292
 msgid "SUM_SERIES"
-msgstr "<b>🔢 Qism:</b>"
+msgstr "Seriya"
 
+#: src/app/bot/dialog/admin/add_movie.py:1294
 msgid "SUM_CAPTION"
-msgstr "<b>📄 Tavsif:</b>"
+msgstr "Tavsif"
 
+#: src/app/bot/dialog/admin/add_movie.py:1294
 msgid "Yo'q"
 msgstr "Yo'q"
 
+#: src/app/bot/dialog/admin/add_movie.py:1308
+#: src/app/bot/dialog/admin/edit_movie.py:1016
 msgid "🖼 Muqovani ko'rish"
 msgstr "🖼 Muqovani ko'rish"
 
+#: src/app/bot/dialog/admin/add_movie.py:1310
+#: src/app/bot/dialog/admin/edit_movie.py:1016
 msgid "📹 Videoni ko'rish"
 msgstr "📹 Videoni ko'rish"
 
+#: src/app/bot/dialog/admin/add_movie.py:1329
 msgid "🏷 <b>Kategoriyani tanlang:</b>"
 msgstr "🏷 <b>Kategoriyani tanlang:</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:1339
 msgid "CAT_ADMIN_MENU"
-msgstr "🏠 Admin menyu"
+msgstr "⬅️ Admin menyusi"
 
+#: src/app/bot/dialog/admin/add_movie.py:1344
 msgid "TYPE_SELECT_PROMPT"
-msgstr "🎬 <b>Kontent turini tanlang:</b>"
+msgstr "Turi tanlang"
 
+#: src/app/bot/dialog/admin/add_movie.py:1359
 msgid "BTN_BACK"
-msgstr "🔙 Ortga"
+msgstr "⬅️ Orqaga"
 
+#: src/app/bot/dialog/admin/add_movie.py:1367
 msgid ""
 "🔢 <b>Kod (ID) kiriting:</b>\n"
 "(Faqat raqamlar)"
@@ -468,9 +691,23 @@ msgstr ""
 "🔢 <b>Kod (ID) kiriting:</b>\n"
 "(Faqat raqamlar)"
 
+#: src/app/bot/dialog/admin/add_movie.py:1370
+#: src/app/bot/dialog/admin/add_movie.py:1391
+#: src/app/bot/dialog/admin/add_movie.py:1401
+#: src/app/bot/dialog/admin/add_movie.py:1419
+#: src/app/bot/dialog/admin/add_movie.py:1435
+#: src/app/bot/dialog/admin/add_movie.py:1455
+#: src/app/bot/dialog/admin/add_movie.py:1476
+#: src/app/bot/dialog/admin/add_movie.py:1495
+#: src/app/bot/dialog/admin/add_movie.py:1523
+#: src/app/bot/dialog/admin/add_movie.py:1564
+#: src/app/bot/dialog/admin/add_movie.py:1605
+#: src/app/bot/dialog/admin/add_movie.py:1648
 msgid "🔙 Ortga"
 msgstr "🔙 Ortga"
 
+#: src/app/bot/dialog/admin/add_movie.py:1375
+#, python-brace-format
 msgid ""
 "🔍 <b>Kod band!</b>\n"
 "\n"
@@ -480,24 +717,47 @@ msgstr ""
 "\n"
 "{can_continue_text}"
 
+#: src/app/bot/dialog/admin/add_movie.py:1378
+#: src/app/bot/dialog/admin/edit_movie.py:1210
 msgid "➕ Yangi til qo'shish"
 msgstr "➕ Yangi til qo'shish"
 
+#: src/app/bot/dialog/admin/add_movie.py:1384
 msgid "✅ Yangi qism qo'shish"
 msgstr "✅ Yangi qism qo'shish"
 
+#: src/app/bot/dialog/admin/add_movie.py:1397
+msgid "🎬 <b>Film nomini kiriting:</b>"
+msgstr "🎬 <b>Film nomini kiriting:</b>"
+
+#: src/app/bot/dialog/admin/add_movie.py:1406
+#: src/app/bot/dialog/admin/add_movie.py:1424
+#: src/app/bot/dialog/admin/add_movie.py:1440
+#: src/app/bot/dialog/admin/add_movie.py:1460
+#: src/app/bot/dialog/admin/add_movie.py:1481
+#: src/app/bot/dialog/admin/add_movie.py:1500
+#: src/app/bot/dialog/admin/add_movie.py:1528
+#: src/app/bot/dialog/admin/add_movie.py:1584
 msgid "❌ Bekor"
 msgstr "❌ Bekor"
 
+#: src/app/bot/dialog/admin/add_movie.py:1415
+msgid "📅 <b>Sezon raqamini kiriting:</b>"
+msgstr "📅 <b>Sezon raqamini kiriting:</b>"
+
+#: src/app/bot/dialog/admin/add_movie.py:1431
 msgid "🔢 <b>Qism raqamini kiriting:</b>"
 msgstr "🔢 <b>Qism raqamini kiriting:</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:1449
 msgid "📹 <b>Video yoki faylni yuboring:</b>"
 msgstr "📹 <b>Video yoki faylni yuboring:</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:1470
 msgid "⏭ O'tkazib yuborish"
 msgstr "⏭ O'tkazib yuborish"
 
+#: src/app/bot/dialog/admin/add_movie.py:1488
 msgid ""
 "🖼 <b>Muqova rasmini yuboring:</b>\n"
 "<i>(Ixtiyoriy)</i>"
@@ -505,12 +765,16 @@ msgstr ""
 "🖼 <b>Muqova rasmini yuboring:</b>\n"
 "<i>(Ixtiyoriy)</i>"
 
+#: src/app/bot/dialog/admin/add_movie.py:1492
 msgid "Skip ⏭"
-msgstr "O'tkazib yuborish ⏭"
+msgstr "O'tkazish ⏭"
 
-msgid "Skip » {lang_label}"
-msgstr "O'tkazib yuborish » {lang_label}"
+#: src/app/bot/dialog/admin/add_movie.py:1520
+msgid "Skip » (O'zbek)"
+msgstr "O'tkazish » (O'zbek)"
 
+#: src/app/bot/dialog/admin/add_movie.py:1539
+#, python-brace-format
 msgid ""
 "🎭 <b>Janrlarni tanlang:</b>\n"
 "<i>(Bir nechta tanlash mumkin)</i>\n"
@@ -522,18 +786,24 @@ msgstr ""
 "\n"
 "<b>Tanlangan:</b> {selected_text}"
 
+#: src/app/bot/dialog/admin/add_movie.py:1554
 msgid "✅ Tasdiqlash"
 msgstr "✅ Tasdiqlash"
 
+#: src/app/bot/dialog/admin/add_movie.py:1558
 msgid "🔙 Xulosa"
 msgstr "🔙 Xulosa"
 
+#: src/app/bot/dialog/admin/add_movie.py:1577
+#: src/app/bot/keyboards/inline.py:425 src/app/bot/keyboards/inline.py:613
 msgid "💾 Saqlash"
 msgstr "💾 Saqlash"
 
+#: src/app/bot/dialog/admin/add_movie.py:1581
 msgid "✏️ Tahrir"
 msgstr "✏️ Tahrir"
 
+#: src/app/bot/dialog/admin/add_movie.py:1592
 msgid ""
 "\n"
 "🛠 <b>Nimani o'zgartirish?</b>"
@@ -541,93 +811,142 @@ msgstr ""
 "\n"
 "🛠 <b>Nimani o'zgartirish?</b>"
 
+#: src/app/bot/dialog/admin/add_movie.py:1600
 msgid "✅ Saqlashga"
 msgstr "✅ Saqlashga"
 
+#: src/app/bot/dialog/admin/add_movie.py:1612
 msgid "🔢 Kod (ID)"
 msgstr "🔢 Kod (ID)"
 
+#: src/app/bot/dialog/admin/add_movie.py:1614
 msgid "📛 Nomi"
 msgstr "📛 Nomi"
 
+#: src/app/bot/dialog/admin/add_movie.py:1616
 msgid "🎭 Janrlar"
 msgstr "🎭 Janrlar"
 
+#: src/app/bot/dialog/admin/add_movie.py:1619
 msgid "📄 Tavsif"
 msgstr "📄 Tavsif"
 
+#: src/app/bot/dialog/admin/add_movie.py:1622
 msgid "🖼 Muqova"
 msgstr "🖼 Muqova"
 
+#: src/app/bot/dialog/admin/add_movie.py:1625
 msgid "📹 Video"
 msgstr "📹 Video"
 
+#: src/app/bot/dialog/admin/add_movie.py:1627
 msgid "🌍 Til"
 msgstr "🌍 Til"
 
+#: src/app/bot/dialog/admin/add_movie.py:1629
 msgid "📅 Sezon"
 msgstr "📅 Sezon"
 
+#: src/app/bot/dialog/admin/add_movie.py:1635
 msgid "🎞 Qism"
 msgstr "🎞 Qism"
 
+#: src/app/bot/dialog/admin/add_movie.py:1659
 msgid "➕ Yana til qo'shish"
 msgstr "➕ Yana til qo'shish"
 
+#: src/app/bot/dialog/admin/add_movie.py:1665
 msgid "➕ Keyingi qism"
 msgstr "➕ Keyingi qism"
 
+#: src/app/bot/dialog/admin/add_movie.py:1670
 msgid "🔙 Boshiga"
 msgstr "🔙 Boshiga"
 
+#: src/app/bot/dialog/admin/add_movie.py:1672
 msgid "🏠 Bosh menyu"
 msgstr "🏠 Bosh menyu"
 
+#: src/app/bot/dialog/admin/admin_management.py:23
 msgid "➕ Qo'shish"
 msgstr "➕ Qo'shish"
 
+#: src/app/bot/dialog/admin/admin_management.py:24
+#: src/app/bot/dialog/admin/admin_management.py:43
+#: src/app/bot/dialog/admin/admin_management.py:85
+#: src/app/bot/dialog/admin/edit_movie.py:1134
+#: src/app/bot/dialog/admin/edit_movie.py:1213
+#: src/app/bot/dialog/admin/edit_movie.py:1241
+#: src/app/bot/dialog/admin/edit_movie.py:1249
+#: src/app/bot/dialog/admin/edit_movie.py:1283
+#: src/app/bot/dialog/admin/edit_movie.py:1302
+#: src/app/bot/dialog/admin/edit_movie.py:1349
+#: src/app/bot/dialog/admin/edit_movie.py:1370
+#: src/app/bot/dialog/admin/edit_movie.py:1418
+#: src/app/bot/dialog/admin/main.py:102
+#: src/app/bot/dialog/admin/vip_management.py:22
 msgid "⬅️ Ortga"
 msgstr "⬅️ Ortga"
 
+#: src/app/bot/dialog/admin/admin_management.py:44
 msgid "🔄 Statusni o'zgartirish"
 msgstr "🔄 Statusni o'zgartirish"
 
+#: src/app/bot/dialog/admin/admin_management.py:45
 msgid "🎖 Darajani o'zgartirish"
 msgstr "🎖 Darajani o'zgartirish"
 
+#: src/app/bot/dialog/admin/admin_management.py:46
+#: src/app/bot/keyboards/inline.py:418 src/app/bot/keyboards/inline.py:603
 msgid "🗑 O'chirish"
 msgstr "🗑 O'chirish"
 
+#: src/app/bot/dialog/admin/admin_management.py:61
+#: src/app/bot/dialog/admin/admin_management.py:87
 msgid "Level 2 (Super)"
 msgstr "Level 2 (Super)"
 
+#: src/app/bot/dialog/admin/admin_management.py:61
+#: src/app/bot/dialog/admin/admin_management.py:86
 msgid "Level 1 (Admin)"
 msgstr "Level 1 (Admin)"
 
+#: src/app/bot/dialog/admin/admin_management.py:62
+#: src/app/bot/dialog/admin/vip_management.py:48
+#: src/app/bot/handlers/user/account.py:64
 msgid "Faol"
 msgstr "Faol"
 
+#: src/app/bot/dialog/admin/admin_management.py:62
 msgid "Nofaol"
 msgstr "Nofaol"
 
+#: src/app/bot/dialog/admin/admin_management.py:74
 msgid "❌ Foydalanuvchi topilmadi. Avval botga start bosgan bo'lishi kerak."
 msgstr "❌ Foydalanuvchi topilmadi. Avval botga start bosgan bo'lishi kerak."
 
+#: src/app/bot/dialog/admin/admin_management.py:107
 msgid "✅ Admin muvaffaqiyatli qo'shildi."
 msgstr "✅ Admin muvaffaqiyatli qo'shildi."
 
+#: src/app/bot/dialog/admin/admin_management.py:125
 msgid "✅ Status o'zgartirildi."
 msgstr "✅ Status o'zgartirildi."
 
+#: src/app/bot/dialog/admin/admin_management.py:135
 msgid "✅ Daraja o'zgartirildi."
 msgstr "✅ Daraja o'zgartirildi."
 
+#: src/app/bot/dialog/admin/admin_management.py:151
 msgid "✅ Admin o'chirildi."
 msgstr "✅ Admin o'chirildi."
 
+#: src/app/bot/dialog/admin/admin_management.py:156
+#, python-brace-format
 msgid "👥 <b>Adminlar ro'yxati</b> ({admins_count} ta):"
 msgstr "👥 <b>Adminlar ro'yxati</b> ({admins_count} ta):"
 
+#: src/app/bot/dialog/admin/admin_management.py:174
 msgid ""
 "👤 <b>Yangi admin qo'shish</b>\n"
 "\n"
@@ -637,6 +956,8 @@ msgstr ""
 "\n"
 "Foydalanuvchi ID yoki @username kiriting:"
 
+#: src/app/bot/dialog/admin/admin_management.py:181
+#, python-brace-format
 msgid ""
 "🎖 <b>Darajani tanlang:</b>\n"
 "\n"
@@ -646,6 +967,8 @@ msgstr ""
 "\n"
 "Foydalanuvchi: {new_admin_username} ({new_admin_id})"
 
+#: src/app/bot/dialog/admin/admin_management.py:191
+#, python-brace-format
 msgid ""
 "👤 <b>Admin ma'lumotlari:</b>\n"
 "\n"
@@ -661,220 +984,305 @@ msgstr ""
 "🎖 Daraja: {level_text}\n"
 "🔘 Status: {status_text}"
 
+#: src/app/bot/dialog/admin/backup.py:38
 msgid "📁 Полный бэкап ВСЕХ пользователей"
-msgstr "📁 Barcha foydalanuvchilar to'liq zaxirasi"
+msgstr "📁 BARCHA foydalanuvchilarning to'liq zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:61
 msgid "📂 Полный бэкап списка Избранного"
-msgstr "📂 Sevimlilar ro'yxati to'liq zaxirasi"
+msgstr "📂 Sevimlilarning to'liq zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:160
 msgid "🎬 BBARCHA filmlarning to'liq zaxirasi"
-msgstr "🎬 Barcha filmlarning to'liq zaxirasi"
+msgstr "🎬 BARCHA filmlarning to'liq zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:161
 msgid "📺 BARCHA seriallarning to'liq zaxirasi"
-msgstr "📺 Barcha seriallarning to'liq zaxirasi"
+msgstr "📺 BARCHA seriallarning to'liq zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:162
 msgid "📽 BARCHA epizodli filmlarning to'liq zaxirasi"
-msgstr "📽 Barcha epizodli filmlarning to'liq zaxirasi"
+msgstr "📽 BARCHA epizodli filmlarning to'liq zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:164
 msgid "🧸 BARCHA multfilmlarning to'liq zaxirasi"
-msgstr "🧸 Barcha multfilmlarning to'liq zaxirasi"
+msgstr "🧸 BARCHA multfilmlarning to'liq zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:165
 msgid "📺 BARCHA mult-seriallarning to'liq zaxirasi"
-msgstr "📺 Barcha mult-seriallarning to'liq zaxirasi"
+msgstr "📺 BARCHA mult-seriallarning to'liq zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:166
 msgid "📽 BARCHA epizodli multfilmlarning to'liq zaxirasi"
-msgstr "📽 Barcha epizodli multfilmlarning to'liq zaxirasi"
+msgstr "📽 BARCHA epizodli multfilmlarning to'liq zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:168
 msgid "🏮 BARCHA anime filmlarning to'liq zaxirasi"
-msgstr "🏮 Barcha anime filmlarning to'liq zaxirasi"
+msgstr "🏮 BARCHA anime filmlarning to'liq zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:169
 msgid "📺 BARCHA anime seriallarning to'liq zaxirasi"
-msgstr "📺 Barcha anime seriallarning to'liq zaxirasi"
+msgstr "📺 BARCHA anime seriallarning to'liq zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:170
 msgid "📽 BARCHA epizodli animelarning to'liq zaxirasi"
-msgstr "📽 Barcha epizodli animelarning to'liq zaxirasi"
+msgstr "📽 BARCHA epizodli animelarning to'liq zaxirasi"
 
-msgid ""
-"💾 <b>Меню бэкапа</b>\n"
-"\n"
-"Выберите тип данных для выгрузки:"
+#: src/app/bot/dialog/admin/backup.py:200
+msgid "💾 <b>Меню бэкапа</b>\n\nВыберите тип данных для выгрузки:"
 msgstr ""
 "💾 <b>Zaxira menyusi</b>\n"
 "\n"
-"Ma'lumot turini tanlang:"
+"Yuklab olish uchun ma'lumot turini tanlang:"
 
+#: src/app/bot/dialog/admin/backup.py:201
 msgid "👥 Бэкап пользователей"
 msgstr "👥 Foydalanuvchilar zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:202
 msgid "⭐ Бэкап избранного"
 msgstr "⭐ Sevimlilar zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:203
 msgid "🎬 Бэкап всех фильмов"
 msgstr "🎬 Barcha filmlar zaxirasi"
 
+#: src/app/bot/dialog/admin/backup.py:205
+#: src/app/bot/dialog/admin/referral.py:85
+#: src/app/bot/dialog/admin/referral.py:103
 msgid "⬅️ Назад"
-msgstr "⬅️ Ortga"
+msgstr "⬅️ Orqaga"
 
+#: src/app/bot/dialog/admin/edit_movie.py:85
 msgid "✅ Janrlar yangilandi!"
 msgstr "✅ Janrlar yangilandi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:106
+#, python-brace-format
 msgid "❌ {code} kodli kontent topilmadi!"
 msgstr "❌ {code} kodli kontent topilmadi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:259
 msgid "✅ Qism nomi yangilandi!"
 msgstr "✅ Qism nomi yangilandi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:269
 msgid "✅ Nomi yangilandi!"
 msgstr "✅ Nomi yangilandi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:301
 msgid "✅ Qism tavsifi yangilandi!"
 msgstr "✅ Qism tavsifi yangilandi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:315
 msgid "✅ Tavsif yangilandi!"
 msgstr "✅ Tavsif yangilandi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:337
 msgid "✅ Format yangilandi!"
 msgstr "✅ Format yangilandi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:360
 msgid "✅ Til yangilandi!"
 msgstr "✅ Til yangilandi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:368
+#, python-brace-format
 msgid "Tanlandi: {lang}"
 msgstr "Tanlandi: {lang}"
 
+#: src/app/bot/dialog/admin/edit_movie.py:380
+#, python-brace-format
 msgid "Track tanlandi: {lang}"
 msgstr "Track tanlandi: {lang}"
 
+#: src/app/bot/dialog/admin/edit_movie.py:403
 msgid "⚠️ Avval tilni tanlang!"
 msgstr "⚠️ Avval tilni tanlang!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:424
 msgid "✅ Til tracki o'chirildi!"
 msgstr "✅ Til tracki o'chirildi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:458
+#, python-brace-format
 msgid "✅ Qism film sifatida ajratildi! Yangi kod: {code}"
 msgstr "✅ Qism film sifatida ajratildi! Yangi kod: {code}"
 
+#: src/app/bot/dialog/admin/edit_movie.py:462
 msgid "✅ Kod muvaffaqiyatli o'zgartirildi!"
 msgstr "✅ Kod muvaffaqiyatli o'zgartirildi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:479
 msgid "❌ Video yoki fayl yuboring."
 msgstr "❌ Video yoki fayl yuboring."
 
+#: src/app/bot/dialog/admin/edit_movie.py:515
 msgid "⏳ Video tayyorlanmoqda (Local Worker)..."
 msgstr "⏳ Video tayyorlanmoqda (Local Worker)..."
 
+#: src/app/bot/dialog/admin/edit_movie.py:540
 msgid ""
-"🚀 Faylni yangilash vazifasi navbatga qo'shildi. Jarayon tugagach sizga "
-"xabar yuboriladi."
+"🚀 Faylni yangilash vazifasi navbatga qo'shildi. Jarayon tugagach sizga xabar"
+" yuboriladi."
 msgstr ""
-"🚀 Faylni yangilash vazifasi navbatga qo'shildi. Jarayon tugagach sizga "
-"xabar yuboriladi."
+"🚀 Faylni yangilash vazifasi navbatga qo'shildi. Jarayon tugagach sizga xabar"
+" yuboriladi."
 
+#: src/app/bot/dialog/admin/edit_movie.py:552
 msgid "❌ Rasm yuboring (foto yoki rasm fayl)."
 msgstr "❌ Rasm yuboring (foto yoki rasm fayl)."
 
+#: src/app/bot/dialog/admin/edit_movie.py:582
 msgid "✅ Muqova muvaffaqiyatli yangilandi!"
 msgstr "✅ Muqova muvaffaqiyatli yangilandi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:617
 msgid "✅ Muqova o'chirildi!"
 msgstr "✅ Muqova o'chirildi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:684
+#: src/app/bot/dialog/admin/edit_movie.py:693
+#, python-brace-format
 msgid "❌ {n}-qism allaqachon band!"
 msgstr "❌ {n}-qism allaqachon band!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:698
 msgid "✅ Qism raqami yangilandi!"
 msgstr "✅ Qism raqami yangilandi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:730
+#, python-brace-format
 msgid "❌ Sezon {s}, qism {n} allaqachon mavjud!"
 msgstr "❌ Sezon {s}, qism {n} allaqachon mavjud!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:734
 msgid "✅ Bu qismning sezon raqami yangilandi!"
 msgstr "✅ Bu qismning sezon raqami yangilandi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:741
+#, python-brace-format
 msgid "❌ {n}-sezon allaqachon mavjud!"
 msgstr "❌ {n}-sezon allaqachon mavjud!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:745
+#, python-brace-format
 msgid "✅ {old}-sezon {new}-sezonga o'zgartirildi!"
 msgstr "✅ {old}-sezon {new}-sezonga o'zgartirildi!"
 
+#: src/app/bot/dialog/admin/edit_movie.py:778
 msgid "✅ Muvaffaqiyatli o'chirildi."
 msgstr "✅ Muvaffaqiyatli o'chirildi."
 
+#: src/app/bot/dialog/admin/edit_movie.py:799
 msgid "✅ Qism muvaffaqiyatli o'chirildi."
 msgstr "✅ Qism muvaffaqiyatli o'chirildi."
 
+#: src/app/bot/dialog/admin/edit_movie.py:814
+#, python-brace-format
 msgid "✅ {season}-sezon o'chirildi."
 msgstr "✅ {season}-sezon o'chirildi."
 
+#: src/app/bot/dialog/admin/edit_movie.py:844
 msgid "🎬 Film"
 msgstr "🎬 Film"
 
+#: src/app/bot/dialog/admin/edit_movie.py:844
 msgid "🎞 Serial"
 msgstr "🎞 Serial"
 
+#: src/app/bot/dialog/admin/edit_movie.py:844
 msgid "🎥 Mini-serial"
-msgstr "🎥 Epizodli film"
+msgstr "🎥 Mini-serial"
 
+#: src/app/bot/dialog/admin/edit_movie.py:845
 msgid "🧸 Mult film"
 msgstr "🧸 Mult film"
 
+#: src/app/bot/dialog/admin/edit_movie.py:845
 msgid "🎞 Mult serial"
 msgstr "🎞 Mult serial"
 
+#: src/app/bot/dialog/admin/edit_movie.py:845
 msgid "🎥 Mult mini-serial"
-msgstr "🎥 Epizodli multfilm"
+msgstr "🎥 Mult mini-serial"
 
+#: src/app/bot/dialog/admin/edit_movie.py:846
 msgid "🏮 Anime film"
 msgstr "🏮 Anime film"
 
+#: src/app/bot/dialog/admin/edit_movie.py:846
 msgid "🎞 Anime serial"
 msgstr "🎞 Anime serial"
 
+#: src/app/bot/dialog/admin/edit_movie.py:846
 msgid "🎥 Anime mini-serial"
-msgstr "🎥 Epizodli anime"
+msgstr "🎥 Anime mini-serial"
 
+#: src/app/bot/dialog/admin/edit_movie.py:925
 msgid "sezon"
 msgstr "sezon"
 
+#: src/app/bot/dialog/admin/edit_movie.py:997
 msgid "ko'rsatilmagan"
 msgstr "ko'rsatilmagan"
 
+#: src/app/bot/dialog/admin/edit_movie.py:999
 msgid "tanlanmagan"
 msgstr "tanlanmagan"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1025
 msgid "Noma'lum"
 msgstr "Noma'lum"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1100
+#, python-brace-format
 msgid "📝 <b>Yangi nom kiriting ({prefix}{target}):</b>"
 msgstr "📝 <b>Yangi nom kiriting ({prefix}{target}):</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1101
+#, python-brace-format
 msgid "📄 <b>Yangi tavsif kiriting ({prefix}{target}):</b>"
 msgstr "📄 <b>Yangi tavsif kiriting ({prefix}{target}):</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1102
+#, python-brace-format
 msgid "🔢 <b>Yangi kod (ID) kiriting ({prefix}{target}):</b>"
 msgstr "🔢 <b>Yangi kod (ID) kiriting ({prefix}{target}):</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1103
+#, python-brace-format
 msgid "📹 <b>Yangi video fayl yuboring ({prefix}{target}):</b>"
 msgstr "📹 <b>Yangi video fayl yuboring ({prefix}{target}):</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1104
 msgid "📅 <b>Yangi sezon raqamini kiriting:</b>"
 msgstr "📅 <b>Yangi sezon raqamini kiriting:</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1105
 msgid "🔢 <b>Yangi qism raqamini kiriting:</b>"
 msgstr "🔢 <b>Yangi qism raqamini kiriting:</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1106
+#, python-brace-format
 msgid "💿 <b>Yangi format kiriting ({prefix}{target}):</b>"
 msgstr "💿 <b>Yangi format kiriting ({prefix}{target}):</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1107
+#, python-brace-format
 msgid "🌍 <b>Yangi til kiriting ({prefix}{target}):</b>"
 msgstr "🌍 <b>Yangi til kiriting ({prefix}{target}):</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1134
 msgid "⬅️ Bekor"
 msgstr "⬅️ Bekor"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1150
 msgid "🔢 <b>Kontent kodini (ID) kiriting:</b>"
 msgstr "🔢 <b>Kontent kodini (ID) kiriting:</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1160
+#, python-brace-format
 msgid ""
 "📋 <b>MA'LUMOT:</b>\n"
 "━━━━━━━━━━━━━━━━━━━━━\n"
@@ -892,6 +1300,8 @@ msgstr ""
 "<b>🎭 Janrlar:</b> {genres_text}\n"
 "<b>📍 Tanlangan:</b> {selected_lang_label}\n"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1168
+#, python-brace-format
 msgid ""
 "<b>📊 Sifat:</b> {quality}\n"
 "<b>🌍 Tracklar:</b> {language}\n"
@@ -899,6 +1309,8 @@ msgstr ""
 "<b>📊 Sifat:</b> {quality}\n"
 "<b>🌍 Tracklar:</b> {language}\n"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1169
+#, python-brace-format
 msgid ""
 "<b>📅 Sezonlar:</b> {total_seasons}\n"
 "<b>🎞 Qismlar:</b> {total_eps}\n"
@@ -906,9 +1318,13 @@ msgstr ""
 "<b>📅 Sezonlar:</b> {total_seasons}\n"
 "<b>🎞 Qismlar:</b> {total_eps}\n"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1170
+#, python-brace-format
 msgid "<b>🎞 Qismlar:</b> {total_eps}\n"
 msgstr "<b>🎞 Qismlar:</b> {total_eps}\n"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1171
+#, python-brace-format
 msgid ""
 "<b>📄 Tavsif:</b>\n"
 "{caption}\n"
@@ -916,6 +1332,7 @@ msgstr ""
 "<b>📄 Tavsif:</b>\n"
 "{caption}\n"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1172
 msgid ""
 "━━━━━━━━━━━━━━━━━━━━━\n"
 "<b>AMALLAR:</b>"
@@ -923,39 +1340,56 @@ msgstr ""
 "━━━━━━━━━━━━━━━━━━━━━\n"
 "<b>AMALLAR:</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1178
+#: src/app/bot/dialog/admin/edit_movie.py:1337
 msgid "✏️ Nomini o'zgartirish"
 msgstr "✏️ Nomini o'zgartirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1180
+#: src/app/bot/dialog/admin/edit_movie.py:1339
 msgid "📄 Tavsifni o'zgartirish"
 msgstr "📄 Tavsifni o'zgartirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1182
 msgid "🔢 Kod ID o'zgartirish"
 msgstr "🔢 Kod ID o'zgartirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1184
+#: src/app/bot/dialog/admin/edit_movie.py:1334
 msgid "🌍 Tillar"
 msgstr "🌍 Tillar"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1185
 msgid "📹 Video o'zgartirish"
 msgstr "📹 Video o'zgartirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1187
 msgid "📷 Muqova o'zgartirish"
 msgstr "📷 Muqova o'zgartirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1189
+#: src/app/bot/dialog/admin/edit_movie.py:1333
 msgid "🎭 Janrlarni o'zgartirish"
 msgstr "🎭 Janrlarni o'zgartirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1190
 msgid "📅 Sezonlar boshqaruvi"
 msgstr "📅 Sezonlar boshqaruvi"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1191
 msgid "🎞 Qismlar boshqaruvi"
 msgstr "🎞 Qismlar boshqaruvi"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1192
 msgid "🗑 To'liq o'chirish"
 msgstr "🗑 To'liq o'chirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1194
 msgid "⬅️ Qidiruvga"
 msgstr "⬅️ Qidiruvga"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1199
+#, python-brace-format
 msgid ""
 "🌍 <b>Tillar boshqaruvi:</b>\n"
 "«{name}»"
@@ -963,15 +1397,26 @@ msgstr ""
 "🌍 <b>Tillar boshqaruvi:</b>\n"
 "«{name}»"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1211
 msgid "🗑 Tanlangan tilni o'chirish"
 msgstr "🗑 Tanlangan tilni o'chirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1220
+#: src/app/bot/dialog/admin/edit_movie.py:1227
+#: src/app/bot/dialog/admin/edit_movie.py:1234
+#: src/app/bot/dialog/admin/edit_movie.py:1255
+#: src/app/bot/dialog/admin/edit_movie.py:1272
+#: src/app/bot/dialog/admin/edit_movie.py:1356
+#: src/app/bot/dialog/admin/edit_movie.py:1363
 msgid "« Ortga"
 msgstr "« Ortga"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1239
+#, python-brace-format
 msgid "📹 {file_prompt}"
 msgstr "📹 {file_prompt}"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1246
 msgid ""
 "📷 <b>Yangi muqova rasmini yuboring:</b>\n"
 "<i>(O'chirib tashlash uchun quyidagi tugmani bosing)</i>"
@@ -979,27 +1424,37 @@ msgstr ""
 "📷 <b>Yangi muqova rasmini yuboring:</b>\n"
 "<i>(O'chirib tashlash uchun quyidagi tugmani bosing)</i>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1248
 msgid "🗑 Muqovani o'chirish"
 msgstr "🗑 Muqovani o'chirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1277
 msgid "📅 <b>Sezonni tanlang:</b>"
 msgstr "📅 <b>Sezonni tanlang:</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1288
+#, python-brace-format
 msgid "🎞 <b>Qismlar ({selected_season}-sezon):</b>"
 msgstr "🎞 <b>Qismlar ({selected_season}-sezon):</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1289
 msgid "🎞 <b>Qismni tanlang:</b>"
 msgstr "🎞 <b>Qismni tanlang:</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1296
 msgid "🔢 Sezon raqamini o'zgartirish"
 msgstr "🔢 Sezon raqamini o'zgartirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1298
 msgid "🗑 Butun sezonni o'chirish"
 msgstr "🗑 Butun sezonni o'chirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1301
 msgid "⬅️ Sezonlarga"
 msgstr "⬅️ Sezonlarga"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1310
+#, python-brace-format
 msgid ""
 "🛠 <b>QISM (Sezon {selected_ep[season]}, Qism {selected_ep[episode]}):</b>\n"
 "━━━━━━━━━━━━━━━━━━━━━\n"
@@ -1023,6 +1478,8 @@ msgstr ""
 "<b>📄 Tavsif:</b>\n"
 "{selected_ep[caption]}"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1321
+#, python-brace-format
 msgid ""
 "🛠 <b>QISM (Raqam {selected_ep[episode]}):</b>\n"
 "━━━━━━━━━━━━━━━━━━━━━\n"
@@ -1035,7 +1492,7 @@ msgid ""
 "<b>📄 Tavsif:</b>\n"
 "{selected_ep[caption]}"
 msgstr ""
-"🛠 <b>QISM ({selected_ep[episode]}-qism):</b>\n"
+"🛠 <b>QISM (Raqam {selected_ep[episode]}):</b>\n"
 "━━━━━━━━━━━━━━━━━━━━━\n"
 "<b>🔢 Kod ID:</b> <code>{selected_ep[code]}</code>\n"
 "<b>🎬 Nomi:</b> {selected_ep[name]}\n"
@@ -1046,24 +1503,33 @@ msgstr ""
 "<b>📄 Tavsif:</b>\n"
 "{selected_ep[caption]}"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1335
 msgid "📹 Video faylni o'zgartirish"
 msgstr "📹 Video faylni o'zgartirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1341
 msgid "🔢 Filmga ajratish (Yangi kod)"
 msgstr "🔢 Filmga ajratish (Yangi kod)"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1343
 msgid "📅 Sezon raqamini o'zgartirish"
 msgstr "📅 Sezon raqamini o'zgartirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1345
 msgid "🔢 Qism raqamini o'zgartirish"
 msgstr "🔢 Qism raqamini o'zgartirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1347
 msgid "🗑 Qismni o'chirish"
 msgstr "🗑 Qismni o'chirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1368
+#, python-brace-format
 msgid "🔢 <b>{selected_season}-sezon uchun yangi raqam:</b>"
 msgstr "🔢 <b>{selected_season}-sezon uchun yangi raqam:</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1375
+#, python-brace-format
 msgid ""
 "⚠️ <b>TO'LIQ O'CHIRISH?</b>\n"
 "\n"
@@ -1073,21 +1539,37 @@ msgstr ""
 "\n"
 "«{name}» (ID: {code})?"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1376
+#: src/app/bot/dialog/admin/edit_movie.py:1388
+#: src/app/bot/dialog/admin/edit_movie.py:1395
 msgid "✅ Ha, o'chirish"
 msgstr "✅ Ha, o'chirish"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1377
+#: src/app/bot/dialog/admin/edit_movie.py:1389
+#: src/app/bot/dialog/admin/edit_movie.py:1396
 msgid "❌ Yo'q"
 msgstr "❌ Yo'q"
 
-msgid "⚠️ <b>S{selected_ep[season]} Q{selected_ep[episode]} o'chirilsinmi?</b>"
-msgstr "⚠️ <b>S{selected_ep[season]} Q{selected_ep[episode]} o'chirilsinmi?</b>"
+#: src/app/bot/dialog/admin/edit_movie.py:1383
+#, python-brace-format
+msgid ""
+"⚠️ <b>S{selected_ep[season]} Q{selected_ep[episode]} o'chirilsinmi?</b>"
+msgstr ""
+"⚠️ <b>S{selected_ep[season]} Q{selected_ep[episode]} o'chirilsinmi?</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1385
+#, python-brace-format
 msgid "⚠️ <b>{selected_ep[episode]}-qism o'chirilsinmi?</b>"
 msgstr "⚠️ <b>{selected_ep[episode]}-qism o'chirilsinmi?</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1394
+#, python-brace-format
 msgid "⚠️ <b>{selected_season}-sezon o'chirilsinmi?</b>"
 msgstr "⚠️ <b>{selected_season}-sezon o'chirilsinmi?</b>"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1402
+#, python-brace-format
 msgid ""
 "🎭 <b>«{name}» janrlari:</b>\n"
 "<i>(O'zgartirish uchun bosing)</i>\n"
@@ -1099,78 +1581,95 @@ msgstr ""
 "\n"
 "<b>Tanlangan:</b> {selected_text}"
 
+#: src/app/bot/dialog/admin/edit_movie.py:1417
 msgid "✅ Saqlash"
 msgstr "✅ Saqlash"
 
+#: src/app/bot/dialog/admin/main.py:80
 msgid "Daromadlar:"
 msgstr "Daromadlar:"
 
+#: src/app/bot/dialog/admin/main.py:81
 msgid "Bugun:"
 msgstr "Bugun:"
 
+#: src/app/bot/dialog/admin/main.py:82
 msgid "Hafta:"
 msgstr "Hafta:"
 
+#: src/app/bot/dialog/admin/main.py:83
 msgid "Oy:"
 msgstr "Oy:"
 
+#: src/app/bot/dialog/admin/main.py:84
 msgid "Yil:"
 msgstr "Yil:"
 
+#: src/app/bot/dialog/admin/main.py:85
 msgid "Jami:"
 msgstr "Jami:"
 
+#: src/app/bot/dialog/admin/main.py:120
 msgid "🟢 Worker: Onlayn"
 msgstr "🟢 Worker: Onlayn"
 
+#: src/app/bot/dialog/admin/main.py:122
 msgid "🔴 Worker: Offlayn (Lokal kompyuter yoqilmagan)"
 msgstr "🔴 Worker: Offlayn (Lokal kompyuter yoqilmagan)"
 
+#: src/app/bot/dialog/admin/main.py:126
 msgid "ADMIN_PANEL_TITLE"
-msgstr ""
-"👨‍💻 <b>Admin Panel</b>\n"
-"\n"
-"Bo'limni tanlang:"
+msgstr "Admin Panel"
 
+#: src/app/bot/dialog/admin/main.py:127
 msgid "BTN_ADD_MOVIE"
-msgstr "🎬 Film qo'shish"
+msgstr "🎥 Kino Qo'shish"
 
+#: src/app/bot/dialog/admin/main.py:128
 msgid "BTN_EDIT_DELETE"
-msgstr "✏️ Tahrirlash / O'chirish"
+msgstr "✏️ Tahrirlash/O'chirish"
 
+#: src/app/bot/dialog/admin/main.py:129
 msgid "BTN_CHANNELS_BOTS"
-msgstr "📢 Kanallar va Botlar"
+msgstr "📃 Kanallar va Botlar"
 
+#: src/app/bot/dialog/admin/main.py:130
 msgid "BTN_SEND_BROADCAST"
-msgstr "📨 Xabar yuborish"
+msgstr "📢 Xabar Yuborish"
 
+#: src/app/bot/dialog/admin/main.py:131
 msgid "BTN_REFERRALS"
-msgstr "🔗 Referallar"
+msgstr "👤 Referallar"
 
+#: src/app/bot/dialog/admin/main.py:132
 msgid "BTN_STATISTICS"
 msgstr "📊 Statistika"
 
+#: src/app/bot/dialog/admin/main.py:133
 msgid "BTN_VIP_MANAGEMENT"
-msgstr "💎 VIP boshqaruvi"
+msgstr "💎 VIP Boshqaruvi"
 
-msgid "👥 Adminlarni boshqarish"
+#: src/app/bot/dialog/admin/main.py:134
+msgid "ADMIN_MANAGMENT"
 msgstr "👥 Adminlarni boshqarish"
 
-msgid "ADMIN_MANAGMENT"
-msgstr "👤 Adminlarni boshqarish"
-
+#: src/app/bot/dialog/admin/main.py:135
 msgid "BTN_BACKUP"
-msgstr "💾 Backup"
+msgstr "💾 Zaxiralash"
 
+#: src/app/bot/dialog/admin/main.py:136
 msgid "BTN_CLOSE"
 msgstr "❌ Yopish"
 
+#: src/app/bot/dialog/admin/main.py:137
 msgid "BTN_CANCEL"
-msgstr "❌ Bekor"
+msgstr "❌ Bekor qilish"
 
+#: src/app/bot/dialog/admin/main.py:138
 msgid "BTN_CONFIRM_SEND"
-msgstr "✅ Ha, yuborish"
+msgstr "✅ Yuborish tasdiqlash"
 
+#: src/app/bot/dialog/admin/main.py:140
 msgid ""
 "📨 <b>Broadcast</b>\n"
 "\n"
@@ -1182,6 +1681,7 @@ msgstr ""
 "Barcha foydalanuvchilarga yuboriladigan xabarni yuboring:\n"
 "<i>(matn, rasm, video — istalgan format)</i>"
 
+#: src/app/bot/dialog/admin/main.py:143
 msgid ""
 "⚠️ <b>Broadcast tasdiqlash</b>\n"
 "\n"
@@ -1191,6 +1691,7 @@ msgstr ""
 "\n"
 "Xabarni barcha foydalanuvchilarga yuborishni tasdiqlaysizmi?"
 
+#: src/app/bot/dialog/admin/main.py:155 src/app/bot/dialog/admin/main.py:169
 msgid ""
 "⚠️ Lokal kompyuterda Worker ishga tushirilmagan! Iltimos, oldin workerni "
 "yoqing."
@@ -1198,12 +1699,16 @@ msgstr ""
 "⚠️ Lokal kompyuterda Worker ishga tushirilmagan! Iltimos, oldin workerni "
 "yoqing."
 
+#: src/app/bot/dialog/admin/main.py:214
 msgid "❌ Xabar topilmadi"
 msgstr "❌ Xabar topilmadi"
 
+#: src/app/bot/dialog/admin/main.py:234
 msgid "🚀 Xabar yuborish fonda boshlandi. Tez orada hisobot olasiz."
 msgstr "🚀 Xabar yuborish fonda boshlandi. Tez orada hisobot olasiz."
 
+#: src/app/bot/dialog/admin/main.py:282
+#, python-brace-format
 msgid ""
 "📊 <b>Statistika:</b>\n"
 "\n"
@@ -1233,12 +1738,15 @@ msgstr ""
 "🌍 <b>Top tillar:</b>\n"
 "{languages}"
 
+#: src/app/bot/dialog/admin/referral.py:55
 msgid "✅ Успешно создано!"
 msgstr "✅ Muvaffaqiyatli yaratildi!"
 
+#: src/app/bot/dialog/admin/referral.py:64
 msgid "✅ Удалено"
 msgstr "✅ O'chirildi"
 
+#: src/app/bot/dialog/admin/referral.py:70
 msgid ""
 "🔗 <b>Рефералы</b>\n"
 "\n"
@@ -1246,11 +1754,13 @@ msgid ""
 msgstr ""
 "🔗 <b>Referallar</b>\n"
 "\n"
-"Ro'yxatdan tanlang yoki yangi yarating:"
+"Ro'yxatdan tanlang yoki yangisini yarating:"
 
+#: src/app/bot/dialog/admin/referral.py:84
 msgid "➕ Создать реферала"
 msgstr "➕ Referal yaratish"
 
+#: src/app/bot/dialog/admin/referral.py:90
 msgid ""
 "✏️ <b>Новый реферал:</b>\n"
 "\n"
@@ -1260,9 +1770,12 @@ msgstr ""
 "\n"
 "Nomini kiriting:"
 
+#: src/app/bot/dialog/admin/referral.py:92
 msgid "❌ Отмена"
 msgstr "❌ Bekor qilish"
 
+#: src/app/bot/dialog/admin/referral.py:96
+#, python-brace-format
 msgid ""
 "ℹ️ <b>Информация о реферале:</b>\n"
 "\n"
@@ -1274,63 +1787,78 @@ msgid ""
 "🔗 <b>Ссылка:</b>\n"
 "<code>{bot_link}?start=ref_{referral.referral_id}</code>"
 msgstr ""
-"ℹ️ <b>Referal ma'lumotlari:</b>\n"
+"ℹ️ <b>Referal ma'lumoti:</b>\n"
 "\n"
 "🆔 ID: {referral.referral_id}\n"
 "🏷 Nomi: {referral.name}\n"
-"👥 Taklif qilingan: {referral.joined_count}\n"
+"👥 Taklif qilinganlar: {referral.joined_count}\n"
 "📅 Yaratilgan: {referral.created_at}\n"
 "\n"
 "🔗 <b>Havola:</b>\n"
 "<code>{bot_link}?start=ref_{referral.referral_id}</code>"
 
+#: src/app/bot/dialog/admin/referral.py:102
 msgid "🗑 Удалить"
 msgstr "🗑 O'chirish"
 
+#: src/app/bot/dialog/admin/vip_management.py:23
 msgid "⬅️ Qidiruvga qaytish"
 msgstr "⬅️ Qidiruvga qaytish"
 
+#: src/app/bot/dialog/admin/vip_management.py:24
 msgid "+1 kun"
 msgstr "+1 kun"
 
+#: src/app/bot/dialog/admin/vip_management.py:25
 msgid "+10 kun"
 msgstr "+10 kun"
 
+#: src/app/bot/dialog/admin/vip_management.py:26
 msgid "+1 oy"
 msgstr "+1 oy"
 
+#: src/app/bot/dialog/admin/vip_management.py:27
 msgid "♾ Cheksiz"
 msgstr "♾ Cheksiz"
 
+#: src/app/bot/dialog/admin/vip_management.py:28
 msgid "❌ VIPni bekor qilish"
 msgstr "❌ VIPni bekor qilish"
 
+#: src/app/bot/dialog/admin/vip_management.py:41
+#: src/app/bot/handlers/user/account.py:70
 msgid "Cheksiz"
 msgstr "Cheksiz"
 
+#: src/app/bot/dialog/admin/vip_management.py:48
+#: src/app/bot/handlers/user/account.py:64
 msgid "Mavjud emas"
 msgstr "Mavjud emas"
 
+#: src/app/bot/dialog/admin/vip_management.py:66
 msgid "❌ Foydalanuvchi topilmadi."
 msgstr "❌ Foydalanuvchi topilmadi."
 
+#: src/app/bot/dialog/admin/vip_management.py:103
 msgid "✅ VIP status berildi."
 msgstr "✅ VIP status berildi."
 
+#: src/app/bot/dialog/admin/vip_management.py:116
 msgid "❌ VIP status olib qo'yildi."
 msgstr "❌ VIP status olib qo'yildi."
 
+#: src/app/bot/dialog/admin/vip_management.py:120
 msgid ""
 "🔍 <b>Foydalanuvchini qidirish</b>\n"
 "\n"
-"Foydalanuvchi username (masalan: @username) yoki telegram ID sini "
-"yuboring:"
+"Foydalanuvchi username (masalan: @username) yoki telegram ID sini yuboring:"
 msgstr ""
 "🔍 <b>Foydalanuvchini qidirish</b>\n"
 "\n"
-"Foydalanuvchi username (masalan: @username) yoki telegram ID sini "
-"yuboring:"
+"Foydalanuvchi username (masalan: @username) yoki telegram ID sini yuboring:"
 
+#: src/app/bot/dialog/admin/vip_management.py:127
+#, python-brace-format
 msgid ""
 "👤 <b>Foydalanuvchi ma'lumotlari:</b>\n"
 "\n"
@@ -1346,20 +1874,21 @@ msgstr ""
 "💎 VIP: {vip_status_text}\n"
 "📅 Muddati: {expiry}"
 
+#: src/app/bot/handlers/start.py:74
 msgid ""
 "<b>🎁 Tabriklaymiz!</b>\n"
 "\n"
-"Siz 5 ta do'stingizni taklif qildingiz va <b>3 kunlik VIP</b> statusiga "
-"ega bo'ldingiz! 🍿"
+"Siz 5 ta do'stingizni taklif qildingiz va <b>3 kunlik VIP</b> statusiga ega bo'ldingiz! 🍿"
 msgstr ""
 "<b>🎁 Tabriklaymiz!</b>\n"
 "\n"
-"Siz 5 ta do'stingizni taklif qildingiz va <b>3 kunlik VIP</b> statusiga "
-"ega bo'ldingiz! 🍿"
+"Siz 5 ta do'stingizni taklif qildingiz va <b>3 kunlik VIP</b> statusiga ega bo'ldingiz! 🍿"
 
+#: src/app/bot/handlers/admin/check.py:73 src/app/bot/handlers/start.py:103
 msgid "Do'stim"
 msgstr "Do'stim"
 
+#: src/app/bot/handlers/start.py:111
 msgid ""
 "🇺🇿 Iltimos, tilni tanlang:\n"
 "🇷🇺 Пожалуйста, выберите язык:\n"
@@ -1369,6 +1898,10 @@ msgstr ""
 "🇷🇺 Пожалуйста, выберите язык:\n"
 "🇺🇸 Please select a language:"
 
+#: src/app/bot/handlers/admin/check.py:78
+#: src/app/bot/handlers/admin/check_sub_channel.py:113
+#: src/app/bot/handlers/start.py:135 src/app/bot/handlers/user/language.py:53
+#, python-brace-format
 msgid ""
 "<b>👋 Salom {name}</b>\n"
 "\n"
@@ -1382,36 +1915,51 @@ msgstr ""
 "\n"
 "<b>🍿 Kino kodini yuboring:</b>"
 
+#: src/app/bot/handlers/admin/check.py:90
+#: src/app/bot/handlers/admin/check.py:98
 msgid "Botdan foydalanish uchun quyidagi kanallarga obuna bo'ling 👇"
 msgstr "Botdan foydalanish uchun quyidagi kanallarga obuna bo'ling 👇"
 
+#: src/app/bot/handlers/admin/check_sub_channel.py:42
+#: src/app/bot/handlers/admin/check_sub_channel.py:70
 msgid "Botdan foydalanish uchun ushbu kanallarga obuna bo'ling 👇"
 msgstr "Botdan foydalanish uchun ushbu kanallarga obuna bo'ling 👇"
 
+#: src/app/bot/handlers/admin/check_sub_channel.py:94
 msgid "❌ Siz hali hamma kanallarga obuna bo'lmadingiz!"
 msgstr "❌ Siz hali hamma kanallarga obuna bo'lmadingiz!"
 
+#: src/app/bot/handlers/user/account.py:47
 msgid "❌ Ma'lumot topilmadi."
 msgstr "❌ Ma'lumot topilmadi."
 
+#: src/app/bot/handlers/user/account.py:70
+#: src/app/bot/handlers/user/account.py:73
+#: src/app/bot/handlers/user/account.py:409
 msgid "Muddati:"
 msgstr "Muddati:"
 
+#: src/app/bot/handlers/user/account.py:80
 msgid "Profil"
 msgstr "Profil"
 
+#: src/app/bot/handlers/user/account.py:82
 msgid "VIP holati:"
 msgstr "VIP holati:"
 
+#: src/app/bot/handlers/user/account.py:83
 msgid "Takliflar:"
 msgstr "Takliflar:"
 
+#: src/app/bot/handlers/user/account.py:83
 msgid "ta"
 msgstr "ta"
 
+#: src/app/bot/handlers/user/account.py:84
 msgid "Havola:"
 msgstr "Havola:"
 
+#: src/app/bot/handlers/user/account.py:90
 msgid ""
 "🍿 Zo'r bot ekan, filmlarni yuqori formatda ko'ryapman! Senga ham tavsiya "
 "qilaman:"
@@ -1419,93 +1967,139 @@ msgstr ""
 "🍿 Zo'r bot ekan, filmlarni yuqori formatda ko'ryapman! Senga ham tavsiya "
 "qilaman:"
 
+#: src/app/bot/handlers/user/account.py:99
 msgid "Botni ulashish"
 msgstr "Botni ulashish"
 
+#: src/app/bot/handlers/user/account.py:104
+#: src/app/bot/handlers/user/account.py:136
 msgid "To'lovlar tarixi"
 msgstr "To'lovlar tarixi"
 
+#: src/app/bot/handlers/user/account.py:110
+#: src/app/bot/handlers/user/account.py:146
 msgid "VIP sotib olish"
 msgstr "VIP sotib olish"
 
+#: src/app/bot/handlers/user/account.py:129
 msgid "To'lovlar tarixi bo'sh."
 msgstr "To'lovlar tarixi bo'sh."
 
+#: src/app/bot/handlers/user/account.py:171
 msgid "VIP Obuna"
 msgstr "VIP Obuna"
 
+#: src/app/bot/handlers/user/account.py:172
 msgid "Imkoniyatlar:"
 msgstr "Imkoniyatlar:"
 
+#: src/app/bot/handlers/user/account.py:173
 msgid "Yuqori sifat (720p, 1080p)"
-msgstr "Yuqori sifat (720p, 1080p)"
+msgstr "Yuqori sifat (1080p, 720p, 480p)"
 
+#: src/app/bot/handlers/user/account.py:174
 msgid "Reklamasiz foydalanish"
-msgstr "Reklamasiz foydalanish"
+msgstr "Reklamasiz va majburiy obunasiz foydalanish"
 
+#: src/app/bot/handlers/user/account.py:175
 msgid "Filmlarni yuklab olish"
 msgstr "Filmlarni yuklab olish"
 
+#: src/app/bot/handlers/user/account.py:176
 msgid "Narxlar:"
 msgstr "Narxlar:"
 
+#: src/app/bot/handlers/user/account.py:188
 msgid "1 kun: 3,000 so'm / 10 Stars"
 msgstr "1 kun: 3,000 so'm / 10 Stars"
 
-msgid "10 kun: 15,000 so'm / 50 Stars"
-msgstr "10 kun: 15,000 so'm / 50 Stars"
+#: src/app/bot/handlers/user/account.py:189
+msgid "10 kun: 18,000 so'm / 60 Stars"
+msgstr "10 kun: 18,000 so'm / 60 Stars"
 
-msgid "30 kun: 25,000 so'm / 85 Stars"
-msgstr "30 kun: 25,000 so'm / 85 Stars"
+#: src/app/bot/handlers/user/account.py:190
+msgid "30 kun: 29,000 so'm / 99 Stars"
+msgstr "30 kun: 29,000 so'm / 99 Stars"
 
+#: src/app/bot/handlers/user/account.py:191
+msgid "90 kun: 69,000 so'm / 240 Stars"
+msgstr "90 kun: 69,000 so'm / 240 Stars"
+
+#: src/app/bot/handlers/user/account.py:192
 msgid "5 ta do'stingizni taklif qiling va 3 kunlik VIP bepul oling!"
 msgstr "5 ta do'stingizni taklif qiling va 3 kunlik VIP bepul oling!"
 
+#: src/app/bot/handlers/user/account.py:187
 msgid "1 kun"
 msgstr "1 kun"
 
+#: src/app/bot/handlers/user/account.py:204
 msgid "10 kun"
 msgstr "10 kun"
 
+#: src/app/bot/handlers/user/account.py:208
 msgid "30 kun"
 msgstr "30 kun"
 
+#: src/app/bot/handlers/user/account.py:212
+msgid "3 oy (90 kun)"
+msgstr "3 oy (90 kun)"
+
+#: src/app/bot/handlers/user/account.py:197
+msgid "30 kun"
+msgstr "30 kun"
+
+#: src/app/bot/handlers/user/account.py:220
 msgid "Xatolik."
 msgstr "Xatolik."
 
+#: src/app/bot/handlers/user/account.py:224
 msgid "To'lov usuli"
 msgstr "To'lov usuli"
 
+#: src/app/bot/handlers/user/account.py:226
 msgid "Click (Humo, Uzcard):"
 msgstr "Click (Humo, Uzcard):"
 
+#: src/app/bot/handlers/user/account.py:226
 msgid "so'm"
 msgstr "so'm"
 
+#: src/app/bot/handlers/user/account.py:227
 msgid "Stars:"
 msgstr "Stars:"
 
+#: src/app/bot/handlers/user/account.py:234
 msgid "Click (Humo, Uzcard)"
 msgstr "Click (Humo, Uzcard)"
 
+#: src/app/bot/handlers/user/account.py:240
 msgid "Payme (Humo, Uzcard)"
 msgstr "Payme (Humo, Uzcard)"
 
+#: src/app/bot/handlers/user/account.py:246
 msgid "Stars (XTR)"
 msgstr "Stars (XTR)"
 
+#: src/app/bot/handlers/user/account.py:251
 msgid "Orqaga"
-msgstr "Orqaga"
+msgstr "⬅️ Orqaga"
 
+#: src/app/bot/handlers/user/account.py:275
 msgid "❌ Tarif topilmadi."
 msgstr "❌ Tarif topilmadi."
 
+#: src/app/bot/handlers/user/account.py:292
+#: src/app/bot/handlers/user/account.py:306
 msgid "❌ Xatolik yuzaga keldi. Iltimos, keyinroq urinib ko'ring."
 msgstr "❌ Xatolik yuzaga keldi. Iltimos, keyinroq urinib ko'ring."
 
+#: src/app/bot/handlers/user/account.py:320
+#, python-brace-format
 msgid "{days} kunlik VIP obuna uchun to'lov"
 msgstr "{days} kunlik VIP obuna uchun to'lov"
 
+#: src/app/bot/handlers/user/account.py:338
 msgid ""
 "❌ To'lov provayderi tokeni noto'g'ri. BotFather'dan olingan tokenni "
 "tekshiring."
@@ -1513,24 +2107,35 @@ msgstr ""
 "❌ To'lov provayderi tokeni noto'g'ri. BotFather'dan olingan tokenni "
 "tekshiring."
 
+#: src/app/bot/handlers/user/account.py:345
+#, python-brace-format
 msgid "❌ Hisob-faktura yuborishda xatolik yuz berdi: {error}"
 msgstr "❌ Hisob-faktura yuborishda xatolik yuz berdi: {error}"
 
+#: src/app/bot/handlers/user/account.py:407
 msgid "To'lov muvaffaqiyatli!"
 msgstr "To'lov muvaffaqiyatli!"
 
+#: src/app/bot/handlers/user/account.py:408
 msgid "VIP:"
 msgstr "VIP:"
 
+#: src/app/bot/handlers/user/account.py:408
 msgid "kun"
 msgstr "kun"
 
+#: src/app/bot/handlers/user/favorite_movies.py:30
 msgid "😔 <b>Siz hali hech nima saqlamagansiz</b>"
 msgstr "😔 <b>Siz hali hech nima saqlamagansiz</b>"
 
+#: src/app/bot/handlers/user/favorite_movies.py:33
 msgid "📬 <b>Sizning filmlar to'plamingiz</b>\n"
 msgstr "📬 <b>Sizning filmlar to'plamingiz</b>\n"
 
+#: src/app/bot/handlers/user/favorite_movies.py:77
+#: src/app/bot/handlers/user/favorite_movies.py:97
+#: src/app/bot/handlers/user/favorite_movies.py:117
+#, python-brace-format
 msgid ""
 "{icon} <b>{name}</b>\n"
 "└ 🆔 Kod: <code>{code}</code>"
@@ -1538,21 +2143,28 @@ msgstr ""
 "{icon} <b>{name}</b>\n"
 "└ 🆔 Kod: <code>{code}</code>"
 
+#: src/app/bot/handlers/user/favorite_movies.py:123
 msgid "🎬 <b>KINO VA SERIALAR:</b>\n"
 msgstr "🎬 <b>KINO VA SERIALAR:</b>\n"
 
+#: src/app/bot/handlers/user/favorite_movies.py:128
 msgid "🎌 <b>ANIME:</b>\n"
 msgstr "🎌 <b>ANIME:</b>\n"
 
+#: src/app/bot/handlers/user/favorite_movies.py:133
 msgid "🎨 <b>MULTFILM:</b>\n"
 msgstr "🎨 <b>MULTFILM:</b>\n"
 
+#: src/app/bot/handlers/user/favorite_movies.py:138
 msgid "<i>Filmni ko'rish uchun uning kodini botga yuboring.</i>"
 msgstr "<i>Filmni ko'rish uchun uning kodini botga yuboring.</i>"
 
+#: src/app/bot/handlers/user/favorite_movies.py:144
+#: src/app/bot/handlers/user/movie_search.py:393
 msgid "❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring."
 msgstr "❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring."
 
+#: src/app/bot/handlers/user/movie_search.py:125
 msgid ""
 "🎬 <b>Kino kategoriyasi</b>\n"
 "\n"
@@ -1562,6 +2174,7 @@ msgstr ""
 "\n"
 "Qaysi turdagi kontent kerak?"
 
+#: src/app/bot/handlers/user/movie_search.py:134
 msgid ""
 "🎌 <b>Anime kategoriyasi</b>\n"
 "\n"
@@ -1571,6 +2184,7 @@ msgstr ""
 "\n"
 "Qaysi turdagi anime kerak?"
 
+#: src/app/bot/handlers/user/movie_search.py:143
 msgid ""
 "🎨 <b>Multfilm kategoriyasi</b>\n"
 "\n"
@@ -1580,21 +2194,35 @@ msgstr ""
 "\n"
 "Qaysi turdagi multfilm kerak?"
 
+#: src/app/bot/handlers/user/movie_search.py:153
+#: src/app/bot/handlers/user/movie_search.py:507
 msgid "🏠 Asosiy menyu"
 msgstr "🏠 Asosiy menyu"
 
+#: src/app/bot/handlers/user/movie_search.py:215
 msgid "😔 Hozircha bu turdagi kontent mavjud emas."
 msgstr "😔 Hozircha bu turdagi kontent mavjud emas."
 
+#: src/app/bot/handlers/user/movie_search.py:399
+#: src/app/bot/handlers/user/movie_search.py:469
+#: src/app/bot/handlers/user/movie_search.py:535
 msgid "KINO"
 msgstr "KINO"
 
+#: src/app/bot/handlers/user/movie_search.py:400
+#: src/app/bot/handlers/user/movie_search.py:470
+#: src/app/bot/handlers/user/movie_search.py:536
 msgid "ANIME"
 msgstr "ANIME"
 
+#: src/app/bot/handlers/user/movie_search.py:401
+#: src/app/bot/handlers/user/movie_search.py:471
+#: src/app/bot/handlers/user/movie_search.py:537
 msgid "MULTFILM"
 msgstr "MULTFILM"
 
+#: src/app/bot/handlers/user/movie_search.py:405
+#, python-brace-format
 msgid ""
 "🔥 {category} TOP 20 FILMLAR:\n"
 "\n"
@@ -1602,50 +2230,71 @@ msgstr ""
 "🔥 {category} TOP 20 FILMLAR:\n"
 "\n"
 
+#: src/app/bot/handlers/user/movie_search.py:408
+#: src/app/bot/handlers/user/movie_search.py:561
 msgid "Hozircha ma'lumotlar yo'q."
 msgstr "Hozircha ma'lumotlar yo'q."
 
+#: src/app/bot/handlers/user/movie_search.py:413
+#: src/app/bot/handlers/user/movie_search.py:551
 msgid "type"
-msgstr "tur"
+msgstr "type"
 
+#: src/app/bot/handlers/user/movie_search.py:416
+#: src/app/bot/handlers/user/movie_search.py:554
 msgid "Turi"
 msgstr "Turi"
 
+#: src/app/bot/handlers/user/movie_search.py:417
+#: src/app/bot/handlers/user/movie_search.py:555
+#: src/app/bot/handlers/user/movie_search.py:878
 msgid "Kod"
 msgstr "Kod"
 
+#: src/app/bot/handlers/user/movie_search.py:418
+#: src/app/bot/handlers/user/movie_search.py:556
 msgid "Saqlangan"
 msgstr "Saqlangan"
 
+#: src/app/bot/handlers/user/movie_search.py:419
+#: src/app/bot/handlers/user/movie_search.py:557
 msgid "Ko'rilgan"
 msgstr "Ko'rilgan"
 
+#: src/app/bot/handlers/user/movie_search.py:433
+#: src/app/bot/handlers/user/movie_search.py:515
 msgid "🔍 Qidirish"
 msgstr "🔍 Qidirish"
 
+#: src/app/bot/handlers/user/movie_search.py:478
+#, python-brace-format
 msgid ""
 "🎭 <b>{category} Janrlarni tanlang:</b>\n"
 "\n"
-"Bir nechta tanlashingiz mumkin. Tanlab bo'lgach <b>🔍 Qidirish</b> "
-"tugmasini bosing."
+"Bir nechta tanlashingiz mumkin. Tanlab bo'lgach <b>🔍 Qidirish</b> tugmasini bosing."
 msgstr ""
 "🎭 <b>{category} Janrlarni tanlang:</b>\n"
 "\n"
-"Bir nechta tanlashingiz mumkin. Tanlab bo'lgach <b>🔍 Qidirish</b> "
-"tugmasini bosing."
+"Bir nechta tanlashingiz mumkin. Tanlab bo'lgach <b>🔍 Qidirish</b> tugmasini bosing."
 
+#: src/app/bot/handlers/user/movie_search.py:498
 msgid "🎬 Kino bo'limi"
 msgstr "🎬 Kino bo'limi"
 
+#: src/app/bot/handlers/user/movie_search.py:501
 msgid "🎌 Anime bo'limi"
 msgstr "🎌 Anime bo'limi"
 
+#: src/app/bot/handlers/user/movie_search.py:504
 msgid "🎨 Multfilm bo'limi"
 msgstr "🎨 Multfilm bo'limi"
 
+#: src/app/bot/handlers/user/movie_search.py:525
 msgid "⚠️ Kamida bitta janrni tanlang!"
 msgstr "⚠️ Kamida bitta janrni tanlang!"
 
+#: src/app/bot/handlers/user/movie_search.py:541
+#, python-brace-format
 msgid ""
 "🎭 {category} Janrlar bo'yicha qidiruv\n"
 "\n"
@@ -1653,6 +2302,8 @@ msgstr ""
 "🎭 {category} Janrlar bo'yicha qidiruv\n"
 "\n"
 
+#: src/app/bot/handlers/user/movie_search.py:544
+#, python-brace-format
 msgid ""
 "🔍 <b>Janrlar:</b> {genres}\n"
 "\n"
@@ -1660,6 +2311,7 @@ msgstr ""
 "🔍 <b>Janrlar:</b> {genres}\n"
 "\n"
 
+#: src/app/bot/handlers/user/movie_search.py:547
 msgid ""
 "<b>Top 10 ta mos filmlar:</b>\n"
 "\n"
@@ -1667,12 +2319,16 @@ msgstr ""
 "<b>Top 10 ta mos filmlar:</b>\n"
 "\n"
 
+#: src/app/bot/handlers/user/movie_search.py:559
 msgid "<b>Ko'rish uchun film kodini yuboring.</b>"
 msgstr "<b>Ko'rish uchun film kodini yuboring.</b>"
 
+#: src/app/bot/handlers/user/movie_search.py:591
+#, python-brace-format
 msgid "🎭 <b>Tanlangan janrlar:</b> {genres}"
 msgstr "🎭 <b>Tanlangan janrlar:</b> {genres}"
 
+#: src/app/bot/handlers/user/movie_search.py:677
 msgid ""
 "😔 Hechnima topilmadi.\n"
 "\n"
@@ -1682,9 +2338,11 @@ msgstr ""
 "\n"
 "Kiritilgan kod bo'yicha film topilmadi va shu nomdagi film ham yo'q."
 
+#: src/app/bot/handlers/user/movie_search.py:877
 msgid "Janr"
 msgstr "Janr"
 
+#: src/app/bot/handlers/user/movie_search.py:894
 msgid ""
 "😔 Kechirasiz, bu nomdagi film topilmadi.\n"
 "\n"
@@ -1694,6 +2352,7 @@ msgstr ""
 "\n"
 "Nomini to'g'ri yozganingizni tekshiring yoki kod orqali qidiring."
 
+#: src/app/bot/handlers/user/movie_search.py:903
 msgid ""
 "🔍 <b>Qidiruv natijalari:</b>\n"
 "\n"
@@ -1701,6 +2360,8 @@ msgstr ""
 "🔍 <b>Qidiruv natijalari:</b>\n"
 "\n"
 
+#: src/app/bot/handlers/user/movie_search.py:909
+#, python-brace-format
 msgid ""
 "\n"
 "\n"
@@ -1710,6 +2371,7 @@ msgstr ""
 "\n"
 "<i>... va yana {count} ta natija. Aniqroq qidiring.</i>"
 
+#: src/app/bot/handlers/user/movie_search.py:913
 msgid ""
 "\n"
 "\n"
@@ -1719,224 +2381,277 @@ msgstr ""
 "\n"
 "<b>Ko'rish uchun kerakli filmni kodini yuboring.</b>"
 
+#: src/app/bot/handlers/user/player.py:74
 msgid "❌ Serial topilmadi"
 msgstr "❌ Serial topilmadi"
 
+#: src/app/bot/handlers/user/player.py:115
+#: src/app/bot/handlers/user/player.py:507
 msgid "❌ Bu tilda ushbu qism mavjud emas"
 msgstr "❌ Bu tilda ushbu qism mavjud emas"
 
+#: src/app/bot/handlers/user/player.py:153
+#: src/app/bot/handlers/user/player.py:351
+#: src/app/bot/handlers/user/player.py:517
 msgid "💎 VIP obuna talab qilinadi"
 msgstr "💎 VIP obuna talab qilinadi"
 
-msgid "❌ Film sevimlilardan o'chirildi"
-msgstr "❌ Film sevimlilardan o'chirildi"
-
-msgid "💾 Film sevimlilarga qo'shildi"
-msgstr "💾 Film sevimlilarga qo'shildi"
-
-msgid "❌ Film topilmadi"
-msgstr "❌ Film topilmadi"
-
-msgid "❌ Seria topilmadi"
-msgstr "❌ Qism topilmadi"
-
-msgid "⬅️ Oldingi qism"
-msgstr "⬅️ Oldingi qism"
-
-msgid "Keyingi qism ➡️"
-msgstr "Keyingi qism ➡️"
-
-msgid "⬅️ Oldingi fasl"
-msgstr "⬅️ Oldingi fasl"
-
-msgid "Keyingi fasl ➡️"
-msgstr "Keyingi fasl ➡️"
-
-msgid "O'chirish"
-msgstr "O'chirish"
-
-msgid "Saqlash"
-msgstr "Saqlash"
-
-msgid "🔙 Orqaga"
-msgstr "🔙 Orqaga"
-
-msgid "Fasl"
-msgstr "Fasl"
-
-msgid "Original"
-msgstr "Original"
-
-msgid "💎 VIP sotib olish"
-msgstr "💎 VIP sotib olish"
-
-msgid "✅ Tekshirish"
-msgstr "✅ Tekshirish"
-
-msgid "Instagram Kanal"
-msgstr "Instagram Kanal"
-
-msgid "Kategoriyani tanlang..."
-msgstr "Kategoriyani tanlang..."
-
-msgid "Kontent turini tanlang..."
-msgstr "Kontent turini tanlang..."
-
-msgid "Anime turini tanlang..."
-msgstr "Anime turini tanlang..."
-
-msgid "Multfilm turini tanlang..."
-msgstr "Multfilm turini tanlang..."
-
-msgid "Всего обработано"
-msgstr "Jami qayta ishlandi"
-
-msgid "пользователей"
-msgstr "foydalanuvchi"
-
-msgid "Отправка сообщений"
-msgstr "Xabarlar yuborilmoqda"
-
-msgid "Не удалось отправить"
-msgstr "Yuborib bo'lmadi"
-
-msgid "Заблокировали"
-msgstr "Bloklagan"
-
-msgid "Удаленных аккаунтов"
-msgstr "O'chirilgan akkauntlar"
-
-msgid "Ограниченных"
-msgstr "Cheklangan akkauntlar"
-
-msgid "Деактивированных"
-msgstr "Nofaol akkauntlar"
-
-msgid "Обработано пачек"
-msgstr "Qayta ishlangan paketlar"
-
-msgid "Ошибка при рассылке"
-msgstr "Xabar yuborishda xatolik"
-
-msgid "✅ Video muvaffaqiyatli saqlandi! Kod: {code}"
-msgstr "✅ Video muvaffaqiyatli saqlandi! Kod: {code}"
-
-msgid "📥 Video yuklanmoqda..."
-msgstr "📥 Video yuklanmoqda..."
-
-msgid "🎬 Base video tayyorlanmoqda..."
-msgstr "🎬 Asosiy video tayyorlanmoqda..."
-
-msgid "💾 Original tayyorlanmoqda..."
-msgstr "💾 Original tayyorlanmoqda..."
-
-msgid "⚠️ Xato: {e}"
-msgstr "⚠️ Xato: {e}"
-
-msgid "⚙️ {n} ta sifat tayyorlanmoqda..."
-msgstr "⚙️ {n} ta sifat tayyorlanmoqda..."
-
-msgid "✅ Tayyor! {n} ta format."
-msgstr "✅ Tayyor! {n} ta format."
-
-msgid "🔄 {n} tayyorlanmoqda ({i}/{t})..."
-msgstr "🔄 {n} tayyorlanmoqda ({i}/{t})..."
-
-msgid "📤 {n} yuklanmoqda ({i}/{t})..."
-msgstr "📤 {n} yuklanmoqda ({i}/{t})..."
-
-msgid "✅ {label} tayyor."
-msgstr "✅ {label} tayyor."
-
-msgid "❌ {n} o'tkazib yuborildi."
-msgstr "❌ {n} o'tkazib yuborildi."
-
-msgid "❌ Канал не найден"
-msgstr "❌ Kanal topilmadi"
-
-msgid "🚫 Убрать из ОП"
-msgstr "🚫 Majburiy obunadan olib tashlash"
-
-msgid "➕ Добавить в ОП"
-msgstr "➕ Majburiy obunaga qo'shish"
-
-msgid "Полная информация о канале"
-msgstr "Kanal haqida to'liq ma'lumot"
-
-msgid "ID:"
-msgstr "ID:"
-
-msgid "Название:"
-msgstr "Nomi:"
-
-msgid "Username:"
-msgstr "Username:"
-
-msgid "не указан"
-msgstr "ko'rsatilmagan"
-
-msgid "Статус в ОП:"
-msgstr "Majburiy obuna statusi:"
-
-msgid "Активен"
-msgstr "Aktiv"
-
-msgid "Неактивен"
-msgstr "Aktiv emas"
-
-msgid "Ссылка:"
-msgstr "Havola:"
-
-msgid "❌ Бот не найден"
-msgstr "❌ Bot topilmadi"
-
-msgid "Полная информация о боте"
-msgstr "Bot haqida to'liq ma'lumot"
-
-msgid "To'lash {amount} {currency}"
-msgstr "To'lash {amount} {currency}"
-
-msgid "To'lash {amount} Stars"
-msgstr "To'lash {amount} Stars"
-
-msgid "🎬 <b>Film nomini kiriting:</b>"
-msgstr "🎬 <b>Film nomini kiriting:</b>"
-
-msgid "📅 <b>Sezon raqamini kiriting:</b>"
-msgstr "📅 <b>Sezon raqamini kiriting:</b>"
-
-msgid "1 kunlik VIP"
-msgstr "1 kunlik VIP"
-
-msgid "10 kunlik VIP"
-msgstr "10 kunlik VIP"
-
-msgid "1 oylik VIP"
-msgstr "30 kunlik VIP"
-
+#: src/app/bot/handlers/user/player.py:306
+#: src/app/bot/handlers/user/player.py:469
 msgid "❌ Film sevimlilardan o‘chirildi"
 msgstr "❌ Film sevimlilardan o‘chirildi"
 
+#: src/app/bot/handlers/user/player.py:313
+#: src/app/bot/handlers/user/player.py:463
 msgid "💾 Film sevimlilarga qo‘shildi"
 msgstr "💾 Film sevimlilarga qo‘shildi"
 
+#: src/app/bot/handlers/user/player.py:332
+msgid "❌ Film topilmadi"
+msgstr "❌ Film topilmadi"
+
+#: src/app/bot/handlers/user/player.py:441
+msgid "❌ Seria topilmadi"
+msgstr "❌ Seria topilmadi"
+
+#: src/app/bot/keyboards/inline.py:77 src/app/bot/keyboards/inline.py:627
+msgid "⬅️ Oldingi qism"
+msgstr "⬅️ Oldingi qism"
+
+#: src/app/bot/keyboards/inline.py:108 src/app/bot/keyboards/inline.py:581
+#: src/app/bot/keyboards/inline.py:654
+msgid "Keyingi qism ➡️"
+msgstr "Keyingi qism ➡️"
+
+#: src/app/bot/keyboards/inline.py:134
+msgid "⬅️ Oldingi fasl"
+msgstr "⬅️ Oldingi fasl"
+
+#: src/app/bot/keyboards/inline.py:165
+msgid "Keyingi fasl ➡️"
+msgstr "Keyingi fasl ➡️"
+
+#: src/app/bot/keyboards/inline.py:234 src/app/bot/keyboards/inline.py:504
+#: src/app/bot/keyboards/inline.py:719
+msgid "O'chirish"
+msgstr "O'chirish"
+
+#: src/app/bot/keyboards/inline.py:249 src/app/bot/keyboards/inline.py:513
+#: src/app/bot/keyboards/inline.py:731
+msgid "Saqlash"
+msgstr "Saqlash"
+
+#: src/app/bot/keyboards/inline.py:291 src/app/bot/keyboards/inline.py:316
+#: src/app/bot/keyboards/inline.py:340 src/app/bot/keyboards/inline.py:395
+msgid "🔙 Orqaga"
+msgstr "⬅️ Orqaga"
+
+#: src/app/bot/keyboards/inline.py:334
+msgid "Fasl"
+msgstr "Fasl"
+
+#: src/app/bot/keyboards/inline.py:385
+msgid "Original"
+msgstr "Original"
+
+#: src/app/bot/keyboards/inline.py:766
+msgid "💎 VIP sotib olish"
+msgstr "💎 VIP sotib olish"
+
+#: src/app/bot/keyboards/inline.py:770
+msgid "✅ Tekshirish"
+msgstr "✅ Tekshirish"
+
+#: src/app/bot/keyboards/inline.py:780
+msgid "Instagram Kanal"
+msgstr "Instagram Kanal"
+
+#: src/app/bot/keyboards/replay.py:32
+msgid "Kategoriyani tanlang..."
+msgstr "Kategoriyani tanlang..."
+
+#: src/app/bot/keyboards/replay.py:57
+msgid "Kontent turini tanlang..."
+msgstr "Kontent turini tanlang..."
+
+#: src/app/bot/keyboards/replay.py:81
+msgid "Anime turini tanlang..."
+msgstr "Anime turini tanlang..."
+
+#: src/app/bot/keyboards/replay.py:105
+msgid "Multfilm turini tanlang..."
+msgstr "Multfilm turini tanlang..."
+
+#: src/app/services/broadcaster.py:112
+msgid "Всего обработано"
+msgstr "Jami ishlangan"
+
+#: src/app/services/broadcaster.py:112
+msgid "пользователей"
+msgstr "foydalanuvchilar"
+
+#: src/app/services/broadcaster.py:127
+msgid "Отправка сообщений"
+msgstr "Xabarlarni yuborish"
+
+#: src/app/services/broadcaster.py:128
+msgid "Не удалось отправить"
+msgstr "Yuborib bo'lmadi"
+
+#: src/app/services/broadcaster.py:129
+msgid "Заблокировали"
+msgstr "Bloklaganlar"
+
+#: src/app/services/broadcaster.py:130
+msgid "Удаленных аккаунтов"
+msgstr "O'chirilgan hisoblar"
+
+#: src/app/services/broadcaster.py:131
+msgid "Ограниченных"
+msgstr "Cheklanganlar"
+
+#: src/app/services/broadcaster.py:132
+msgid "Деактивированных"
+msgstr "Faolsizlantirilganlar"
+
+#: src/app/services/broadcaster.py:133
+msgid "Обработано пачек"
+msgstr "Ishlangan partiyalar"
+
+#: src/app/services/broadcaster.py:191
+msgid "Ошибка при рассылке"
+msgstr "Yuborishda xatolik yuz berdi"
+
+#: src/app/services/tasks.py:404
+#, python-brace-format
+msgid "✅ Video muvaffaqiyatli saqlandi! Kod: {code}"
+msgstr "✅ Video muvaffaqiyatli saqlandi! Kod: {code}"
+
+#: src/app/services/transcoder.py:165
+msgid "📥 Video yuklanmoqda..."
+msgstr "📥 Video yuklanmoqda..."
+
+#: src/app/services/transcoder.py:203
+msgid "🎬 Base video tayyorlanmoqda..."
+msgstr "💾 Base video tayyorlanmoqda..."
+
+#: src/app/services/transcoder.py:215
 msgid "💾 Original tayyorlanmoqda..."
 msgstr "💾 Original tayyorlanmoqda..."
 
+#: src/app/bot/dialog/admin/add_movie.py:1110
+msgid "💿 <b>Format kiriting (masalan: HD, 1080p, 4K):</b>"
+msgstr "💿 <b>Format kiriting (masalan: HD, 1080p, 4K):</b>"
+
+#: src/app/bot/dialog/admin/add_movie.py:1123
+msgid "💿 Yangi format kiriting (masalan: HD, 4K):"
+msgstr "💿 Yangi format kiriting (masalan: HD, 4K):"
+
+#: src/app/bot/dialog/admin/add_movie.py:1675
+msgid "💿 Format"
+msgstr "💿 Format"
+
+#: src/app/services/transcoder.py:105
+#, python-brace-format
+msgid "⚠️ Xato: {e}"
+msgstr "⚠️ Xato: {e}"
+
+#: src/app/services/transcoder.py:251
+#, python-brace-format
 msgid "⚙️ {n} ta sifat tayyorlanmoqda..."
 msgstr "⚙️ {n} ta sifat tayyorlanmoqda..."
 
+#: src/app/services/transcoder.py:286
+#, python-brace-format
 msgid "✅ Tayyor! {n} ta format."
 msgstr "✅ Tayyor! {n} ta format."
 
+#: src/app/services/transcoder.py:466
+#, python-brace-format
 msgid "🔄 {n} tayyorlanmoqda ({i}/{t})..."
 msgstr "🔄 {n} tayyorlanmoqda ({i}/{t})..."
 
+#: src/app/services/transcoder.py:474
+#, python-brace-format
 msgid "📤 {n} yuklanmoqda ({i}/{t})..."
 msgstr "📤 {n} yuklanmoqda ({i}/{t})..."
 
+#: src/app/services/transcoder.py:536
+#, python-brace-format
 msgid "✅ {label} tayyor."
 msgstr "✅ {label} tayyor."
 
+#: src/app/services/transcoder.py:542
+#, python-brace-format
 msgid "❌ {n} o'tkazib yuborildi."
 msgstr "❌ {n} o'tkazib yuborildi."
+
+#: src/app/bot/handlers/user/account.py:354
+msgid "1 kunlik VIP"
+msgstr "1 kunlik VIP"
+
+#: src/app/bot/handlers/user/account.py:354
+msgid "10 kunlik VIP"
+msgstr "10 kunlik VIP"
+
+#: src/app/bot/handlers/user/account.py:354
+msgid "30 kunlik VIP"
+msgstr "30 kunlik VIP"
+
+#: src/app/bot/handlers/user/account.py:354
+msgid "1 oylik VIP"
+msgstr "1 oylik VIP"
+
+#: src/app/bot/handlers/user/account.py:354
+msgid "3 oylik VIP"
+msgstr "3 oylik VIP"
+
+#: src/app/bot/handlers/user/account.py
+msgid "Click / Payme (Humo, Uzcard):"
+msgstr "Click / Payme (Humo, Uzcard):"
+
+#: src/app/bot/handlers/user/account.py
+#, python-brace-format
+msgid "To'lash {amount} UZS"
+msgstr "To'lash {amount} UZS"
+
+#: src/app/bot/handlers/user/account.py
+#, python-brace-format
+msgid "To'lash {amount} Stars"
+msgstr "To'lash {amount} Stars"
+
+#: src/app/database/queries/movie/top_movies.py:39
+msgid "Film"
+msgstr "Film"
+
+#: src/app/database/queries/movie/top_movies.py:39
+msgid "Serial"
+msgstr "Serial"
+
+#: src/app/database/queries/movie/top_movies.py:39
+msgid "Epizodli film"
+msgstr "Epizodli film"
+
+#: src/app/database/queries/movie/top_movies.py:39
+msgid "Multfilm"
+msgstr "Multfilm"
+
+#: src/app/database/queries/movie/top_movies.py:39
+msgid "Multserial"
+msgstr "Multserial"
+
+#: src/app/database/queries/movie/top_movies.py:39
+msgid "Epizodli multfilm"
+msgstr "Epizodli multfilm"
+
+#: src/app/database/queries/movie/top_movies.py:39
+msgid "Anime (film)"
+msgstr "Anime"
+
+#: src/app/database/queries/movie/top_movies.py:39
+msgid "Anime (serial)"
+msgstr "Anime serial"
+
+#: src/app/database/queries/movie/top_movies.py:39
+msgid "Anime (mini)"
+msgstr "Epizodli anime"

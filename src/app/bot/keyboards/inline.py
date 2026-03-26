@@ -184,9 +184,12 @@ def series_player_kbd(
             for k in files.keys()
         )
         if has_real_langs:
+            from src.app.bot.common.languages import LANGUAGES
+            lang_obj = next((l for l in LANGUAGES if l["id"] == get_lang_code(current_language)), None)
+            lang_label = lang_obj["label"] if lang_obj else current_language.upper()
             settings_row.append(
                 InlineKeyboardButton(
-                    text=f"🌐 {current_language.upper()}",
+                    text=f"🌐 {lang_label}",
                     callback_data=SeriesPlayerCD(
                         code=code,
                         series_number=current_series_for_current_season,
@@ -379,7 +382,7 @@ def _build_quality_menu(
         )
 
         vip_tag = ""
-        if not is_vip and quality in ["720p", "1080p"]:
+        if not is_vip and quality in ["480p", "720p", "1080p"]:
             vip_tag = " 💎"
 
         label = quality if quality.lower() != "original" else str(_("Original"))
@@ -460,9 +463,12 @@ def film_kbd(
             for k in files.keys()
         )
         if has_real_langs:
+            from src.app.bot.common.languages import LANGUAGES
+            lang_obj = next((l for l in LANGUAGES if l["id"] == get_lang_code(current_language)), None)
+            lang_label = lang_obj["label"] if lang_obj else current_language.upper()
             settings_row.append(
                 InlineKeyboardButton(
-                    text=f"🌐 {current_language.upper()}",
+                    text=f"🌐 {lang_label}",
                     callback_data=FeatureFilmPlayerCD(
                         code=code,
                         actions=ActionType.open_language_menu,
@@ -673,9 +679,12 @@ def mini_series_player_kbd(
             for k in files.keys()
         )
         if has_real_langs:
+            from src.app.bot.common.languages import LANGUAGES
+            lang_obj = next((l for l in LANGUAGES if l["id"] == get_lang_code(current_language)), None)
+            lang_label = lang_obj["label"] if lang_obj else current_language.upper()
             settings_row.append(
                 InlineKeyboardButton(
-                    text=f"🌐 {current_language.upper()}",
+                    text=f"🌐 {lang_label}",
                     callback_data=MiniSeriesPlayerCD(
                         code=code,
                         series_number=current_seria,

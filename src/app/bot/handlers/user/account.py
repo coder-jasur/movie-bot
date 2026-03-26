@@ -30,11 +30,29 @@ def get_tashkent_time():
 
 account_router = Router()
 
+
+async def smart_edit(
+    message: Message, text: str, reply_markup: InlineKeyboardMarkup = None
+):
+    """Edits message if possible, otherwise answers with new message.
+    Used to prevent TelegramBadRequest when editing invoices or old messages.
+    """
+    try:
+        if message.invoice or message.successful_payment:
+            await message.answer(text, reply_markup=reply_markup, parse_mode="HTML")
+        else:
+            await message.edit_text(text, reply_markup=reply_markup, parse_mode="HTML")
+    except Exception as e:
+        logger.debug(f"Edit failed, falling back to answer: {e}")
+        await message.answer(text, reply_markup=reply_markup, parse_mode="HTML")
+
+
 # VIP Prices
 VIP_PRICES = {
     "1_day": {"stars": 10, "uzs": 3000, "days": 1, "label": __("1 kunlik VIP")},
-    "10_days": {"stars": 50, "uzs": 15000, "days": 10, "label": __("10 kunlik VIP")},
-    "30_days": {"stars": 85, "uzs": 25000, "days": 30, "label": __("1 oylik VIP")},
+    "10_days": {"stars": 60, "uzs": 18000, "days": 10, "label": __("10 kunlik VIP")},
+    "30_days": {"stars": 99, "uzs": 29000, "days": 30, "label": __("1 oylik VIP")},
+    "90_days": {"stars": 240, "uzs": 69000, "days": 90, "label": __("3 oylik VIP")},
 }
 
 
@@ -112,7 +130,7 @@ async def profile_handler(message: Message, session: AsyncSession, edit: bool = 
     )
 
     if edit:
-        await message.edit_text(text, reply_markup=kbd, parse_mode="HTML")
+        await smart_edit(message, text, reply_markup=kbd)
     else:
         await message.answer(text, reply_markup=kbd, parse_mode="HTML")
 
@@ -172,8 +190,9 @@ async def vip_tarif_handler(message: Message, edit: bool = False):
         f"✅ {_('Filmlarni yuklab olish')}\n\n"
         f"<b>💰 {_('Narxlar:')}</b>\n"
         f"🎫 {_('1 kun: 3,000 so\'m / 10 Stars')}\n"
-        f"🎫 {_('10 kun: 15,000 so\'m / 50 Stars')}\n"
-        f"🎫 {_('30 kun: 25,000 so\'m / 85 Stars')}\n\n"
+        f"🎫 {_('10 kun: 18,000 so\'m / 60 Stars')}\n"
+        f"🎫 {_('30 kun: 29,000 so\'m / 99 Stars')}\n"
+        f"🎫 {_('90 kun: 69,000 so\'m / 240 Stars')}\n\n"
         f"🎁 <i>{_('5 ta do\'stingizni taklif qiling va 3 kunlik VIP bepul oling!')}</i>"
     )
 
@@ -196,14 +215,14 @@ async def vip_tarif_handler(message: Message, edit: bool = False):
             ],
             [
                 InlineKeyboardButton(
-                    text=str(_("⬅️ Orqaga")), callback_data="back_to_profile"
+                    text=str(_("3 oy (90 kun)")), callback_data="select_plan:90_days"
                 )
             ],
         ]
     )
 
     if edit:
-        await message.edit_text(text, reply_markup=kbd, parse_mode="HTML")
+        await smart_edit(message, text, reply_markup=kbd)
     else:
         await message.answer(text, reply_markup=kbd, parse_mode="HTML")
 
@@ -220,7 +239,7 @@ async def select_payment_method_handler(callback: CallbackQuery):
     text = (
         f"<b>💳 {_('To\'lov usuli')}</b>\n\n"
         f"🎫 {str(plan['label'])}\n"
-        f"🔹 {_('Click (Humo, Uzcard):')} {plan['uzs']} {_('so\'m')}\n"
+        f"🔹 {_('Click / Payme (Humo, Uzcard):')} {plan['uzs']:,} {_('so\'m')}\n"
         f"🔹 {_('Stars:')} {plan['stars']} Stars"
     )
 
@@ -251,7 +270,7 @@ async def select_payment_method_handler(callback: CallbackQuery):
         ]
     )
 
-    await callback.message.edit_text(text, reply_markup=kbd, parse_mode="HTML")
+    await smart_edit(callback.message, text, reply_markup=kbd)
     await callback.answer()
 
 
@@ -274,14 +293,14 @@ async def send_invoice_handler(callback: CallbackQuery, settings: "Settings" = N
 
     provider_token = None
     currency = "UZS"
-    is_test = True
+    is_test = False
     prices = []
 
     if method == "stars":
         prices = [LabeledPrice(label=str(plan["label"]), amount=plan["stars"])]
         currency = "XTR"
         provider_token = None  # For Stars it must be None or omitted
-        is_test = True  # Stars testing
+        is_test = False  # Stars real
     elif method == "click":
         token = settings.click_provider_token
         if not token or "YOUR_CLICK_TOKEN" in token:
@@ -295,7 +314,8 @@ async def send_invoice_handler(callback: CallbackQuery, settings: "Settings" = N
         prices = [LabeledPrice(label=str(plan["label"]), amount=plan["uzs"] * 100)]
         currency = "UZS"
         provider_token = token
-        is_test = True  # User said they use test terminal
+        is_test = False  # Click real
+
     elif method == "payme":
         token = settings.payme_provider_token
         if not token or "YOUR_PAYME_TOKEN" in token:
@@ -309,7 +329,7 @@ async def send_invoice_handler(callback: CallbackQuery, settings: "Settings" = N
         prices = [LabeledPrice(label=str(plan["label"]), amount=plan["uzs"] * 100)]
         currency = "UZS"
         provider_token = token
-        is_test = True  # User said they use test terminal
+        is_test = False  # Payme real
 
     try:
         # Create localized pay button to avoid default Telegram Russian button
@@ -318,9 +338,8 @@ async def send_invoice_handler(callback: CallbackQuery, settings: "Settings" = N
                 [
                     InlineKeyboardButton(
                         text=(
-                            str(_("To'lash {amount} {currency}")).format(
+                            str(_("To'lash {amount} UZS")).format(
                                 amount=f"{plan['uzs']:,}".replace(",", " "),
-                                currency=currency,
                             )
                             if method != "stars"
                             else str(_("To'lash {amount} Stars")).format(

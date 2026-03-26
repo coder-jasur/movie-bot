@@ -33,7 +33,6 @@ from src.app.bot.common.genres import GENRES, deserialize_genres, get_genre_disp
 from src.app.bot.common.i18n import i18n
 from src.app.bot.common.utils import (
     get_localized_name,
-    get_thumbnail_input,
     get_user_language,
     resolve_movie_media,
 )
@@ -86,6 +85,25 @@ _ = i18n.gettext
 logger = logging.getLogger(__name__)
 
 movie_search_router = Router()
+
+
+def _get_name_from_dict(name_obj, user_lang: str) -> str:
+    """
+    Dict yoki string bo'lishi mumkin bo'lgan name'dan
+    foydalanuvchi tiliga mos qiymatni oladi.
+    """
+    if isinstance(name_obj, dict):
+        # Foydalanuvchi tili → 'uz' → birinchi mavjud qiymat
+        return (
+            name_obj.get(user_lang)
+            or name_obj.get("uz")
+            or name_obj.get("ru")
+            or name_obj.get("en")
+            or next(
+                (v for v in name_obj.values() if isinstance(v, str) and v.strip()), ""
+            )
+        )
+    return str(name_obj) if name_obj else ""
 
 
 # ─────────────────────────────────────────────
@@ -232,7 +250,6 @@ async def random_film_handler(message: Message, session: AsyncSession):
         _unused,
         thumbnail_id,
     ) = resolve_movie_media(random_movie, user_lang, is_vip=is_vip)
-    thumbnail_input = await get_thumbnail_input(message.bot, thumbnail_id)
 
     bot_info = await message.bot.get_me()
     bot_username = bot_info.username
@@ -255,7 +272,6 @@ async def random_film_handler(message: Message, session: AsyncSession):
                 is_vip=is_vip,
             ),
             protect_content=not is_vip,
-            thumbnail=thumbnail_input,
         )
         await track_and_increment_view(
             user_id=message.from_user.id,
@@ -377,18 +393,27 @@ async def top_films_handler(message: Message, session: AsyncSession):
 
 
 async def send_top_movies(
-    message: Message,
-    session: AsyncSession,
+    message,
+    session,
     interval: str = "total",
     category: str = "all",
 ):
+    import logging
+
+    from src.app.bot.common.i18n import i18n
+    from src.app.bot.common.utils import get_user_language
+    from src.app.database.queries.movie.top_movies import TopMoviesActions
+
+    logger = logging.getLogger(__name__)
+    _ = i18n.gettext
+
     try:
         top_movies_actions = TopMoviesActions(session)
         top_20 = await top_movies_actions.get_top_movies(
             interval=interval, limit=20, category=category
         )
     except Exception as e:
-        logger.error(f"Error getting top movies: {e}")
+        logger.error("Error getting top movies: %s", e)
         await message.answer(
             str(_("❌ Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring."))
         )
@@ -396,11 +421,10 @@ async def send_top_movies(
 
     cat_names = {
         "all": "",
-        "cinema": _("KINO"),
-        "anime": _("ANIME"),
-        "cartoon": _("MULTFILM"),
+        "cinema": str(_("KINO")),
+        "anime": str(_("ANIME")),
+        "cartoon": str(_("MULTFILM")),
     }
-
     cat_title = cat_names.get(category, "")
     text = str(_("🔥 {category} TOP 20 FILMLAR:\n\n")).format(category=cat_title)
 
@@ -409,11 +433,15 @@ async def send_top_movies(
     else:
         user_lang = await get_user_language(message.from_user, session)
         for index, m in enumerate(top_20, start=1):
-            localized_name = get_localized_name(m, user_lang)
-            localized_type = _(m["type"]) if m["type"] else ""
+            # m["name"] endi dict — get_localized_name ni to'g'ri ishlaydi
+            name = _get_name_from_dict(m["name"], user_lang)
+            # type — top_movies.py dan TYPE_LABELS kaliti bilan keladi
+            # movie_search.py da _(m["type"]) chaqirsa, .po faylda msgid bo'lishi kerak
+            # Xavfsiz yondashuv: to'g'ridan-to'g'ri ishlatamiz
+            type_label = str(m["type"])
             text += (
-                f"<b>{index}</b>. <b>{localized_name}</b>\n"
-                f"   ├─ <b>{str(_('Turi'))}</b>: <b>{localized_type}</b>\n"
+                f"<b>{index}</b>. <b>{name}</b>\n"
+                f"   ├─ <b>{str(_('Turi'))}</b>: <b>{type_label}</b>\n"
                 f"   ├─ <b>{str(_('Kod'))}</b>: <code>{m['code']}</code>\n"
                 f"   ├─ <b>{str(_('Saqlangan'))}</b>: <b>{m['favs']}</b>\n"
                 f"   └─ <b>{str(_('Ko\'rilgan'))}</b>: <b>{m['views']}</b>\n\n"
@@ -514,9 +542,20 @@ async def genre_search_back(message: Message, state: FSMContext):
     F.text.regexp(r"^(🔍|🔎)\s*(Qidirish|Search|Поиск)$")
     | (F.text == _("🔍 Qidirish")),
 )
-async def genre_search_execute(
-    message: Message, state: FSMContext, session: AsyncSession
-):
+async def genre_search_execute(message, state, session):
+    from src.app.bot.common.genres import GENRES, get_genre_display_text
+    from src.app.bot.common.i18n import i18n
+    from src.app.bot.common.utils import get_user_language
+    from src.app.bot.keyboards.replay import (
+        get_anime_menu,
+        get_cartoon_menu,
+        get_cinema_menu,
+        get_main_menu,
+    )
+    from src.app.database.queries.movie.top_movies import TopMoviesActions
+
+    _ = i18n.gettext
+
     data = await state.get_data()
     selected = data.get("selected_genres", [])
     category = data.get("category", "all")
@@ -525,16 +564,22 @@ async def genre_search_execute(
         await message.answer(str(_("⚠️ Kamida bitta janrni tanlang!")))
         return
 
+    # Genre nomlarini barcha variantlar bilan kengaytirish
+    # Lekin asosiy qidiruv uchun faqat texnik nomlar (g["name"]) yetarli
+    # chunki DB da genres "Drama", "Comedy" kabi saqlangan
+    genre_names = list(selected)  # texnik nomlar (ruscha, masalan "🎭 Драма")
+
     top_actions = TopMoviesActions(session)
-    results = await top_actions.get_top_by_genres(selected, limit=10, category=category)
+    results = await top_actions.get_top_by_genres(
+        genre_names, limit=10, category=category
+    )
 
     genre_header = get_genre_display_text(selected)
-
     cat_names = {
         "all": "",
-        "cinema": _("KINO"),
-        "anime": _("ANIME"),
-        "cartoon": _("MULTFILM"),
+        "cinema": str(_("KINO")),
+        "anime": str(_("ANIME")),
+        "cartoon": str(_("MULTFILM")),
     }
     cat_title = cat_names.get(category, "")
 
@@ -547,11 +592,11 @@ async def genre_search_execute(
         text += str(_("<b>Top 10 ta mos filmlar:</b>\n\n"))
         user_lang = await get_user_language(message.from_user, session)
         for index, m in enumerate(results, start=1):
-            localized_name = get_localized_name(m, user_lang)
-            localized_type = _(m["type"]) if m["type"] else ""
+            name = _get_name_from_dict(m["name"], user_lang)
+            type_label = str(m["type"])
             text += (
-                f"<b>{index}. {localized_name}</b>\n"
-                f"   ├─ <b>{str(_('Turi'))}</b>: {localized_type}\n"
+                f"<b>{index}. {name}</b>\n"
+                f"   ├─ <b>{str(_('Turi'))}</b>: {type_label}\n"
                 f"   ├─ <b>{str(_('Kod'))}</b>: <code>{m['code']}</code>\n"
                 f"   ├─ <b>{str(_('Saqlangan'))}</b>: {m['favs']}\n"
                 f"   └─ <b>{str(_('Ko\'rilgan'))}</b>: {m['views']}\n\n"
@@ -698,7 +743,6 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                 _captions,
                 thumbnail_id,
             ) = resolve_movie_media(found_movie, user_lang, is_vip=is_vip)
-            thumbnail_input = await get_thumbnail_input(message.bot, thumbnail_id)
 
             bot_info = await message.bot.get_me()
             bot_username = bot_info.username
@@ -716,7 +760,6 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                     is_vip=is_vip,
                 ),
                 protect_content=not is_vip,
-                thumbnail=thumbnail_input,
             )
             # FIX #2: closure
             _actions, _code = actions, code
@@ -746,7 +789,6 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                 _captions,
                 thumbnail_id,
             ) = resolve_movie_media(ms[0], user_lang, is_vip=is_vip)
-            thumbnail_input = await get_thumbnail_input(message.bot, thumbnail_id)
 
             filtered_ms = [
                 s
@@ -779,7 +821,6 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                     is_vip=is_vip,
                 ),
                 protect_content=not is_vip,
-                thumbnail=thumbnail_input,
             )
             # FIX #2: closure
             _actions, _code = actions, code
@@ -808,7 +849,6 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                 _captions,
                 thumbnail_id,
             ) = resolve_movie_media(first_ep, user_lang, is_vip=is_vip)
-            thumbnail_input = await get_thumbnail_input(message.bot, thumbnail_id)
 
             filtered_s = [
                 s
@@ -850,7 +890,6 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                     is_vip=is_vip,
                 ),
                 protect_content=not is_vip,
-                thumbnail=thumbnail_input,
             )
             # FIX #2: closure
             _actions, _code = actions, code

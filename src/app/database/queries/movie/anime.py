@@ -163,6 +163,11 @@ class AnimeFeatureActions:
         else:
             current_captions = {}
 
+        if isinstance(film.name, dict):
+            current_names = dict(film.name)
+        else:
+            current_names = {"uz": str(film.name)} if film.name else {}
+
         if files or video_file_id:
             if language not in current_files or not isinstance(current_files[language], dict) or clear_files:
                 current_files[language] = {}
@@ -187,6 +192,12 @@ class AnimeFeatureActions:
             current_names[language] = name
             film.name = current_names
             flag_modified(film, "name")
+
+        # Ensure language is added to the language list
+        current_langs = [l for l in (film.language or "").split(",") if l]
+        if language not in current_langs:
+            current_langs.append(language)
+            film.language = ",".join(current_langs)
 
         if thumbnail_file_id is not None:
             if not isinstance(film.thumbnails, dict):
@@ -445,6 +456,12 @@ class AnimeSeriesActions:
             episode.name = current_names
             flag_modified(episode, "name")
 
+        # Ensure language is added to the language list
+        current_langs = [l for l in (episode.language or "").split(",") if l]
+        if language not in current_langs:
+            current_langs.append(language)
+            episode.language = ",".join(current_langs)
+
         if thumbnail_file_id is not None:
             if not isinstance(episode.thumbnails, dict):
                 episode.thumbnails = {}
@@ -672,6 +689,11 @@ class AnimeMiniSeriesActions:
         else:
             current_captions = {}
 
+        if isinstance(episode.name, dict):
+            current_names = dict(episode.name)
+        else:
+            current_names = {"uz": str(episode.name)} if episode.name else {}
+
         if files or video_file_id:
             if language not in current_files or not isinstance(current_files[language], dict) or clear_files:
                 current_files[language] = {}
@@ -688,6 +710,17 @@ class AnimeMiniSeriesActions:
             current_captions[language] = caption
             episode.captions = current_captions
             flag_modified(episode, "captions")
+
+        if name is not None:
+            current_names[language] = name
+            episode.name = current_names
+            flag_modified(episode, "name")
+
+        # Ensure language is added to the language list
+        current_langs = [l for l in (episode.language or "").split(",") if l]
+        if language not in current_langs:
+            current_langs.append(language)
+            episode.language = ",".join(current_langs)
 
         if thumbnail_file_id is not None:
             if not isinstance(episode.thumbnails, dict):

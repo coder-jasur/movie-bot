@@ -160,12 +160,8 @@ async def transition_to_editing(m: Message, dialog_manager: DialogManager, code:
     dialog_manager.dialog_data["all_langs"] = langs
     dialog_manager.dialog_data["return_to_lang"] = "search"
 
-    if len(langs) > 1:
+    if len(langs) >= 1:
         await dialog_manager.switch_to(EditMovieSG.select_language)
-    elif len(langs) == 1:
-        dialog_manager.dialog_data["selected_lang_track"] = langs[0]
-        await _trigger_edit_preview(dialog_manager)
-        await dialog_manager.switch_to(EditMovieSG.select_action)
     else:
         await _trigger_edit_preview(dialog_manager)
         await dialog_manager.switch_to(EditMovieSG.select_action)
@@ -192,6 +188,7 @@ async def on_code_search(m: Message, widget: Any, manager: DialogManager):
         (AnimeSeriesActions, "series", "anime"),
     ]
 
+    matches = []
     for ActionClass, m_type, cat in search_map:
         actions = ActionClass(session)
         if m_type == "feature_film":
@@ -203,39 +200,48 @@ async def on_code_search(m: Message, widget: Any, manager: DialogManager):
 
         if not result:
             continue
+        
+        matches.append((result, m_type, cat))
 
-        if m_type == "feature_film":
-            obj_data = {
-                "name": result.name,
-                "caption": result.captions,
-                "file_id": result.video_file_id,
-                "genres": result.genres,
-                "format": result.format,
-                "language": result.language,
-                "files": result.files,
-                "captions": result.captions,
-            }
-        else:
-            obj_data = {
-                "name": result[0].name,
-                "genres": result[0].genres,
-                "format": result[0].format,
-                "language": result[0].language,
-            }
-
-        manager.dialog_data.update(
-            {
-                "type": m_type,
-                "category": cat,
-                "code": code,
-                "obj": obj_data,
-                "exists": True,
-            }
-        )
+    if not matches:
+        manager.dialog_data["exists"] = False
         await transition_to_editing(m, manager, code)
         return
 
-    manager.dialog_data["exists"] = False
+    # Agar bir nechta turdagi kontent topilsa (masalan, film va serial)
+    # Hozircha birinchisini olamiz
+    result, m_type, cat = matches[0]
+
+    if m_type == "feature_film":
+        obj_data = {
+            "name": result.name,
+            "caption": result.captions,
+            "file_id": result.video_file_id,
+            "genres": result.genres,
+            "format": result.format,
+            "language": result.language,
+            "files": result.files,
+            "thumbnails": result.thumbnails,
+            "captions": result.captions,
+        }
+    else:
+        obj_data = {
+            "name": result[0].name,
+            "genres": result[0].genres,
+            "format": result[0].format,
+            "language": result[0].language,
+            "thumbnails": result[0].thumbnails,
+        }
+
+    manager.dialog_data.update(
+        {
+            "type": m_type,
+            "category": cat,
+            "code": code,
+            "obj": obj_data,
+            "exists": True,
+        }
+    )
     await transition_to_editing(m, manager, code)
 
 
@@ -676,6 +682,10 @@ async def on_edit_thumbnail(m: Message, widget: Any, manager: DialogManager):
                     code, thumbnail_file_id=new_thumbnail_id
                 )
         await m.answer(str(_("✅ Muqova muvaffaqiyatli yangilandi!")))
+        if "obj" in manager.dialog_data:
+            if not isinstance(manager.dialog_data["obj"].get("thumbnails"), dict):
+                manager.dialog_data["obj"]["thumbnails"] = {}
+            manager.dialog_data["obj"]["thumbnails"][lang] = new_thumbnail_id
         await _trigger_edit_preview(manager)
         await manager.switch_to(EditMovieSG.select_action)
     except Exception as e:
@@ -715,6 +725,9 @@ async def on_skip_edit_thumbnail(c: CallbackQuery, widget: Any, manager: DialogM
             else:
                 await actions.update_mini_series(code, thumbnail_file_id=None)
         await c.answer(str(_("✅ Muqova o'chirildi!")))
+        if "obj" in manager.dialog_data and "thumbnails" in manager.dialog_data["obj"]:
+            if isinstance(manager.dialog_data["obj"]["thumbnails"], dict):
+                manager.dialog_data["obj"]["thumbnails"].pop(lang, None)
         await manager.switch_to(EditMovieSG.select_action)
     except Exception as e:
         await c.answer(
@@ -972,6 +985,7 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
                 "format": fresh_data.format,
                 "language": fresh_data.language,
                 "video_file_id": fresh_data.video_file_id,
+                "thumbnails": fresh_data.thumbnails,
                 "captions": fresh_data.captions,
             }
             dialog_manager.dialog_data["obj"] = data
@@ -1019,7 +1033,7 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
             self.name = d.get("name")
 
     try:
-        res_file, _n, _c, _d, _q, _e, _f, _th = resolve_movie_media(
+        res_file, _n, _c, _d, _q, _e, _f, thumbnail_id = resolve_movie_media(
             MovieProxy(data), preview_lang
         )
         file_id = res_file
@@ -1107,7 +1121,7 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
                     )
 
                     try:
-                        res_file, _n, _c, _d, _tq, _e, _f, _th = resolve_movie_media(
+                        res_file, _n, _c, _d, _tq, _e, _f, thumbnail_id = resolve_movie_media(
                             match, preview_lang
                         )
                     except Exception:
@@ -1150,7 +1164,7 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
                     )
 
                     try:
-                        res_file, _n, _c, _d, _tq, _e, _f, _th = resolve_movie_media(
+                        res_file, _n, _c, _d, _tq, _e, _f, thumbnail_id = resolve_movie_media(
                             match, preview_lang
                         )
                     except Exception:
@@ -1201,9 +1215,7 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
     from src.app.bot.common.utils import format_multi_caption, format_multi_name
 
     preview_mode = dialog_manager.dialog_data.get("preview_mode", "video")
-    thumbnail_id = (data.get("thumbnails") or {}).get(sel_lang or "uz")
-    if not thumbnail_id and data.get("thumbnails"):
-        thumbnail_id = next(iter(data.get("thumbnails").values()))
+    # resolve_movie_media dan olingan thumbnail_id (yoki _th) ishlatiladi
 
     media = None
     if preview_mode == "thumbnail" and thumbnail_id:

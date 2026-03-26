@@ -287,7 +287,8 @@ def build_movie_caption(movie, lang: str) -> str:
     if isinstance(raw_name, dict):
         name = raw_name.get(lang)
         if not name:
-            for fl in ["uz", "ru", "en"]:
+            from src.app.bot.common.languages import LANGUAGES
+            for fl in [l["id"] for l in LANGUAGES]:
                 if raw_name.get(fl):
                     name = raw_name[fl]
                     break
@@ -393,7 +394,8 @@ def resolve_movie_media(
 
     # Fallback in order
     if not target_lang:
-        for l in ["uz", "ru", "en"]:
+        from src.app.bot.common.languages import LANGUAGES
+        for l in [lang["id"] for lang in LANGUAGES]:
             if l in files:
                 target_lang = l
                 break
@@ -456,19 +458,15 @@ def resolve_movie_media(
                     else:
                         target_quality = best_q
             else:
-                # Not VIP: Highest quality <= 480p
-                non_vip_options = [x for x in available_ranks if x[1] <= 480]
+                # Not VIP: Highest quality < 480p (max 360p)
+                non_vip_options = [x for x in available_ranks if x[1] < 480 and x[1] > 0]
                 if non_vip_options:
-                    # If we have named qualities <= 480p, pick the best named one.
-                    # Note: if 'original' was 480p, its rank 9999 would exclude it from non_vip_options.
-                    # We should handle the case where 'original' is the ONLY quality or it is <= 480p.
+                    # Pick the best quality strictly below 480p (e.g. 360p, 240p)
                     target_quality = non_vip_options[0][0]
                 else:
-                    # Fallback if only high qualities or ONLY 'original' exists
-                    if available_ranks:
-                        # If 'original' is the only one, or all named ones are > 480p
-                        # we pick the lowest available named one OR 'original' if it's the only one.
-                        target_quality = available_ranks[-1][0]
+                    # No quality below 480p available → signal that VIP is needed
+                    # We set target_quality to None so callers can detect this case
+                    target_quality = None
 
         file_id = lang_files.get(
             target_quality,
@@ -524,7 +522,8 @@ def resolve_movie_media(
     if not thumbnail_id:
         thumbnail_id = final_thumbnails.get(target_lang)
     if not thumbnail_id:
-        for l in ["uz", "ru", "en"]:
+        from src.app.bot.common.languages import LANGUAGES
+        for l in [lang["id"] for lang in LANGUAGES]:
             if l in final_thumbnails:
                 thumbnail_id = final_thumbnails[l]
                 break

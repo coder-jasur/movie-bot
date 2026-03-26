@@ -213,6 +213,12 @@ class FeatureFilmsActions:
             film.name = current_names
             flag_modified(film, "name")
 
+        # Ensure language is added to the language list
+        current_langs = [l for l in (film.language or "").split(",") if l]
+        if language not in current_langs:
+            current_langs.append(language)
+            film.language = ",".join(current_langs)
+
         if thumbnail_file_id is not None:
             if not isinstance(film.thumbnails, dict):
                 film.thumbnails = {}
