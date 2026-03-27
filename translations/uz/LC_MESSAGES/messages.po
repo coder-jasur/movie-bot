@@ -2655,3 +2655,18 @@ msgstr "Anime serial"
 #: src/app/database/queries/movie/top_movies.py:39
 msgid "Anime (mini)"
 msgstr "Epizodli anime"
+
+msgid "Admin orqali"
+msgstr "Admin orqali"
+
+msgid "Admin orqali to'lov"
+msgstr "<b>💳 Admin orqali to'lov</b>"
+
+msgid "Narx:"
+msgstr "Narx:"
+
+msgid "Karta raqami:"
+msgstr "Karta raqami:"
+
+msgid "Iltimos, ushbu karta raqamiga pul o'tkazing va to'lov rasmini (skrinshot) @hikmatilloyev_J adminga yuboring."
+msgstr "Iltimos, ushbu karta raqamiga pul o'tkazing va to'lov rasmini (skrinshot) @hikmatilloyev_J adminga yuboring."

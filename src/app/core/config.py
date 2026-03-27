@@ -18,6 +18,7 @@ class Settings:
     db_port: int = 5432
     click_provider_token: str | None = None
     payme_provider_token: str | None = None
+    payment_card: str = "8600 1234 5678 9012"
     webhook_url: str | None = None
     webhook_path: str = "/webhook"
     use_webhook: bool = False
@@ -47,6 +48,7 @@ def load_config() -> Settings:
         redis_url=env.str("REDIS_URL"),
         click_provider_token=env.str("CLICK_PROVIDER_TOKEN", None),
         payme_provider_token=env.str("PAYME_PROVIDER_TOKEN", None),
+        payment_card=env.str("PAYMENT_CARD", "8600 1234 5678 9012"),
         webhook_url=env.str("WEBHOOK_URL", None),
         webhook_path=env.str("WEBHOOK_PATH", "/webhook"),
         use_webhook=env.bool("USE_WEBHOOK", False)

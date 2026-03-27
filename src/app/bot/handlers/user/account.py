@@ -264,9 +264,49 @@ async def select_payment_method_handler(callback: CallbackQuery):
             ],
             [
                 InlineKeyboardButton(
+                    text=str(_("Admin orqali")), callback_data=f"pay:{plan_key}:admin"
+                )
+            ],
+            [
+                InlineKeyboardButton(
                     text=str(_("Orqaga")), callback_data="buy_vip_from_profile"
                 )
             ],
+        ]
+    )
+
+    await smart_edit(callback.message, text, reply_markup=kbd)
+    await callback.answer()
+
+
+@account_router.callback_query(F.data.startswith("pay:") & F.data.endswith(":admin"))
+async def admin_payment_handler(callback: CallbackQuery):
+    from src.app.core.config import load_config
+
+    settings = load_config()
+
+    parts = callback.data.split(":")
+    plan_key = parts[1]
+    plan = VIP_PRICES.get(plan_key)
+    if not plan:
+        await callback.answer(str(_("Xatolik.")))
+        return
+
+    text = (
+        f"{_('Admin orqali to\'lov')}\n\n"
+        f"🎫 {str(plan['label'])}\n"
+        f"💰 {_('Narx:')} {plan['uzs']:,} {_('so\'m')}\n"
+        f"💳 {_('Karta raqami:')} <code>{settings.payment_card}</code>\n\n"
+        f"{_('Iltimos, ushbu karta raqamiga pul o\'tkazing va to\'lov rasmini (skrinshot) @hikmatilloyev_J adminga yuboring.')}"
+    )
+
+    kbd = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=str(_("⬅️ Orqaga")), callback_data=f"select_plan:{plan_key}"
+                )
+            ]
         ]
     )
 

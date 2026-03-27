@@ -1030,7 +1030,10 @@ msgid "📽 BARCHA epizodli animelarning to'liq zaxirasi"
 msgstr "📽 Полный бэкап ВСЕХ эпизодов аниме"
 
 #: src/app/bot/dialog/admin/backup.py:200
-msgid "💾 <b>Меню бэкапа</b>\n\nВыберите тип данных для выгрузки:"
+msgid ""
+"💾 <b>Меню бэкапа</b>\n"
+"\n"
+"Выберите тип данных для выгрузки:"
 msgstr ""
 "💾 <b>Меню бэкапа</b>\n"
 "\n"
@@ -2653,3 +2656,22 @@ msgstr "Аниме Сериал"
 #: src/app/database/queries/movie/top_movies.py:39
 msgid "Anime (mini)"
 msgstr "Аниме с эпизодами"
+
+msgid "Admin orqali"
+msgstr "Через админа"
+
+msgid "Admin orqali to'lov"
+msgstr "<b>💳 Оплата через админа</b>"
+
+msgid "Narx:"
+msgstr "Цена:"
+
+msgid "Karta raqami:"
+msgstr "Номер карты:"
+
+msgid ""
+"Iltimos, ushbu karta raqamiga pul o'tkazing va to'lov rasmini (skrinshot) "
+"@hikmatilloyev_J adminga yuboring."
+msgstr ""
+"Пожалуйста, переведите деньги на этот номер карты и отправьте скриншот "
+"оплаты админу @hikmatilloyev_J."
