@@ -239,24 +239,25 @@ async def select_payment_method_handler(callback: CallbackQuery):
     text = (
         f"<b>💳 {_('To\'lov usuli')}</b>\n\n"
         f"🎫 {str(plan['label'])}\n"
-        f"🔹 {_('Click / Payme (Humo, Uzcard):')} {plan['uzs']:,} {_('so\'m')}\n"
+        # f"🔹 {_('Click / Payme (Humo, Uzcard):')} {plan['uzs']:,} {_('so\'m')}\n"
+        f"🔹 {_('Admin orqali:')} {plan['uzs']:,} {_('so\'m')}\n"
         f"🔹 {_('Stars:')} {plan['stars']} Stars"
     )
 
     kbd = InlineKeyboardMarkup(
         inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=str(_("Click (Humo, Uzcard)")),
-                    callback_data=f"pay:{plan_key}:click",
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text=str(_("Payme (Humo, Uzcard)")),
-                    callback_data=f"pay:{plan_key}:payme",
-                )
-            ],
+            # [
+            #     InlineKeyboardButton(
+            #         text=str(_("Click (Humo, Uzcard)")),
+            #         callback_data=f"pay:{plan_key}:click",
+            #     )
+            # ],
+            # [
+            #     InlineKeyboardButton(
+            #         text=str(_("Payme (Humo, Uzcard)")),
+            #         callback_data=f"pay:{plan_key}:payme",
+            #     )
+            # ],
             [
                 InlineKeyboardButton(
                     text=str(_("Stars (XTR)")), callback_data=f"pay:{plan_key}:stars"

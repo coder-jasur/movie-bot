@@ -2606,6 +2606,10 @@ msgid "Click / Payme (Humo, Uzcard):"
 msgstr "Click / Payme (Humo, Uzcard):"
 
 #: src/app/bot/handlers/user/account.py
+msgid "Admin orqali:"
+msgstr "Via Admin:"
+
+#: src/app/bot/handlers/user/account.py
 #, python-brace-format
 msgid "To'lash {amount} UZS"
 msgstr "Pay {amount} UZS"
