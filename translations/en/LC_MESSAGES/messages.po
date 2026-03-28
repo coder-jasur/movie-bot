@@ -1995,6 +1995,10 @@ msgid "Yuqori sifat (720p, 1080p)"
 msgstr "High quality (1080p, 720p, 480p)"
 
 #: src/app/bot/handlers/user/account.py:174
+msgid "Tillar boshqaruvi"
+msgstr "Language control english, uzbek, russian"
+
+#: src/app/bot/handlers/user/account.py:174
 msgid "Reklamasiz foydalanish"
 msgstr "Ad-free experience"
 

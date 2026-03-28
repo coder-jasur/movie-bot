@@ -186,6 +186,7 @@ async def vip_tarif_handler(message: Message, edit: bool = False):
         f"<b>⭐ {_('VIP Obuna')}</b>\n\n"
         f"<b>✨ {_('Imkoniyatlar:')}</b>\n"
         f"✅ {_('Yuqori sifat (720p, 1080p)')}\n"
+        f"✅ {_('Tillar boshqaruvi')}"
         f"✅ {_('Reklamasiz foydalanish')}\n"
         f"✅ {_('Filmlarni yuklab olish')}\n\n"
         f"<b>💰 {_('Narxlar:')}</b>\n"
