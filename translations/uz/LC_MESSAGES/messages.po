@@ -1998,6 +1998,10 @@ msgid "Yuqori sifat (720p, 1080p)"
 msgstr "Yuqori sifat (1080p, 720p, 480p)"
 
 #: src/app/bot/handlers/user/account.py:174
+msgid "Tillar boshqaruvi"
+msgstr "Tillar boshqaruvi - 🇺🇿 🇷🇺 🇬🇧"
+
+#: src/app/bot/handlers/user/account.py:174
 msgid "Reklamasiz foydalanish"
 msgstr "Reklamasiz va majburiy obunasiz foydalanish"
 

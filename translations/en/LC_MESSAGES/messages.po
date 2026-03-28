@@ -1994,7 +1994,7 @@ msgstr "Features:"
 msgid "Yuqori sifat (720p, 1080p)"
 msgstr "High quality (1080p, 720p, 480p)"
 
-#: src/app/bot/handlers/user/account.py:174
+#: src/app/bot/handlers/user/account.py
 msgid "Tillar boshqaruvi"
 msgstr "Language control english, uzbek, russian"
 

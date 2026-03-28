@@ -1999,6 +1999,10 @@ msgid "Yuqori sifat (720p, 1080p)"
 msgstr "Высокое качество (1080p, 720p, 480p)"
 
 #: src/app/bot/handlers/user/account.py:174
+msgid "Tillar boshqaruvi"
+msgstr "Управление языками - 🇺🇿 🇷🇺 🇬🇧"
+
+#: src/app/bot/handlers/user/account.py:174
 msgid "Reklamasiz foydalanish"
 msgstr "Использование без рекламы и обязательной подписки"
 
