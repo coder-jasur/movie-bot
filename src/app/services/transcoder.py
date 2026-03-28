@@ -520,33 +520,51 @@ class Transcoder:
             return None
 
     async def _download(self, file_id: str, file_path: str, dest: str) -> Optional[str]:
+        # 1. To'g'ridan-to'g'ri fayl tizimidan nusxa olish (eng tezkor usul)
         if os.path.isabs(file_path) and os.path.isfile(file_path):
             await asyncio.to_thread(shutil.copy2, file_path, dest)
             return file_path
 
         token = self.bot.token
         bot_id = token.split(":")[0] if ":" in token else token
-        local = "/var/lib/telegram-bot-api"
+        local_base = "/var/lib/telegram-bot-api"
 
+        # 2. Boshqa mumkin bo'lgan lokal yo'llarni tekshirish
         for candidate in [
-            os.path.join(local, token, file_path.lstrip("/")),
-            os.path.join(local, bot_id, file_path.lstrip("/")),
-            os.path.join(local, file_path.lstrip("/")),
+            os.path.join(local_base, token, file_path.lstrip("/")),
+            os.path.join(local_base, bot_id, file_path.lstrip("/")),
+            os.path.join(local_base, file_path.lstrip("/")),
         ]:
             if os.path.isfile(candidate):
                 await asyncio.to_thread(shutil.copy2, candidate, dest)
                 return candidate
 
+        # 3. HTTP orqali yuklab olish (Local API serverdan)
         try:
-            await self.bot.download_file(file_path, dest)
-        except Exception as e:
-            logger.warning(f"Local API failure: {e}")
-            from aiogram.client.session.aiohttp import AiohttpSession
+            # Agar file_path mutloq yo'l bo'lsa (/var/lib/...), uning nisbiy qismini ajratamiz
+            # Aks holda aiogram noto'g'ri URL yasaydi (404 Not Found)
+            download_path = file_path
+            if file_path.startswith(local_base):
+                parts = file_path.split("/")
+                # /var/lib/telegram-bot-api/{token_or_id}/{relative_path}
+                if len(parts) > 5:
+                    download_path = "/".join(parts[5:])
 
+            await self.bot.download_file(download_path, dest)
+        except Exception as e:
+            logger.warning(f"Local API download failure: {e}")
+            
+            # 4. Global API (api.telegram.org) - faqat oxirgi chora sifatida
+            # DIQQAT: Global API 20MB dan katta fayllarni yuklashga ruxsat bermaydi
+            from aiogram.client.session.aiohttp import AiohttpSession
             async with AiohttpSession() as session:
                 temp_bot = Bot(token=token, session=session)
                 try:
                     fi = await temp_bot.get_file(file_id)
+                    if fi.file_size and fi.file_size > 20 * 1024 * 1024:
+                        logger.error(f"Global API limited: File is too big ({fi.file_size} bytes)")
+                        raise ValueError("File is too big for Global API download limit (20MB)")
+                    
                     await temp_bot.download_file(fi.file_path, dest)
                 except Exception as e2:
                     logger.error(f"Global API failure: {e2}")
