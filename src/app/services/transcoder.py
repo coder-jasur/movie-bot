@@ -28,18 +28,17 @@ INTRO_PATH = INTRO_MKV if os.path.exists(INTRO_MKV) else INTRO_MP4
 WATERMARK_PATH = os.path.join(BASE_DIR, "media/photos/bot_watermark.png")
 TMP_BASE = "/var/lib/telegram-bot-api/temp"
 
+LOCAL_API_BASE = "/var/lib/telegram-bot-api"
+
 StatusCallback = Optional[Callable[[str], Awaitable[None]]]
 QualityCallback = Optional[Callable[[str, str], Awaitable[None]]]
 
 
-# ─── gt() O'RNIGA to'g'ridan-to'g'ri i18n.gettext() ishlatamiz ──────────────
 def _t(key: str, locale: str, **kwargs) -> str:
-    """Locale bilan tarjima qiluvchi yordamchi funksiya."""
     text = i18n.gettext(key, locale=locale)
     return text.format(**kwargs) if kwargs else text
 
 
-# ─── Encoder ──────────────────────────────────────────────────────────────────
 _NVENC_CACHE: Optional[bool] = None
 
 
@@ -65,11 +64,11 @@ async def _check_nvenc() -> bool:
 
 def _enc(nvenc: bool, h: int) -> list:
     if h >= 1080:
-        crf = "18"
-    elif h >= 720:
         crf = "24"
+    elif h >= 720:
+        crf = "26"
     elif h >= 480:
-        crf = "30"
+        crf = "32"
     else:
         crf = "40"
 
@@ -113,7 +112,7 @@ async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
             "-i",
             WATERMARK_PATH,
             "-filter_complex",
-            "[1:v]scale=iw*0.30:-1[wm];[0:v][wm]overlay=W-w-10:H-h-10",
+            "[1:v]scale=iw*0.15:-1[wm];[0:v][wm]overlay=W-w-10:10",
             "-frames:v",
             "1",
             "-q:v",
@@ -131,6 +130,57 @@ async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
         logger.error(f"Thumb watermark exception: {e}")
         shutil.copy2(thumb_in, thumb_out)
         return False
+
+
+def _resolve_local_path(token: str, file_path: str) -> Optional[str]:
+    """
+    Telegram Local API file_path ni haqiqiy fayl yo'liga aylantiradi.
+    file_path quyidagi ko'rinishlarda kelishi mumkin:
+      - "videos/file_0.mp4"                            (nisbiy)
+      - "/var/lib/telegram-bot-api/TOKEN/videos/..."   (mutloq, token bilan)
+      - "/var/lib/telegram-bot-api/BOT_ID/videos/..."  (mutloq, bot_id bilan)
+    """
+    bot_id = token.split(":")[0] if ":" in token else token
+
+    candidates = [
+        # Agar mutloq yo'l bo'lsa — to'g'ridan-to'g'ri
+        file_path,
+        # Nisbiy yo'l + token
+        os.path.join(LOCAL_API_BASE, token, file_path.lstrip("/")),
+        # Nisbiy yo'l + bot_id
+        os.path.join(LOCAL_API_BASE, bot_id, file_path.lstrip("/")),
+        # Nisbiy yo'l (bazadan)
+        os.path.join(LOCAL_API_BASE, file_path.lstrip("/")),
+    ]
+
+    for path in candidates:
+        if os.path.isfile(path):
+            logger.info(f"Local file found: {path}")
+            return path
+
+    logger.debug(
+        f"Local file not found for file_path={file_path!r}, tried: {candidates}"
+    )
+    return None
+
+
+def _make_relative_path(token: str, file_path: str) -> str:
+    """
+    Local API HTTP download uchun nisbiy yo'l qaytaradi.
+    aiogram download_file() nisbiy yo'l kutadi.
+    """
+    bot_id = token.split(":")[0] if ":" in token else token
+
+    for prefix in [
+        f"{LOCAL_API_BASE}/{token}/",
+        f"{LOCAL_API_BASE}/{bot_id}/",
+        f"{LOCAL_API_BASE}/",
+    ]:
+        if file_path.startswith(prefix):
+            return file_path[len(prefix) :]
+
+    # Allaqachon nisbiy
+    return file_path.lstrip("/")
 
 
 class Transcoder:
@@ -156,7 +206,6 @@ class Transcoder:
                 logger.error(f"get_file failed: {e}")
                 return {"original": file_id}, []
 
-            # ── _t() bilan to'g'ri locale uzatiladi ──────────────────────────
             await self._notify(status_callback, _t("📥 Video yuklanmoqda...", locale))
 
             try:
@@ -189,8 +238,7 @@ class Transcoder:
             )
 
             await self._notify(
-                status_callback,
-                _t("🎬 Base video tayyorlanmoqda...", locale),
+                status_callback, _t("🎬 Base video tayyorlanmoqda...", locale)
             )
             base_path = os.path.join(tmp, "base.mp4")
             try:
@@ -202,8 +250,7 @@ class Transcoder:
             results: Dict[str, str] = {}
 
             await self._notify(
-                status_callback,
-                _t("💾 Original tayyorlanmoqda...", locale),
+                status_callback, _t("💾 Original tayyorlanmoqda...", locale)
             )
             try:
                 out_orig = os.path.join(tmp, "orig.mp4")
@@ -465,112 +512,110 @@ class Transcoder:
         label: str,
         thumb_path: Optional[str] = None,
     ) -> Optional[str]:
-        try:
-            from aiogram.types import FSInputFile
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            try:
+                from aiogram.types import FSInputFile
 
-            tg_thumb = None
-            thumb_tg_path = None
+                tg_thumb = None
+                thumb_tg_path = None
 
-            if thumb_path and os.path.exists(thumb_path):
-                thumb_tg_path = path.replace(".mp4", "_tgthumb.jpg")
-                resize_cmd = [
-                    "ffmpeg",
-                    "-y",
-                    "-i",
-                    thumb_path,
-                    "-vf",
-                    "scale=320:320:force_original_aspect_ratio=decrease",
-                    "-frames:v",
-                    "1",
-                    "-q:v",
-                    "5",
-                    thumb_tg_path,
-                ]
-                proc = await asyncio.create_subprocess_exec(
-                    *resize_cmd, stderr=subprocess.PIPE
+                if thumb_path and os.path.exists(thumb_path):
+                    thumb_tg_path = path.replace(".mp4", "_tgthumb.jpg")
+                    resize_cmd = [
+                        "ffmpeg",
+                        "-y",
+                        "-i",
+                        thumb_path,
+                        "-vf",
+                        "scale=320:320:force_original_aspect_ratio=decrease",
+                        "-frames:v",
+                        "1",
+                        "-q:v",
+                        "5",
+                        thumb_tg_path,
+                    ]
+                    proc = await asyncio.create_subprocess_exec(
+                        *resize_cmd, stderr=subprocess.PIPE
+                    )
+                    await proc.communicate()
+                    if os.path.exists(thumb_tg_path):
+                        tg_thumb = FSInputFile(thumb_tg_path)
+
+                send_kwargs = dict(
+                    chat_id=user_id,
+                    video=FSInputFile(path),
+                    caption=f"✅ {label} tayyor.",
+                    disable_notification=True,
                 )
-                await proc.communicate()
-                if os.path.exists(thumb_tg_path):
-                    tg_thumb = FSInputFile(thumb_tg_path)
+                if tg_thumb:
+                    send_kwargs["thumbnail"] = tg_thumb
 
-            send_kwargs = dict(
-                chat_id=user_id,
-                video=FSInputFile(path),
-                caption=f"✅ {label} tayyor.",
-                disable_notification=True,
-            )
-            if tg_thumb:
-                send_kwargs["thumbnail"] = tg_thumb
+                msg = await self.bot.send_video(**send_kwargs)
 
-            msg = await self.bot.send_video(**send_kwargs)
+                if thumb_tg_path and os.path.exists(thumb_tg_path):
+                    try:
+                        os.remove(thumb_tg_path)
+                    except Exception:
+                        pass
 
-            if thumb_tg_path and os.path.exists(thumb_tg_path):
-                try:
-                    os.remove(thumb_tg_path)
-                except Exception:
-                    pass
+                if msg.video:
+                    return msg.video.file_id
+                
+                logger.error(f"Upload {label} attempt {attempt}: msg.video is None")
 
-            if msg.video:
-                return msg.video.file_id
-            logger.error(f"Upload {label}: msg.video is None")
-            return None
-
-        except Exception as e:
-            logger.error(f"Upload {label} failed: {e}")
-            return None
+            except Exception as e:
+                logger.warning(f"Upload {label} attempt {attempt} failed: {e}")
+                if attempt == max_retries:
+                    logger.error(f"Upload {label} finally failed after {max_retries} attempts.")
+                    return None
+                # Kichik pauza keyingi urinishdan oldin
+                await asyncio.sleep(2 * attempt)
+        
+        return None
 
     async def _download(self, file_id: str, file_path: str, dest: str) -> Optional[str]:
-        # 1. To'g'ridan-to'g'ri fayl tizimidan nusxa olish (eng tezkor usul)
-        if os.path.isabs(file_path) and os.path.isfile(file_path):
-            await asyncio.to_thread(shutil.copy2, file_path, dest)
-            return file_path
-
         token = self.bot.token
-        bot_id = token.split(":")[0] if ":" in token else token
-        local_base = "/var/lib/telegram-bot-api"
 
-        # 2. Boshqa mumkin bo'lgan lokal yo'llarni tekshirish
-        for candidate in [
-            os.path.join(local_base, token, file_path.lstrip("/")),
-            os.path.join(local_base, bot_id, file_path.lstrip("/")),
-            os.path.join(local_base, file_path.lstrip("/")),
-        ]:
-            if os.path.isfile(candidate):
-                await asyncio.to_thread(shutil.copy2, candidate, dest)
-                return candidate
+        # ── 1. Fayl tizimidan to'g'ridan-to'g'ri topish ──────────────────────
+        local_path = _resolve_local_path(token, file_path)
+        if local_path:
+            await asyncio.to_thread(shutil.copy2, local_path, dest)
+            return local_path
 
-        # 3. HTTP orqali yuklab olish (Local API serverdan)
+        # ── 2. Local API HTTP orqali yuklab olish ─────────────────────────────
+        # aiogram download_file() nisbiy yo'l (TOKEN prefix'siz) kutadi
+        relative = _make_relative_path(token, file_path)
+        logger.info(f"Trying Local API HTTP download: relative_path={relative!r}")
         try:
-            # Agar file_path mutloq yo'l bo'lsa (/var/lib/...), uning nisbiy qismini ajratamiz
-            # Aks holda aiogram noto'g'ri URL yasaydi (404 Not Found)
-            download_path = file_path
-            if file_path.startswith(local_base):
-                parts = file_path.split("/")
-                # /var/lib/telegram-bot-api/{token_or_id}/{relative_path}
-                if len(parts) > 5:
-                    download_path = "/".join(parts[5:])
-
-            await self.bot.download_file(download_path, dest)
+            await self.bot.download_file(relative, dest)
+            if os.path.exists(dest) and os.path.getsize(dest) > 0:
+                logger.info(f"Local API HTTP download OK: {dest}")
+                return dest
         except Exception as e:
             logger.warning(f"Local API download failure: {e}")
-            
-            # 4. Global API (api.telegram.org) - faqat oxirgi chora sifatida
-            # DIQQAT: Global API 20MB dan katta fayllarni yuklashga ruxsat bermaydi
-            from aiogram.client.session.aiohttp import AiohttpSession
-            async with AiohttpSession() as session:
-                temp_bot = Bot(token=token, session=session)
-                try:
-                    fi = await temp_bot.get_file(file_id)
-                    if fi.file_size and fi.file_size > 20 * 1024 * 1024:
-                        logger.error(f"Global API limited: File is too big ({fi.file_size} bytes)")
-                        raise ValueError("File is too big for Global API download limit (20MB)")
-                    
-                    await temp_bot.download_file(fi.file_path, dest)
-                except Exception as e2:
-                    logger.error(f"Global API failure: {e2}")
-                    raise
-                finally:
-                    await temp_bot.session.close()
+
+        # ── 3. Global API — faqat 20MB dan kichik fayllar uchun ──────────────
+        logger.warning("Falling back to Global API (20MB limit applies)")
+        from aiogram.client.session.aiohttp import AiohttpSession
+
+        async with AiohttpSession() as session:
+            temp_bot = Bot(token=token, session=session)
+            try:
+                fi = await temp_bot.get_file(file_id)
+                if fi.file_size and fi.file_size > 20 * 1024 * 1024:
+                    raise ValueError(
+                        f"File too big for Global API: {fi.file_size} bytes "
+                        f"({fi.file_size // 1024 // 1024}MB)"
+                    )
+                await temp_bot.download_file(fi.file_path, dest)
+                logger.info("Global API download OK")
+                return dest
+            except Exception as e:
+                logger.error(f"Global API failure: {e}")
+                raise
+            finally:
+                await temp_bot.session.close()
 
     async def _get_height(self, path: str) -> int:
         cmd = [
@@ -635,9 +680,6 @@ class Transcoder:
         out, _ = await proc.communicate()
         return "audio" in out.decode().lower()
 
-    # ── _notify endi faqat tayyor matnni qabul qiladi ────────────────────────
-    # Tarjima _t() orqali CHAQIRUVCHI JOYDA amalga oshiriladi,
-    # shuning uchun bu method locale parametriga endi muhtoj emas.
     @staticmethod
     async def _notify(cb: StatusCallback, text: str):
         if cb:

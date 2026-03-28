@@ -138,14 +138,14 @@ async def series_player(
     if callback_data.action == "save_to_favorites":
         await favorites_actions.add_favorite_movie(callback_data.code, user_id)
         saved = True
-    elif callback_data.action == "remove_in_favorites":
+    elif callback_data.action == ActionType.remove_in_favorites:
         await favorites_actions.delete_favorite_movie(callback_data.code, user_id)
         saved = False
 
     if (
         callback_data.action == ActionType.set_quality
         and not is_vip
-        and callback_data.quality in ["720p", "1080p"]
+        and callback_data.quality in ["480p", "720p", "1080p"]
     ):
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
@@ -521,7 +521,7 @@ async def mini_series_player(
     if (
         callback_data.action == ActionType.set_quality
         and not is_vip
-        and callback_data.quality in ["720p", "1080p"]
+        and callback_data.quality in ["480p", "720p", "1080p"]
     ):
         from src.app.bot.handlers.user.account import vip_tarif_handler
 

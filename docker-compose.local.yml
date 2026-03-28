@@ -19,14 +19,28 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu, video]  # ← "video" NVENC uchun kerak
+
     networks:
       - tg_bot
 
+  api:
+    image: aiogram/telegram-bot-api:latest
+    container_name: telegram-bot-api
+    restart: always
+    environment:
+      TELEGRAM_API_ID: ${TELEGRAM_API_ID}
+      TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
+      TELEGRAM_LOCAL: ${TELEGRAM_LOCAL}
+    ports:
+      - "8081:8081"
+    volumes:
+      - telegram-bot-api-data:/var/lib/telegram-bot-api
+    networks:
+      - tg_bot
+  
 networks:
   tg_bot:
     driver: bridge
 
 volumes:
   telegram-bot-api-data:
-    external: true
-    name: movie-bot_telegram-bot-api-data
