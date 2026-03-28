@@ -31,6 +31,7 @@ services:
       TELEGRAM_API_ID: ${TELEGRAM_API_ID}
       TELEGRAM_API_HASH: ${TELEGRAM_API_HASH}
       TELEGRAM_LOCAL: ${TELEGRAM_LOCAL}
+      TELEGRAM_MAX_FILE_SIZE: 2000
     ports:
       - "8081:8081"
     volumes:

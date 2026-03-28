@@ -442,6 +442,14 @@ async def _handle_language_chosen(manager: DialogManager, lang_value: str):
         await manager.switch_to(AddMovieWizardSG.input_season_number)
     elif movie_type == "mini_series" and not is_adding:
         await manager.switch_to(AddMovieWizardSG.input_series_number)
+    elif manager.dialog_data.get("name"):
+        # Agar nom allaqachon mavjud bo'lsa (DB dan olingan yoki oldin kiritilgan)
+        if movie_type == "series":
+            await manager.switch_to(AddMovieWizardSG.input_season_number)
+        elif movie_type == "mini_series":
+            await manager.switch_to(AddMovieWizardSG.input_series_number)
+        else:
+            await manager.switch_to(AddMovieWizardSG.input_file)
     else:
         await manager.switch_to(AddMovieWizardSG.input_name)
 
@@ -972,7 +980,16 @@ async def on_add_more(c: CallbackQuery, widget: Any, manager: DialogManager):
         ],
     )
     await c.answer()
-    await manager.switch_to(AddMovieWizardSG.input_name)
+    if manager.dialog_data.get("name"):
+        m_type = manager.dialog_data.get("movie_type") or manager.dialog_data.get("exist_type")
+        if m_type == "series":
+            await manager.switch_to(AddMovieWizardSG.input_season_number)
+        elif m_type == "mini_series":
+            await manager.switch_to(AddMovieWizardSG.input_series_number)
+        else:
+            await manager.switch_to(AddMovieWizardSG.input_file)
+    else:
+        await manager.switch_to(AddMovieWizardSG.input_name)
 
 
 async def on_back_to_type(c: CallbackQuery, widget: Any, manager: DialogManager):

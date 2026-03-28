@@ -551,7 +551,7 @@ class Transcoder:
                 if tg_thumb:
                     send_kwargs["thumbnail"] = tg_thumb
 
-                msg = await self.bot.send_video(**send_kwargs)
+                msg = await self.bot.send_video(**send_kwargs, request_timeout=1200)
 
                 if thumb_tg_path and os.path.exists(thumb_tg_path):
                     try:
@@ -561,17 +561,19 @@ class Transcoder:
 
                 if msg.video:
                     return msg.video.file_id
-                
+
                 logger.error(f"Upload {label} attempt {attempt}: msg.video is None")
 
             except Exception as e:
                 logger.warning(f"Upload {label} attempt {attempt} failed: {e}")
                 if attempt == max_retries:
-                    logger.error(f"Upload {label} finally failed after {max_retries} attempts.")
+                    logger.error(
+                        f"Upload {label} finally failed after {max_retries} attempts."
+                    )
                     return None
                 # Kichik pauza keyingi urinishdan oldin
                 await asyncio.sleep(2 * attempt)
-        
+
         return None
 
     async def _download(self, file_id: str, file_path: str, dest: str) -> Optional[str]:
