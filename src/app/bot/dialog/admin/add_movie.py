@@ -385,9 +385,10 @@ async def on_thumbnail_input(m: Message, widget: Any, manager: DialogManager):
         manager.dialog_data["thumbnail_file_id"] = m.document.file_id
     else:
         await m.answer(str(_("❌ Rasm yuboring (JPG, PNG)!")))
-        return
     is_adding = manager.dialog_data.get("is_adding_track", False)
-    if is_adding:
+    movie_type = manager.dialog_data.get("movie_type")
+
+    if is_adding or movie_type in ["series", "mini_series"]:
         await _trigger_admin_preview(manager)
         await manager.switch_to(AddMovieWizardSG.confirm)
     else:
@@ -397,7 +398,9 @@ async def on_thumbnail_input(m: Message, widget: Any, manager: DialogManager):
 async def on_skip_thumbnail(c: CallbackQuery, widget: Any, manager: DialogManager):
     manager.dialog_data.pop("thumbnail_file_id", None)
     is_adding = manager.dialog_data.get("is_adding_track", False)
-    if is_adding:
+    movie_type = manager.dialog_data.get("movie_type")
+
+    if is_adding or movie_type in ["series", "mini_series"]:
         await _trigger_admin_preview(manager)
         await manager.switch_to(AddMovieWizardSG.confirm)
     else:

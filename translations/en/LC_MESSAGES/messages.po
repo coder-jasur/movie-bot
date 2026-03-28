@@ -2000,7 +2000,7 @@ msgstr "Language control - 🇺🇿 🇷🇺 🇬🇧"
 
 #: src/app/bot/handlers/user/account.py:174
 msgid "Reklamasiz foydalanish"
-msgstr "Ad-free experience"
+msgstr "Use without ads and mandatory subscription."
 
 #: src/app/bot/handlers/user/account.py:175
 msgid "Filmlarni yuklab olish"
