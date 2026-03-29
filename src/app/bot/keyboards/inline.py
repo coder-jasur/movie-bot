@@ -21,7 +21,6 @@ def series_player_kbd(
     current_series_for_current_season: int,
     series_count_for_current_season: int,
     saved: bool,
-    bot_username: str,
     files: dict = None,
     current_quality: str = "original",
     current_language: str = "uz",
@@ -185,7 +184,11 @@ def series_player_kbd(
         )
         if has_real_langs:
             from src.app.bot.common.languages import LANGUAGES
-            lang_obj = next((l for l in LANGUAGES if l["id"] == get_lang_code(current_language)), None)
+
+            lang_obj = next(
+                (l for l in LANGUAGES if l["id"] == get_lang_code(current_language)),
+                None,
+            )
             lang_label = lang_obj["label"] if lang_obj else current_language.upper()
             settings_row.append(
                 InlineKeyboardButton(
@@ -464,7 +467,11 @@ def film_kbd(
         )
         if has_real_langs:
             from src.app.bot.common.languages import LANGUAGES
-            lang_obj = next((l for l in LANGUAGES if l["id"] == get_lang_code(current_language)), None)
+
+            lang_obj = next(
+                (l for l in LANGUAGES if l["id"] == get_lang_code(current_language)),
+                None,
+            )
             lang_label = lang_obj["label"] if lang_obj else current_language.upper()
             settings_row.append(
                 InlineKeyboardButton(
@@ -534,7 +541,6 @@ def mini_series_player_kbd(
     current_seria: int,
     serias_count: int,
     saved: bool,
-    bot_username: str,
     files: dict = None,
     current_quality: str = "original",
     current_language: str = "uz",
@@ -680,7 +686,11 @@ def mini_series_player_kbd(
         )
         if has_real_langs:
             from src.app.bot.common.languages import LANGUAGES
-            lang_obj = next((l for l in LANGUAGES if l["id"] == get_lang_code(current_language)), None)
+
+            lang_obj = next(
+                (l for l in LANGUAGES if l["id"] == get_lang_code(current_language)),
+                None,
+            )
             lang_label = lang_obj["label"] if lang_obj else current_language.upper()
             settings_row.append(
                 InlineKeyboardButton(

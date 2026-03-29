@@ -265,7 +265,6 @@ async def random_film_handler(message: Message, session: AsyncSession):
             reply_markup=film_kbd(
                 random_movie.code,
                 saved,
-                bot_username=bot_username,
                 files=files,
                 current_quality=target_quality,
                 current_language=target_language,
@@ -302,14 +301,12 @@ async def random_film_handler(message: Message, session: AsyncSession):
                 random_movie.series,
                 serias_count,
                 saved,
-                bot_username=bot_username,
                 files=files,
                 current_quality=target_quality,
                 current_language=target_language,
                 is_vip=is_vip,
             ),
             protect_content=not is_vip,
-            thumbnail=thumbnail_input,
         )
         _series_num = _movie.series
         await track_and_increment_view(
@@ -350,14 +347,12 @@ async def random_film_handler(message: Message, session: AsyncSession):
                 random_movie.series,
                 current_season_series,
                 saved,
-                bot_username=bot_username,
                 files=files,
                 current_quality=target_quality,
                 current_language=target_language,
                 is_vip=is_vip,
             ),
             protect_content=not is_vip,
-            thumbnail=thumbnail_input,
         )
         _season = _movie.season
         _series = _movie.series
