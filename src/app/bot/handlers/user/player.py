@@ -50,9 +50,6 @@ async def series_player(
 
     is_vip = await is_active_vip(db_user, session)
 
-    bot_info = await call.bot.get_me()
-    bot_username = bot_info.username
-
     favorites_actions = FavoriteMoviesActions(session)
     code = callback_data.code
 
@@ -247,7 +244,6 @@ async def series_player(
                     current_series_for_current_season=callback_data.series_number,
                     series_count_for_current_season=series_count_for_current_season,
                     saved=bool(saved),
-                    bot_username=bot_username,
                     files=files,
                     current_quality=target_quality,
                     current_language=target_language_res,
@@ -270,7 +266,6 @@ async def series_player(
                 current_series_for_current_season=callback_data.series_number,
                 series_count_for_current_season=series_count_for_current_season,
                 saved=bool(saved),
-                bot_username=bot_username,
                 files=files,
                 current_quality=target_quality,
                 current_language=target_language_res,
@@ -295,9 +290,6 @@ async def feature_movies_player(
     from src.app.bot.common.utils import is_active_vip
 
     is_vip = await is_active_vip(db_user, session)
-
-    bot_info = await call.bot.get_me()
-    bot_username = bot_info.username
 
     saved = await favorite_films_actions.get_favorites(
         callback_data.code, call.from_user.id
@@ -395,7 +387,6 @@ async def feature_movies_player(
                 reply_markup=film_kbd(
                     code=callback_data.code,
                     saved=saved,
-                    bot_username=bot_username,
                     files=files,
                     current_quality=target_quality,
                     current_language=target_language_res,
@@ -413,7 +404,6 @@ async def feature_movies_player(
                 reply_markup=film_kbd(
                     code=callback_data.code,
                     saved=saved,
-                    bot_username=bot_username,
                     files=files,
                     current_quality=target_quality,
                     current_language=target_language_res,
@@ -459,9 +449,6 @@ async def mini_series_player(
     from src.app.bot.common.utils import is_active_vip
 
     is_vip = await is_active_vip(db_user, session)
-
-    bot_info = await call.bot.get_me()
-    bot_username = bot_info.username
 
     saved = await favorite_films_actions.get_favorites(code, call.from_user.id)
 

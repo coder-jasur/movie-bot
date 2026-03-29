@@ -251,9 +251,6 @@ async def random_film_handler(message: Message, session: AsyncSession):
         thumbnail_id,
     ) = resolve_movie_media(random_movie, user_lang, is_vip=is_vip)
 
-    bot_info = await message.bot.get_me()
-    bot_username = bot_info.username
-
     # FIX #2: lambda closure — local variable bilan capture
     _actions = actions
     _movie = random_movie
@@ -739,16 +736,12 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                 thumbnail_id,
             ) = resolve_movie_media(found_movie, user_lang, is_vip=is_vip)
 
-            bot_info = await message.bot.get_me()
-            bot_username = bot_info.username
-
             await message.answer_video(
                 video=video_to_send,
                 caption=caption,
                 reply_markup=film_kbd(
                     code,
                     saved,
-                    bot_username=bot_username,
                     files=files,
                     current_quality=target_quality,
                     current_language=target_language,
@@ -859,9 +852,6 @@ async def movie_search_handler(message: Message, session: AsyncSession):
             series_count = len(filtered_s)
             seasons_count = len(set(s.season for s in filtered_s)) if filtered_s else 0
 
-            bot_info = await message.bot.get_me()
-            bot_username = bot_info.username
-
             await message.answer_video(
                 video=video_to_send,
                 caption=caption,
@@ -874,7 +864,6 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                     first_ep.series,
                     current_season_series,
                     saved,
-                    bot_username=bot_username,
                     files=files,
                     current_quality=target_quality,
                     current_language=target_language,
