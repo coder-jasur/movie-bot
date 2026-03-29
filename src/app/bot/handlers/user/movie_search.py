@@ -798,9 +798,6 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                 filtered_ms = ms
             serias_count = len(filtered_ms)
 
-            bot_info = await message.bot.get_me()
-            bot_username = bot_info.username
-
             await message.answer_video(
                 video=video_to_send,
                 caption=caption,
@@ -809,7 +806,6 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                     1,
                     serias_count,
                     saved,
-                    bot_username=bot_username,
                     files=files,
                     current_quality=target_quality,
                     current_language=target_language,

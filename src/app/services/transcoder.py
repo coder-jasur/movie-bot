@@ -255,6 +255,9 @@ class Transcoder:
             try:
                 out_orig = os.path.join(tmp, "orig.mp4")
                 await self._scale_only(base_path, out_orig, orig_h)
+                # Ensure the file is flushed and accessible
+                await asyncio.sleep(2)
+                self._ensure_permissions(out_orig)
                 res = await self._upload(out_orig, user_id, "Original", thumb_wm_path)
                 results["original"] = res if res else file_id
                 if res:
@@ -481,6 +484,9 @@ class Transcoder:
                     ),
                 )
                 await self._scale_only(base, out, height)
+                # Ensure the file is flushed and accessible
+                await asyncio.sleep(2)
+                self._ensure_permissions(out)
                 await self._notify(
                     status_callback,
                     _t(
@@ -710,6 +716,19 @@ class Transcoder:
         )
         out, _ = await proc.communicate()
         return "audio" in out.decode().lower()
+
+    @staticmethod
+    def _ensure_permissions(path: str):
+        """Sets 777 permissions for the file and its parent folder for Local API access."""
+        try:
+            if os.path.exists(path):
+                os.chmod(path, 0o777)
+                parent = os.path.dirname(path)
+                if os.path.exists(parent):
+                    os.chmod(parent, 0o777)
+                # logger.info(f"Permissions set for: {path}")
+        except Exception as e:
+            logger.warning(f"Could not set permissions for {path}: {e}")
 
     @staticmethod
     async def _notify(cb: StatusCallback, text: str):
