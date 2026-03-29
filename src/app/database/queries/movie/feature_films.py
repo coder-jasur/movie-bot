@@ -18,10 +18,8 @@ class FeatureFilmsActions:
             self,
             film_code: int,
             film_name: str,
-            video_file_id: str,
             caption: str,
             genres: str = None,
-            format: str = None,
             language: str = None,
             files: dict = None,
             thumbnail_file_id: str = None,
@@ -41,16 +39,14 @@ class FeatureFilmsActions:
         else:
             structured_captions = {lang_key: caption} if caption else {}
 
-        structured_files = {lang_key: files or {"original": video_file_id}}
+        structured_files = {lang_key: files or {}}
         structured_thumbnails = {lang_key: thumbnail_file_id} if thumbnail_file_id else {}
 
         film = FeatureFilm(
             code=film_code,
             name=structured_names,
-            video_file_id=video_file_id, 
             captions=structured_captions,
             genres=genres,
-            format=format,
             language=language or lang_key, 
             files=structured_files,
             thumbnails=structured_thumbnails
@@ -62,7 +58,6 @@ class FeatureFilmsActions:
             self,
             film_code: int,
             language: str,
-            video_file_id: str,
             caption: str,
             files: dict = None,
             name: str = None,
@@ -92,8 +87,7 @@ class FeatureFilmsActions:
         if isinstance(film.files, dict):
             current_files = dict(film.files)
         else:
-            # If legacy was a string or None
-            current_files = {"uz": {"original": film.video_file_id}} if film.video_file_id else {}
+            current_files = {}
 
         if isinstance(film.captions, dict):
             current_captions = dict(film.captions)
@@ -116,8 +110,6 @@ class FeatureFilmsActions:
 
         if files:
             current_files[language].update(files)
-        else:
-            current_files[language]["original"] = video_file_id
 
         # Ensure caption is a string, not a dict (prevents nesting)
         if isinstance(caption, dict):
@@ -152,7 +144,6 @@ class FeatureFilmsActions:
             self,
             film_code: int,
             language: str,
-            video_file_id: str = None,
             caption: str = None,
             files: dict = None,
             name: str = None,
@@ -166,7 +157,7 @@ class FeatureFilmsActions:
         if isinstance(film.files, dict):
             current_files = dict(film.files)
         else:
-            current_files = {"uz": {"original": film.video_file_id}} if film.video_file_id else {}
+            current_files = {}
 
         if isinstance(film.captions, dict):
             current_captions = dict(film.captions)
@@ -188,17 +179,11 @@ class FeatureFilmsActions:
         else:
             current_names = {"uz": str(film.name)} if film.name else {}
         
-        if files or video_file_id:
+        if files:
             if language not in current_files or not isinstance(current_files[language], dict) or clear_files:
                 current_files[language] = {}
             
-            # Record the primary video_file_id if provided
-            if video_file_id:
-                film.video_file_id = video_file_id
-                current_files[language]["original"] = video_file_id
-
-            if files:
-                current_files[language].update(files)
+            current_files[language].update(files)
                 
             film.files = current_files
             flag_modified(film, "files")

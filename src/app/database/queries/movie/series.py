@@ -18,10 +18,8 @@ class SeriesActions:
             series_name: str,
             series_num: int,
             season: int,
-            video_file_id: str,
             caption: str,
             genres: str = None,
-            format: str = None,
             language: str = None,
             files: dict = None,
             thumbnail_file_id: str = None,
@@ -31,10 +29,6 @@ class SeriesActions:
         # Determine structured names/captions - prioritize existing dicts
         if isinstance(series_name, dict):
             structured_names = series_name
-            # Ensure the current language key is present if possible
-            if lang_key not in structured_names and isinstance(series_name, dict):
-                # This case shouldn't happen much with our new UI, but let's be safe
-                pass
         else:
             structured_names = {lang_key: series_name}
 
@@ -43,7 +37,7 @@ class SeriesActions:
         else:
             structured_captions = {lang_key: caption} if caption else {}
 
-        structured_files = {lang_key: files or {"original": video_file_id}}
+        structured_files = {lang_key: files or {}}
         structured_thumbnails = {lang_key: thumbnail_file_id} if thumbnail_file_id else {}
 
         s = Series(
@@ -51,23 +45,15 @@ class SeriesActions:
             name=structured_names,
             season=season,
             series=series_num,
-            video_file_id=video_file_id,
             captions=structured_captions,
             genres=genres,
-            format=format,
             language=language or lang_key,
             files=structured_files,
             thumbnails=structured_thumbnails
         )
-        # Update genres, format for all other episodes of the same series
-        updates = {}
-        if genres: updates["genres"] = genres
-        if format: updates["format"] = format
-        # Note: language is track-specific, so we might not want to overwrite it globally 
-        # unless it's a list. But for now we store a list of available tracks in the 'language' column.
         
-        if updates:
-            stmt = update(Series).where(Series.code == series_code).values(**updates)
+        if genres:
+            stmt = update(Series).where(Series.code == series_code).values(genres=genres)
             await self.session.execute(stmt)
             
         self.session.add(s)
@@ -79,16 +65,11 @@ class SeriesActions:
             season: int,
             series_num: int,
             language: str,
-            video_file_id: str,
             caption: str,
             files: dict = None,
             name: str = None,
             thumbnail_file_id: str = None,
     ):
-        # This is a bit tricky for series: name is often "global" for the series code
-        # but the user requested track-specific names. We store it in each episode row.
-        pass # We'll handle 'name' in the episode record below
-
         stmt = select(Series).where(
             Series.code == series_code,
             Series.season == season,
@@ -100,11 +81,10 @@ class SeriesActions:
         if not episode:
             raise ValueError(f"Episode {series_num} S{season} of series {series_code} not found")
 
-        # Ensure we work with dictionaries and don't lose legacy data
         if isinstance(episode.files, dict):
             current_files = dict(episode.files)
         else:
-            current_files = {"uz": {"original": episode.video_file_id}} if episode.video_file_id else {}
+            current_files = {}
 
         if isinstance(episode.captions, dict):
             current_captions = dict(episode.captions)
@@ -136,8 +116,6 @@ class SeriesActions:
         
         if files:
             current_files[language].update(files)
-        else:
-            current_files[language]["original"] = video_file_id
 
         current_captions[language] = caption
         
@@ -166,7 +144,6 @@ class SeriesActions:
             season: int,
             series_num: int,
             language: str,
-            video_file_id: str = None,
             caption: str = None,
             files: dict = None,
             name: str = None,
@@ -187,7 +164,7 @@ class SeriesActions:
         if isinstance(episode.files, dict):
             current_files = dict(episode.files)
         else:
-            current_files = {"uz": {"original": episode.video_file_id}} if episode.video_file_id else {}
+            current_files = {}
 
         if isinstance(episode.captions, dict):
             current_captions = dict(episode.captions)
@@ -201,17 +178,11 @@ class SeriesActions:
         else:
             current_names = {"uz": str(episode.name)} if episode.name else {}
 
-        if files or video_file_id:
+        if files:
             if language not in current_files or not isinstance(current_files[language], dict) or clear_files:
                 current_files[language] = {}
             
-            # Record the primary video_file_id if provided
-            if video_file_id:
-                episode.video_file_id = video_file_id
-                current_files[language]["original"] = video_file_id
-
-            if files:
-                current_files[language].update(files)
+            current_files[language].update(files)
                 
             episode.files = current_files
             flag_modified(episode, "files")
@@ -313,15 +284,20 @@ class SeriesActions:
         await self.session.execute(stmt)
         await self.session.commit()
 
-    async def update_episode_file(self, series_code: int, season: int, series_num: int, file_id: str):
-        """Update file_id for a specific episode."""
-        stmt = update(Series).where(
-            Series.code == series_code,
-            Series.season == season,
-            Series.series == series_num
-        ).values(video_file_id=file_id)
-        await self.session.execute(stmt)
-        await self.session.commit()
+    async def update_episode_file(self, series_code: int, season: int, series_num: int, language: str, quality: str, file_id: str):
+        """Update file_id for a specific episode track."""
+        episode = await self.session.execute(
+            select(Series).where(Series.code == series_code, Series.season == season, Series.series == series_num)
+        )
+        episode = episode.scalar_one_or_none()
+        if episode:
+            if not isinstance(episode.files, dict):
+                episode.files = {}
+            if language not in episode.files:
+                episode.files[language] = {}
+            episode.files[language][quality] = file_id
+            flag_modified(episode, "files")
+            await self.session.commit()
 
     async def update_movie_code(self, old_code: int, new_code: int) -> None:
         """
@@ -404,7 +380,6 @@ class SeriesActions:
         new_film = FeatureFilm(
             code=new_code,
             name=episode.name,
-            video_file_id=episode.video_file_id,
             captions=episode.captions
         )
         self.session.add(new_film)

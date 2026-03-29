@@ -64,11 +64,11 @@ async def _check_nvenc() -> bool:
 
 def _enc(nvenc: bool, h: int) -> list:
     if h >= 1080:
-        crf = "24"
+        crf = "20"
     elif h >= 720:
-        crf = "26"
+        crf = "22"
     elif h >= 480:
-        crf = "32"
+        crf = "26"
     else:
         crf = "40"
 
@@ -249,6 +249,7 @@ class Transcoder:
 
             results: Dict[str, str] = {}
 
+            q_name = f"{orig_h}p"
             await self._notify(
                 status_callback, _t("💾 Original tayyorlanmoqda...", locale)
             )
@@ -258,8 +259,8 @@ class Transcoder:
                 # Ensure the file is flushed and accessible
                 await asyncio.sleep(2)
                 self._ensure_permissions(out_orig)
-                res = await self._upload(out_orig, user_id, "Original", thumb_wm_path)
-                results["original"] = res if res else file_id
+                res = await self._upload(out_orig, user_id, q_name, thumb_wm_path)
+                results[q_name] = res if res else file_id
                 if res:
                     for name, q_h in TARGET_QUALITIES.items():
                         if q_h == orig_h:
@@ -268,10 +269,10 @@ class Transcoder:
                                 await on_quality_ready(name, res)
                             break
                     if on_quality_ready:
-                        await on_quality_ready("original", res)
+                        await on_quality_ready(q_name, res)
             except Exception as e:
                 logger.error(f"Original upload failed: {e}")
-                results["original"] = file_id
+                results[q_name] = file_id
             finally:
                 p = os.path.join(tmp, "orig.mp4")
                 if os.path.exists(p):

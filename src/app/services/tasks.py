@@ -61,8 +61,6 @@ async def _save_to_db(data: dict, files: dict, is_incremental: bool = False):
         if isinstance(caption, dict):
             caption = caption.get(lang_id) or next(iter(caption.values()), None)
 
-        primary_video_id = files.get("original") or (next(iter(files.values())) if files else None)
-
         # Helper to get the right actions class
         from src.app.bot.dialog.admin.edit_movie import get_actions
         actions = get_actions(session, category, movie_type)
@@ -91,21 +89,21 @@ async def _save_to_db(data: dict, files: dict, is_incremental: bool = False):
         else:
             if movie_type == "feature_film":
                 await actions.add_feature_film(
-                    film_code=code, film_name=name, video_file_id=primary_video_id,
-                    caption=caption, genres=genres_serialized, format=data.get("format"),
+                    film_code=code, film_name=name, 
+                    caption=caption, genres=genres_serialized,
                     language=lang_id, files=files, thumbnail_file_id=thumbnail_id,
                 )
             elif movie_type == "series":
                 await actions.add_series(
                     series_code=code, series_name=name, series_num=data["series"], season=data["season"],
-                    video_file_id=primary_video_id, caption=caption, genres=genres_serialized,
-                    format=data.get("format"), language=lang_id, files=files, thumbnail_file_id=thumbnail_id
+                    caption=caption, genres=genres_serialized,
+                    language=lang_id, files=files, thumbnail_file_id=thumbnail_id
                 )
             elif movie_type == "mini_series":
                 await actions.add_mini_series(
                     mini_series_code=code, mini_series_name=name, series=data["series"],
-                    video_file_id=primary_video_id, caption=caption, genres=genres_serialized,
-                    format=data.get("format"), language=lang_id, files=files, thumbnail_file_id=thumbnail_id
+                    caption=caption, genres=genres_serialized,
+                    language=lang_id, files=files, thumbnail_file_id=thumbnail_id
                 )
         
         await session.commit()
@@ -117,7 +115,7 @@ async def _save_to_db(data: dict, files: dict, is_incremental: bool = False):
 
 
 async def _update_db_files(data: dict, files: dict):
-    """is_editing=True bo'lganda faqat files va video_file_id ni yangilaydi."""
+    """is_editing=True bo'lganda faqat files ni yangilaydi."""
     settings = load_config()
     db = Database(settings.construct_postgresql_url())
 
@@ -145,13 +143,10 @@ async def _update_db_files(data: dict, files: dict):
         if isinstance(caption, dict):
             caption = caption.get(lang_id)
 
-        new_file_id = files.get("original")
-
         if movie_type == "feature_film":
             await actions.update_language_track(
                 code,
                 lang_id,
-                video_file_id=new_file_id,
                 files=files,
                 name=name,
                 caption=caption,
@@ -164,7 +159,6 @@ async def _update_db_files(data: dict, files: dict):
                 s,
                 n,
                 lang_id,
-                video_file_id=new_file_id,
                 files=files,
                 name=name,
                 caption=caption,
@@ -176,7 +170,6 @@ async def _update_db_files(data: dict, files: dict):
                 code,
                 n,
                 lang_id,
-                video_file_id=new_file_id,
                 files=files,
                 name=name,
                 caption=caption,
@@ -213,7 +206,7 @@ async def _run_task(data: dict):
     settings = load_config()
 
     # BUG FIX #4: session yaratishda timeout juda kam edi
-    # Katta fayllar uchun 600s yetarli emas, 3600s kerak
+    # Katta fayllar uchun 3600s kerak
     session = AiohttpSession(
         api=TelegramAPIServer.from_base(settings.tg_api_server_url),
         timeout=3600,
@@ -251,8 +244,8 @@ async def _run_task(data: dict):
                 if data.get("is_editing"):
                     await _update_db_files(data, partial)
                 else:
-                    # Agar birinchi sifat bo'lsa (Original), add_... chaqiramiz.
-                    # Qolganlarida update_... chaqiramiz.
+                    # Har bir sifat tayyor bo'lganda incremental saqlaymiz.
+                    # Birinchi sifat bo'lganda add_..., qolganlarida update_...
                     await _save_to_db(data, partial, is_incremental=not is_first)
                 logger.info(f"Incremental save done: {quality}")
             except Exception as e:
@@ -268,8 +261,6 @@ async def _run_task(data: dict):
                     if os.path.exists(path):
                         os.remove(path)
                         logger.info(f"Surgical cleanup: {path}")
-                # Qo'shimcha: /temp papkasini ham tozalash (orphaned files)
-                # Lekin rm -rf qilmang, faqat eskilarni. Hozircha shu yetarli.
             except Exception as e:
                 logger.warning(f"Cleanup failed: {e}")
 
@@ -283,13 +274,9 @@ async def _run_task(data: dict):
                 locale=admin_locale,
             )
 
-            # on_quality_ready orqali har sifat allaqachon incremental saqlangan.
-            # Oxirida qayta saqlash shart emas — duplicate avoid.
             if not files or not isinstance(files, dict):
                 raise ValueError("Transcoder bo'sh natija qaytardi")
 
-            # BUG FIX #6: gt() funksiyasi locale parametrini qo'llab-quvvatlamaydi
-            # i18n.gettext() ishlatish kerak
             success_msg = i18n.gettext(
                 "✅ Video muvaffaqiyatli saqlandi! Kod: {code}",
                 locale=admin_locale,

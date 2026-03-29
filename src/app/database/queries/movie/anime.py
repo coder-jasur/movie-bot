@@ -16,10 +16,8 @@ class AnimeFeatureActions:
             self,
             film_code: int,
             film_name: str,
-            video_file_id: str,
             caption: str,
             genres: str = None,
-            format: str = None,
             language: str = None,
             files: dict = None,
             thumbnail_file_id: str = None,
@@ -37,16 +35,14 @@ class AnimeFeatureActions:
         else:
             structured_captions = {lang_key: caption} if caption else {}
 
-        structured_files = {lang_key: files or {"original": video_file_id}}
+        structured_files = {lang_key: files or {}}
         structured_thumbnails = {lang_key: thumbnail_file_id} if thumbnail_file_id else {}
 
         film = AnimeFeature(
             code=film_code,
             name=structured_names,
-            video_file_id=video_file_id,
             captions=structured_captions,
             genres=genres,
-            format=format,
             language=language or lang_key,
             files=structured_files,
             thumbnails=structured_thumbnails
@@ -58,7 +54,6 @@ class AnimeFeatureActions:
             self,
             film_code: int,
             language: str,
-            video_file_id: str,
             caption: str,
             files: dict = None,
             name: str = None,
@@ -82,7 +77,7 @@ class AnimeFeatureActions:
         if isinstance(film.files, dict):
             current_files = dict(film.files)
         else:
-            current_files = {"uz": {"original": film.video_file_id}} if film.video_file_id else {}
+            current_files = {}
 
         if isinstance(film.captions, dict):
             current_captions = dict(film.captions)
@@ -104,8 +99,6 @@ class AnimeFeatureActions:
 
         if files:
             current_files[language].update(files)
-        else:
-            current_files[language]["original"] = video_file_id
 
         current_captions[language] = caption
         
@@ -132,7 +125,6 @@ class AnimeFeatureActions:
             self,
             film_code: int,
             language: str,
-            video_file_id: str = None,
             caption: str = None,
             files: dict = None,
             name: str = None,
@@ -146,7 +138,7 @@ class AnimeFeatureActions:
         if isinstance(film.files, dict):
             current_files = dict(film.files)
         else:
-            current_files = {"uz": {"original": film.video_file_id}} if film.video_file_id else {}
+            current_files = {}
 
         if isinstance(film.captions, dict):
             current_captions = dict(film.captions)
@@ -168,17 +160,11 @@ class AnimeFeatureActions:
         else:
             current_names = {"uz": str(film.name)} if film.name else {}
 
-        if files or video_file_id:
+        if files:
             if language not in current_files or not isinstance(current_files[language], dict) or clear_files:
                 current_files[language] = {}
             
-            # Record the primary video_file_id if provided
-            if video_file_id:
-                film.video_file_id = video_file_id
-                current_files[language]["original"] = video_file_id
-
-            if files:
-                current_files[language].update(files)
+            current_files[language].update(files)
                 
             film.files = current_files
             flag_modified(film, "files")
@@ -264,10 +250,8 @@ class AnimeSeriesActions:
             series_name: str,
             series_num: int,
             season: int,
-            video_file_id: str,
             caption: str,
             genres: str = None,
-            format: str = None,
             language: str = None,
             files: dict = None,
             thumbnail_file_id: str = None,
@@ -285,7 +269,7 @@ class AnimeSeriesActions:
         else:
             structured_captions = {lang_key: caption} if caption else {}
 
-        structured_files = {lang_key: files or {"original": video_file_id}}
+        structured_files = {lang_key: files or {}}
         structured_thumbnails = {lang_key: thumbnail_file_id} if thumbnail_file_id else {}
 
         s = AnimeSeries(
@@ -293,21 +277,15 @@ class AnimeSeriesActions:
             name=structured_names,
             season=season,
             series=series_num,
-            video_file_id=video_file_id,
             captions=structured_captions,
             genres=genres,
-            format=format,
             language=language or lang_key,
             files=structured_files,
             thumbnails=structured_thumbnails
         )
         # Update genres, format for all other episodes of the same series
-        updates = {}
-        if genres: updates["genres"] = genres
-        if format: updates["format"] = format
-        
-        if updates:
-            stmt = update(AnimeSeries).where(AnimeSeries.code == series_code).values(**updates)
+        if genres:
+            stmt = update(AnimeSeries).where(AnimeSeries.code == series_code).values(genres=genres)
             await self.session.execute(stmt)
             
         self.session.add(s)
@@ -319,15 +297,11 @@ class AnimeSeriesActions:
             season: int,
             series_num: int,
             language: str,
-            video_file_id: str,
             caption: str,
             files: dict = None,
             name: str = None,
             thumbnail_file_id: str = None,
     ):
-        # Name handling
-        pass # Handle in episode record below
-
         stmt = select(AnimeSeries).where(
             AnimeSeries.code == series_code,
             AnimeSeries.season == season,
@@ -342,7 +316,7 @@ class AnimeSeriesActions:
         if isinstance(episode.files, dict):
             current_files = dict(episode.files)
         else:
-            current_files = {"uz": {"original": episode.video_file_id}} if episode.video_file_id else {}
+            current_files = {}
 
         if isinstance(episode.captions, dict):
             current_captions = dict(episode.captions)
@@ -366,8 +340,6 @@ class AnimeSeriesActions:
 
         if files:
             current_files[language].update(files)
-        else:
-            current_files[language]["original"] = video_file_id
 
         current_captions[language] = caption
         
@@ -396,7 +368,6 @@ class AnimeSeriesActions:
             season: int,
             series_num: int,
             language: str,
-            video_file_id: str = None,
             caption: str = None,
             files: dict = None,
             name: str = None,
@@ -417,7 +388,7 @@ class AnimeSeriesActions:
         if isinstance(episode.files, dict):
             current_files = dict(episode.files)
         else:
-            current_files = {"uz": {"original": episode.video_file_id}} if episode.video_file_id else {}
+            current_files = {}
 
         if isinstance(episode.captions, dict):
             current_captions = dict(episode.captions)
@@ -431,17 +402,11 @@ class AnimeSeriesActions:
         else:
             current_names = {"uz": str(episode.name)} if episode.name else {}
 
-        if files or video_file_id:
+        if files:
             if language not in current_files or not isinstance(current_files[language], dict) or clear_files:
                 current_files[language] = {}
             
-            # Record the primary video_file_id if provided
-            if video_file_id:
-                episode.video_file_id = video_file_id
-                current_files[language]["original"] = video_file_id
-
-            if files:
-                current_files[language].update(files)
+            current_files[language].update(files)
                 
             episode.files = current_files
             flag_modified(episode, "files")
@@ -542,10 +507,8 @@ class AnimeMiniSeriesActions:
             mini_series_code: int,
             mini_series_name: str,
             series: int,
-            video_file_id: str,
             caption: str,
             genres: str = None,
-            format: str = None,
             language: str = None,
             files: dict = None,
             thumbnail_file_id: str = None,
@@ -563,28 +526,22 @@ class AnimeMiniSeriesActions:
         else:
             structured_captions = {lang_key: caption} if caption else {}
 
-        structured_files = {lang_key: files or {"original": video_file_id}}
+        structured_files = {lang_key: files or {}}
         structured_thumbnails = {lang_key: thumbnail_file_id} if thumbnail_file_id else {}
 
         ms = AnimeMiniSeries(
             code=mini_series_code,
             name=structured_names,
             series=series,
-            video_file_id=video_file_id,
             captions=structured_captions,
             genres=genres,
-            format=format,
             language=language or lang_key,
             files=structured_files,
             thumbnails=structured_thumbnails
         )
         # Update genres, format for all other episodes of the same mini-series
-        updates = {}
-        if genres: updates["genres"] = genres
-        if format: updates["format"] = format
-
-        if updates:
-            stmt = update(AnimeMiniSeries).where(AnimeMiniSeries.code == mini_series_code).values(**updates)
+        if genres:
+            stmt = update(AnimeMiniSeries).where(AnimeMiniSeries.code == mini_series_code).values(genres=genres)
             await self.session.execute(stmt)
 
         self.session.add(ms)
@@ -595,15 +552,11 @@ class AnimeMiniSeriesActions:
             mini_series_code: int,
             series_num: int,
             language: str,
-            video_file_id: str,
             caption: str,
             files: dict = None,
             name: str = None,
             thumbnail_file_id: str = None,
     ):
-        # Name handling
-        pass # Handle in episode record below
-
         stmt = select(AnimeMiniSeries).where(
             AnimeMiniSeries.code == mini_series_code,
             AnimeMiniSeries.series == series_num
@@ -617,7 +570,7 @@ class AnimeMiniSeriesActions:
         if isinstance(episode.files, dict):
             current_files = dict(episode.files)
         else:
-            current_files = {"uz": {"original": episode.video_file_id}} if episode.video_file_id else {}
+            current_files = {}
 
         if isinstance(episode.captions, dict):
             current_captions = dict(episode.captions)
@@ -631,8 +584,6 @@ class AnimeMiniSeriesActions:
 
         if files:
             current_files[language].update(files)
-        else:
-            current_files[language]["original"] = video_file_id
 
         current_captions[language] = caption
         
@@ -643,7 +594,7 @@ class AnimeMiniSeriesActions:
         episode.language = ",".join(current_langs)
         episode.files = current_files
         episode.captions = current_captions
-
+        
         if thumbnail_file_id:
             if not isinstance(episode.thumbnails, dict):
                 episode.thumbnails = {}
@@ -660,7 +611,6 @@ class AnimeMiniSeriesActions:
             mini_series_code: int,
             series_num: int,
             language: str,
-            video_file_id: str = None,
             caption: str = None,
             files: dict = None,
             name: str = None,
@@ -680,7 +630,7 @@ class AnimeMiniSeriesActions:
         if isinstance(episode.files, dict):
             current_files = dict(episode.files)
         else:
-            current_files = {"uz": {"original": episode.video_file_id}} if episode.video_file_id else {}
+            current_files = {}
 
         if isinstance(episode.captions, dict):
             current_captions = dict(episode.captions)
@@ -694,14 +644,11 @@ class AnimeMiniSeriesActions:
         else:
             current_names = {"uz": str(episode.name)} if episode.name else {}
 
-        if files or video_file_id:
+        if files:
             if language not in current_files or not isinstance(current_files[language], dict) or clear_files:
                 current_files[language] = {}
             
-            if files:
-                current_files[language].update(files)
-            else:
-                current_files[language]["original"] = video_file_id
+            current_files[language].update(files)
                 
             episode.files = current_files
             flag_modified(episode, "files")
