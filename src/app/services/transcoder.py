@@ -512,57 +512,81 @@ class Transcoder:
         label: str,
         thumb_path: Optional[str] = None,
     ) -> Optional[str]:
+        from aiogram.client.default import DefaultBotProperties
+        from aiogram.client.session.aiohttp import AiohttpSession
+        from aiogram.client.telegram import TelegramAPIServer
+        from aiogram.types import FSInputFile
+
+        token = self.bot.token
+        # Bot yaratilgan server URL ni olish
+        try:
+            api_server = self.bot.session.api
+        except Exception:
+            api_server = TelegramAPIServer.from_base("http://localhost:8081")
+
         max_retries = 3
         for attempt in range(1, max_retries + 1):
+            # Har urinishda yangi sessiya va bot yaratamiz
+            # Bu asosiy tuzatish: buzilgan sessiyadan qayta foydalanmaslik uchun
+            session = AiohttpSession(
+                api=api_server,
+                timeout=3600,
+            )
             try:
-                from aiogram.types import FSInputFile
+                async with Bot(
+                    token=token,
+                    session=session,
+                    default=DefaultBotProperties(parse_mode="HTML"),
+                ) as upload_bot:
+                    tg_thumb = None
+                    thumb_tg_path = None
 
-                tg_thumb = None
-                thumb_tg_path = None
+                    if thumb_path and os.path.exists(thumb_path):
+                        thumb_tg_path = path.replace(".mp4", "_tgthumb.jpg")
+                        resize_cmd = [
+                            "ffmpeg",
+                            "-y",
+                            "-i",
+                            thumb_path,
+                            "-vf",
+                            "scale=320:320:force_original_aspect_ratio=decrease",
+                            "-frames:v",
+                            "1",
+                            "-q:v",
+                            "5",
+                            thumb_tg_path,
+                        ]
+                        proc = await asyncio.create_subprocess_exec(
+                            *resize_cmd, stderr=subprocess.PIPE
+                        )
+                        await proc.communicate()
+                        if os.path.exists(thumb_tg_path):
+                            tg_thumb = FSInputFile(thumb_tg_path)
 
-                if thumb_path and os.path.exists(thumb_path):
-                    thumb_tg_path = path.replace(".mp4", "_tgthumb.jpg")
-                    resize_cmd = [
-                        "ffmpeg",
-                        "-y",
-                        "-i",
-                        thumb_path,
-                        "-vf",
-                        "scale=320:320:force_original_aspect_ratio=decrease",
-                        "-frames:v",
-                        "1",
-                        "-q:v",
-                        "5",
-                        thumb_tg_path,
-                    ]
-                    proc = await asyncio.create_subprocess_exec(
-                        *resize_cmd, stderr=subprocess.PIPE
+                    send_kwargs = dict(
+                        chat_id=user_id,
+                        video=FSInputFile(path),
+                        caption=f"✅ {label} tayyor.",
+                        disable_notification=True,
                     )
-                    await proc.communicate()
-                    if os.path.exists(thumb_tg_path):
-                        tg_thumb = FSInputFile(thumb_tg_path)
+                    if tg_thumb:
+                        send_kwargs["thumbnail"] = tg_thumb
 
-                send_kwargs = dict(
-                    chat_id=user_id,
-                    video=FSInputFile(path),
-                    caption=f"✅ {label} tayyor.",
-                    disable_notification=True,
-                )
-                if tg_thumb:
-                    send_kwargs["thumbnail"] = tg_thumb
+                    # aiogram 3.x da to'g'ri request_timeout sintaksisi:
+                    # bot(SendVideo(...), request_timeout=N)
+                    from aiogram.methods import SendVideo
 
-                msg = await self.bot.send_video(**send_kwargs, request_timeout=1200)
+                    msg = await upload_bot(
+                        SendVideo(**send_kwargs),
+                        request_timeout=1800,
+                    )
 
-                if thumb_tg_path and os.path.exists(thumb_tg_path):
-                    try:
-                        os.remove(thumb_tg_path)
-                    except Exception:
-                        pass
+                    if msg.video:
+                        logger.info(f"Upload {label} OK: {msg.video.file_id}")
+                        return msg.video.file_id
 
-                if msg.video:
-                    return msg.video.file_id
-
-                logger.error(f"Upload {label} attempt {attempt}: msg.video is None")
+                    logger.error(f"Upload {label} attempt {attempt}: msg.video is None")
+                    return None
 
             except Exception as e:
                 logger.warning(f"Upload {label} attempt {attempt} failed: {e}")
@@ -571,9 +595,14 @@ class Transcoder:
                         f"Upload {label} finally failed after {max_retries} attempts."
                     )
                     return None
-                # Kichik pauza keyingi urinishdan oldin
-                await asyncio.sleep(2 * attempt)
-
+                # Katta fayllar uchun yetarli pauza
+                await asyncio.sleep(10 * attempt)
+            finally:
+                if thumb_tg_path and os.path.exists(thumb_tg_path):
+                    try:
+                        os.remove(thumb_tg_path)
+                    except Exception:
+                        pass
         return None
 
     async def _download(self, file_id: str, file_path: str, dest: str) -> Optional[str]:

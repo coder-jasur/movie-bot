@@ -1,6 +1,6 @@
 import logging
 
-from aiogram import Router
+from aiogram import F, Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -91,6 +91,7 @@ async def start_bot(
 
     if args and args.isdigit():
         from src.app.bot.handlers.user.movie_search import movie_search_handler
+
         msg_copy = message.model_copy(update={"text": args})
         await movie_search_handler(msg_copy, session)
         return
@@ -108,9 +109,11 @@ async def start_bot(
         from src.app.bot.keyboards.inline import get_language_inline_markup
 
         await message.answer(
-            _("🇺🇿 Iltimos, tilni tanlang:\n"
-              "🇷🇺 Пожалуйста, выберите язык:\n"
-              "🇺🇸 Please select a language:"),
+            _(
+                "🇺🇿 Iltimos, tilni tanlang:\n"
+                "🇷🇺 Пожалуйста, выберите язык:\n"
+                "🇺🇸 Please select a language:"
+            ),
             reply_markup=get_language_inline_markup(),
         )
         return
@@ -124,8 +127,10 @@ async def start_bot(
 
     # Update bot commands for this user based on their DB language and admin status
     admin_actions = AdminActions(session)
-    is_admin = (message.from_user.id in settings.admins_ids) or (await admin_actions.is_admin(message.from_user.id))
-    
+    is_admin = (message.from_user.id in settings.admins_ids) or (
+        await admin_actions.is_admin(message.from_user.id)
+    )
+
     await set_user_commands(
         message.bot, message.from_user.id, language_code, is_admin=is_admin
     )

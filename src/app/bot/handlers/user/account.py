@@ -5,6 +5,7 @@ from aiogram import Bot, F, Router
 from aiogram.filters import Command, or_f
 from aiogram.types import (
     CallbackQuery,
+    FSInputFile,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     LabeledPrice,
@@ -58,6 +59,9 @@ VIP_PRICES = {
 
 @account_router.message(or_f(F.text == BTN_PROFILE, Command("profile", "profil")))
 async def profile_handler(message: Message, session: AsyncSession, edit: bool = False):
+    from src.app.bot.common.utils import get_user_language
+
+    locale = await get_user_language(message.from_user, session)
     user_actions = UserActions(session)
     user = await user_actions.get_user(message.from_user.id)
 
@@ -129,10 +133,19 @@ async def profile_handler(message: Message, session: AsyncSession, edit: bool = 
         ]
     )
 
+    if locale == "ru":
+        banner_file_id = "AgACAgIAAxkBAAICwWnI9rkEQVucoXGjXeDpGWijC69GAAITFWsb_utJSujS1XZlIOrJAQADAgADeAADOgQ"
+    elif locale == "en":
+        banner_file_id = "AgACAgIAAxkBAAICxWnI9wx28eppVmST9mRIfuQpk6scAAIfFWsb_utJSriYqPdtMqAbAQADAgADeAADOgQ"
+    else:
+        banner_file_id = "AgACAgIAAxkBAAICsGnI7MzcPYkSPeYnBFnSaUinvbV7AALhFGsb_utJSv1gCeoq-4aMAQADAgADeAADOgQ"
+
     if edit:
         await smart_edit(message, text, reply_markup=kbd)
     else:
-        await message.answer(text, reply_markup=kbd, parse_mode="HTML")
+        await message.answer_photo(
+            photo=banner_file_id, caption=text, reply_markup=kbd, parse_mode="HTML"
+        )
 
 
 @account_router.callback_query(F.data == "payment_history")
@@ -169,8 +182,8 @@ async def payment_history_handler(callback: CallbackQuery, session: AsyncSession
 
 
 @account_router.callback_query(F.data == "buy_vip_from_profile")
-async def buy_vip_callback(callback: CallbackQuery):
-    await vip_tarif_handler(callback.message, edit=True)
+async def buy_vip_callback(callback: CallbackQuery, locale: str):
+    await vip_tarif_handler(callback.message, locale=locale, edit=True)
     await callback.answer()
 
 
@@ -181,12 +194,17 @@ async def back_to_profile_callback(callback: CallbackQuery, session: AsyncSessio
 
 
 @account_router.message(or_f(F.text == BTN_VIP, Command("vip")))
-async def vip_tarif_handler(message: Message, edit: bool = False):
+async def vip_tarif_handler(
+    message: Message, session: AsyncSession, edit: bool = False
+):
+    from src.app.bot.common.utils import get_user_language
+
+    locale = await get_user_language(message.from_user, session)
     text = (
         f"<b>⭐ {_('VIP Obuna')}</b>\n\n"
         f"<b>✨ {_('Imkoniyatlar:')}</b>\n"
         f"✅ {_('Yuqori sifat (720p, 1080p)')}\n"
-        f"✅ {_('Tillar boshqaruvi')}"
+        f"✅ {_('Tillar boshqaruvi')}\n"
         f"✅ {_('Reklamasiz foydalanish')}\n"
         f"✅ {_('Filmlarni yuklab olish')}\n\n"
         f"<b>💰 {_('Narxlar:')}</b>\n"
@@ -221,11 +239,19 @@ async def vip_tarif_handler(message: Message, edit: bool = False):
             ],
         ]
     )
+    if locale == "ru":
+        file_id = "AgACAgIAAxkBAAICwWnI9rkEQVucoXGjXeDpGWijC69GAAITFWsb_utJSujS1XZlIOrJAQADAgADeAADOgQ"
+    elif locale == "en":
+        file_id = "AgACAgIAAxkBAAICxWnI9wx28eppVmST9mRIfuQpk6scAAIfFWsb_utJSriYqPdtMqAbAQADAgADeAADOgQ"
+    else:
+        file_id = "AgACAgIAAxkBAAICsGnI7MzcPYkSPeYnBFnSaUinvbV7AALhFGsb_utJSv1gCeoq-4aMAQADAgADeAADOgQ"
 
     if edit:
         await smart_edit(message, text, reply_markup=kbd)
     else:
-        await message.answer(text, reply_markup=kbd, parse_mode="HTML")
+        await message.answer_photo(
+            photo=file_id, caption=text, reply_markup=kbd, parse_mode="HTML"
+        )
 
 
 @account_router.callback_query(F.data.startswith("select_plan:"))

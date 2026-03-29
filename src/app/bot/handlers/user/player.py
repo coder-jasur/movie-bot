@@ -74,10 +74,7 @@ async def series_player(
         await call.answer(str(_("❌ Serial topilmadi")), show_alert=True)
         return
 
-    from src.app.bot.common.utils import (
-        get_user_language,
-        resolve_movie_media,
-    )
+    from src.app.bot.common.utils import get_user_language, resolve_movie_media
 
     user_lang = await get_user_language(call.from_user, session)
     target_language_req = callback_data.language or user_lang
@@ -150,7 +147,7 @@ async def series_player(
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
         await call.answer(str(_("💎 VIP obuna talab qilinadi")), show_alert=False)
-        await vip_tarif_handler(call.message)
+        await vip_tarif_handler(call.message, locale=user_lang)
         return
 
     (
@@ -170,8 +167,11 @@ async def series_player(
     if not is_vip and target_quality is None:
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
-        await call.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")), show_alert=True)
-        await vip_tarif_handler(call.message)
+        await call.answer(
+            str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")),
+            show_alert=True,
+        )
+        await vip_tarif_handler(call.message, locale=user_lang)
         return
 
     show_quality_menu = callback_data.action == ActionType.open_quality_menu
@@ -338,10 +338,7 @@ async def feature_movies_player(
         await call.answer(str(_("❌ Film topilmadi")), show_alert=True)
         return
 
-    from src.app.bot.common.utils import (
-        get_user_language,
-        resolve_movie_media,
-    )
+    from src.app.bot.common.utils import get_user_language, resolve_movie_media
 
     user_lang = await get_user_language(call.from_user, session)
 
@@ -354,7 +351,7 @@ async def feature_movies_player(
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
         await call.answer(str(_("💎 VIP obuna talab qilinadi")), show_alert=False)
-        await vip_tarif_handler(call.message)
+        await vip_tarif_handler(call.message, locale=user_lang)
         return
 
     (
@@ -374,8 +371,11 @@ async def feature_movies_player(
     if not is_vip and target_quality is None:
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
-        await call.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")), show_alert=True)
-        await vip_tarif_handler(call.message)
+        await call.answer(
+            str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")),
+            show_alert=True,
+        )
+        await vip_tarif_handler(call.message, locale=user_lang)
         return
 
     # files is now the parsed dictionary
@@ -409,9 +409,7 @@ async def feature_movies_player(
     if callback_data.actions in [ActionType.set_quality, ActionType.set_language]:
         with suppress(TelegramBadRequest):
             await call.message.edit_media(
-                InputMediaVideo(
-                    media=file_id, caption=caption
-                ),
+                InputMediaVideo(media=file_id, caption=caption),
                 reply_markup=film_kbd(
                     code=callback_data.code,
                     saved=saved,
@@ -482,10 +480,7 @@ async def mini_series_player(
 
     saved = bool(saved)
 
-    from src.app.bot.common.utils import (
-        get_user_language,
-        resolve_movie_media,
-    )
+    from src.app.bot.common.utils import get_user_language, resolve_movie_media
 
     user_lang = await get_user_language(call.from_user, session)
     target_language_req = callback_data.language or user_lang
@@ -526,7 +521,7 @@ async def mini_series_player(
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
         await call.answer(str(_("💎 VIP obuna talab qilinadi")), show_alert=False)
-        await vip_tarif_handler(call.message)
+        await vip_tarif_handler(call.message, session=session)
         return
 
     (
@@ -546,8 +541,11 @@ async def mini_series_player(
     if not is_vip and target_quality is None:
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
-        await call.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")), show_alert=True)
-        await vip_tarif_handler(call.message)
+        await call.answer(
+            str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")),
+            show_alert=True,
+        )
+        await vip_tarif_handler(call.message, session=session)
         return
 
     # files is now the parsed dictionary
