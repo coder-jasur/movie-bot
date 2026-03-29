@@ -409,7 +409,6 @@ def _build_quality_menu(
 def film_kbd(
     code: int,
     saved: bool,
-    bot_username: str,
     files: dict = None,
     current_quality: str = "original",
     current_language: str = "uz",
