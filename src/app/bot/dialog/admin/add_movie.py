@@ -117,7 +117,6 @@ async def on_code_input(m: Message, widget: Any, manager: DialogManager):
 
     found = await _get_existing_by_code(session, code)
     if not found:
-        # Yangi film — keshni tozalaymiz
         manager.dialog_data["genres"] = []
         manager.dialog_data["existing_langs"] = []
         await manager.switch_to(AddMovieWizardSG.input_name)
@@ -321,7 +320,7 @@ async def on_series_num_input(m: Message, widget: Any, manager: DialogManager):
 
 
 async def on_file_input(m: Message, widget: Any, manager: DialogManager):
-    # Yangi video keldi — eski files keshini tozalab tashlaymiz
+    # ✅ Yangi video keldi — eski files keshini tozalab tashlaymiz
     manager.dialog_data.pop("files", None)
 
     if m.video:
@@ -335,6 +334,8 @@ async def on_file_input(m: Message, widget: Any, manager: DialogManager):
         await m.answer(str(_("❌ Video yoki fayl yuboring!")))
         return
     await manager.switch_to(AddMovieWizardSG.input_caption)
+
+
 async def on_caption_input(m: Message, widget: Any, manager: DialogManager):
     lang = manager.dialog_data.get("language")
     input_text = m.html_text if m.caption else m.text
@@ -395,7 +396,6 @@ async def on_skip_thumbnail(c: CallbackQuery, widget: Any, manager: DialogManage
 
 
 async def _handle_language_chosen(manager: DialogManager, lang_value: str):
-    # Normalize language value if it matches a label or contains an emoji
     normalized_lang = lang_value.strip().lower()
     for l in LANGUAGES:
         if (
@@ -430,7 +430,6 @@ async def _handle_language_chosen(manager: DialogManager, lang_value: str):
     elif movie_type == "mini_series" and not is_adding:
         await manager.switch_to(AddMovieWizardSG.input_series_number)
     elif manager.dialog_data.get("name"):
-        # Agar nom allaqachon mavjud bo'lsa (DB dan olingan yoki oldin kiritilgan)
         if movie_type == "series":
             await manager.switch_to(AddMovieWizardSG.input_season_number)
         elif movie_type == "mini_series":
@@ -496,7 +495,7 @@ async def on_genre_toggle(
 
 
 # ─────────────────────────────────────────────
-#  ASOSIY TUZATISH: on_confirm
+#  ASOSIY: on_confirm
 # ─────────────────────────────────────────────
 
 
@@ -514,18 +513,15 @@ async def on_confirm(c: CallbackQuery, widget: Any, manager: DialogManager):
             )
             return
 
-        # ── Har doim eski "files" keshini o'chirib, transcoder ishlatamiz ──
-        # Bu asosiy tuzatish: oldin `if not files` sharti transcoder ni o'tkazib yuborardi
+        # ✅ Har doim eski "files" keshini o'chirib, transcoder ishlatamiz
         data.pop("files", None)
 
-        # Transcoder o'rniga Celery task ishlatamiz
         from src.app.services.tasks import process_video_task
 
         status_msg = await c.message.answer(
             str(lazy_gettext("⏳ Video tayyorlanmoqda (Local Worker)..."))
         )
 
-        # Task uchun ma'lumotlarni yig'amiz
         admin_locale = manager.middleware_data.get("i18n").current_locale
         task_data = {
             "admin_id": c.from_user.id,
@@ -546,7 +542,6 @@ async def on_confirm(c: CallbackQuery, widget: Any, manager: DialogManager):
             "series": data.get("series"),
         }
 
-        # Celery taskini fon rejimida ishga tushuramiz
         process_video_task.delay(task_data)
 
         await c.message.answer(
@@ -868,7 +863,7 @@ async def on_field_edit_input(m: Message, widget: Any, manager: DialogManager):
         manager.dialog_data["file_id"] = (
             m.video.file_id if m.video else m.document.file_id
         )
-        # Yangi video — eski files keshini o'chiramiz, confirm da qayta transcode bo'ladi
+        # ✅ Yangi video — eski files keshini o'chiramiz
         manager.dialog_data.pop("files", None)
 
     elif field == "e_thumbnail" and (m.photo or m.document):
@@ -941,7 +936,9 @@ async def on_add_more(c: CallbackQuery, widget: Any, manager: DialogManager):
     )
     await c.answer()
     if manager.dialog_data.get("name"):
-        m_type = manager.dialog_data.get("movie_type") or manager.dialog_data.get("exist_type")
+        m_type = manager.dialog_data.get("movie_type") or manager.dialog_data.get(
+            "exist_type"
+        )
         if m_type == "series":
             await manager.switch_to(AddMovieWizardSG.input_season_number)
         elif m_type == "mini_series":
@@ -991,7 +988,6 @@ async def get_genre_data(dialog_manager: DialogManager, **kwargs):
 async def get_language_data(dialog_manager: DialogManager, **kwargs):
     all_langs = LANGUAGES
     raw_existing = dialog_manager.dialog_data.get("existing_langs", [])
-    # Normalize and filter out non-empty codes.
     existing = set()
     for l in raw_existing:
         if l and l.strip():
@@ -1153,7 +1149,6 @@ async def get_quick_add_data(dialog_manager: DialogManager, **kwargs):
         if match:
             lang_info_list.append(f"{match['flag']} {match['label']}")
         else:
-            # If code is unrecognized (like 'sd' or 'SD'), try to normalize or show as is
             norm_code = get_lang_code(l_id)
             match_norm = next((l for l in LANGUAGES if l["id"] == norm_code), None)
             if match_norm:
@@ -1215,7 +1210,6 @@ async def get_success_data(dialog_manager: DialogManager, **kwargs):
         else:
             save_info = str(_("Qism {ep}").format(ep=ep))
 
-    # Saqlangan formatlarni ko'rsatamiz
     saved_files = d.get("files", {})
     fmt_keys = [k for k in saved_files.keys() if k != "original"]
     fmt_text = ", ".join(fmt_keys) if fmt_keys else "Original"
