@@ -182,8 +182,8 @@ async def payment_history_handler(callback: CallbackQuery, session: AsyncSession
 
 
 @account_router.callback_query(F.data == "buy_vip_from_profile")
-async def buy_vip_callback(callback: CallbackQuery, locale: str):
-    await vip_tarif_handler(callback.message, locale=locale, edit=True)
+async def buy_vip_callback(callback: CallbackQuery, session: AsyncSession):
+    await vip_tarif_handler(callback.message, session=session, edit=True)
     await callback.answer()
 
 

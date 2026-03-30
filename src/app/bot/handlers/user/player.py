@@ -144,7 +144,7 @@ async def series_player(
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
         await call.answer(str(_("💎 VIP obuna talab qilinadi")), show_alert=False)
-        await vip_tarif_handler(call.message, locale=user_lang)
+        await vip_tarif_handler(call.message, session=session)
         return
 
     (
@@ -168,7 +168,7 @@ async def series_player(
             str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")),
             show_alert=True,
         )
-        await vip_tarif_handler(call.message, locale=user_lang)
+        await vip_tarif_handler(call.message, session=session)
         return
 
     show_quality_menu = callback_data.action == ActionType.open_quality_menu
@@ -343,7 +343,7 @@ async def feature_movies_player(
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
         await call.answer(str(_("💎 VIP obuna talab qilinadi")), show_alert=False)
-        await vip_tarif_handler(call.message, locale=user_lang)
+        await vip_tarif_handler(call.message, session=session)
         return
 
     (
@@ -367,7 +367,7 @@ async def feature_movies_player(
             str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")),
             show_alert=True,
         )
-        await vip_tarif_handler(call.message, locale=user_lang)
+        await vip_tarif_handler(call.message, session=session)
         return
 
     # files is now the parsed dictionary
