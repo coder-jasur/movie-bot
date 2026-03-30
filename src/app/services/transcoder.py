@@ -74,11 +74,11 @@ async def _check_nvenc() -> bool:
 def _enc(nvenc: bool, h: int) -> list:
     # ✅ Hajmni optimallashtirish uchun CRF qiymatlari (balandroq = kichikroq hajm)
     if h >= 1080:
-        crf, maxrate, bufsize = "26", "4M", "8M"
+        crf, maxrate, bufsize = "28", "4M", "8M"
     elif h >= 720:
-        crf, maxrate, bufsize = "28", "2M", "4M"
+        crf, maxrate, bufsize = "30", "2M", "4M"
     elif h >= 480:
-        crf, maxrate, bufsize = "30", "1M", "2M"
+        crf, maxrate, bufsize = "32", "1M", "2M"
     else:
         crf, maxrate, bufsize = "40", "500k", "1M"
 
