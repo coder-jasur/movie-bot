@@ -23,7 +23,6 @@ class AddMovieWizardSG(StatesGroup):
     input_file = State()
     input_caption = State()
     input_thumbnail = State()  # Muqova rasm (ixtiyoriy)
-    input_format = State()
     input_language = State()
     select_genres = State()  # Genre selection
     confirm = State()     # The Hub (Video + Info + Save/Edit/Cancel)
@@ -39,7 +38,6 @@ class EditMovieSG(StatesGroup):
     edit_caption = State()
     edit_file = State()
     edit_code = State()
-    edit_format = State()
     edit_language = State()
     edit_genres = State()  # Genre editing
     select_language = State() # Select which track to edit
