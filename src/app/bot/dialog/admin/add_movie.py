@@ -331,23 +331,10 @@ async def on_file_input(m: Message, widget: Any, manager: DialogManager):
         )
     elif m.document:
         manager.dialog_data["file_id"] = m.document.file_id
-        manager.dialog_data["format"] = "Original"
     else:
         await m.answer(str(_("❌ Video yoki fayl yuboring!")))
         return
-    await manager.switch_to(AddMovieWizardSG.input_format)
-async def on_format_input(m: Message, widget: Any, manager: DialogManager):
-    manager.dialog_data["format"] = m.text
     await manager.switch_to(AddMovieWizardSG.input_caption)
-
-
-async def on_skip_format(c: CallbackQuery, widget: Any, manager: DialogManager):
-    # Keep auto-detected or set to Original if missing
-    if not manager.dialog_data.get("format"):
-        manager.dialog_data["format"] = "Original"
-    await manager.switch_to(AddMovieWizardSG.input_caption)
-
-
 async def on_caption_input(m: Message, widget: Any, manager: DialogManager):
     lang = manager.dialog_data.get("language")
     input_text = m.html_text if m.caption else m.text
@@ -588,7 +575,6 @@ async def _save_film(
             await actions.add_language_track(
                 film_code=data["code"],
                 language=lang_id,
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 files=files,
                 name=data.get("name"),
@@ -598,10 +584,8 @@ async def _save_film(
             await actions.add_feature_film(
                 film_code=data["code"],
                 film_name=data["name"],
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 genres=genres,
-                format=data.get("format"),
                 language=lang_id,
                 files=files,
                 thumbnail_file_id=thumbnail_id,
@@ -614,7 +598,6 @@ async def _save_film(
                 season=data["season"],
                 series_num=data["series"],
                 language=lang_id,
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 files=files,
                 name=data.get("name"),
@@ -626,10 +609,8 @@ async def _save_film(
                 series_name=data["name"],
                 series_num=data["series"],
                 season=data["season"],
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 genres=genres,
-                format=data.get("format"),
                 language=lang_id,
                 files=files,
                 thumbnail_file_id=thumbnail_id,
@@ -641,7 +622,6 @@ async def _save_film(
                 mini_series_code=data["code"],
                 series_num=data["series"],
                 language=lang_id,
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 files=files,
                 name=data.get("name"),
@@ -652,10 +632,8 @@ async def _save_film(
                 mini_series_code=data["code"],
                 mini_series_name=data["name"],
                 series=data["series"],
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 genres=genres,
-                format=data.get("format"),
                 language=lang_id,
                 files=files,
                 thumbnail_file_id=thumbnail_id,
@@ -671,7 +649,6 @@ async def _save_multi_film(
             await actions.add_language_track(
                 film_code=data["code"],
                 language=lang_id,
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 files=files,
                 name=data.get("name"),
@@ -681,10 +658,8 @@ async def _save_multi_film(
             await actions.add_feature_film(
                 film_code=data["code"],
                 film_name=data["name"],
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 genres=genres,
-                format=data.get("format"),
                 language=lang_id,
                 files=files,
                 thumbnail_file_id=thumbnail_id,
@@ -697,7 +672,6 @@ async def _save_multi_film(
                 season=data["season"],
                 series_num=data["series"],
                 language=lang_id,
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 files=files,
                 name=data.get("name"),
@@ -709,10 +683,8 @@ async def _save_multi_film(
                 series_name=data["name"],
                 series_num=data["series"],
                 season=data["season"],
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 genres=genres,
-                format=data.get("format"),
                 language=lang_id,
                 files=files,
                 thumbnail_file_id=thumbnail_id,
@@ -724,7 +696,6 @@ async def _save_multi_film(
                 mini_series_code=data["code"],
                 series_num=data["series"],
                 language=lang_id,
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 files=files,
                 name=data.get("name"),
@@ -735,10 +706,8 @@ async def _save_multi_film(
                 mini_series_code=data["code"],
                 mini_series_name=data["name"],
                 series=data["series"],
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 genres=genres,
-                format=data.get("format"),
                 language=lang_id,
                 files=files,
                 thumbnail_file_id=thumbnail_id,
@@ -754,7 +723,6 @@ async def _save_anime(
             await actions.add_language_track(
                 film_code=data["code"],
                 language=lang_id,
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 files=files,
                 name=data.get("name"),
@@ -764,10 +732,8 @@ async def _save_anime(
             await actions.add_feature_film(
                 film_code=data["code"],
                 film_name=data["name"],
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 genres=genres,
-                format=data.get("format"),
                 language=lang_id,
                 files=files,
                 thumbnail_file_id=thumbnail_id,
@@ -780,7 +746,6 @@ async def _save_anime(
                 season=data["season"],
                 series_num=data["series"],
                 language=lang_id,
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 files=files,
                 name=data.get("name"),
@@ -792,10 +757,8 @@ async def _save_anime(
                 series_name=data["name"],
                 series_num=data["series"],
                 season=data["season"],
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 genres=genres,
-                format=data.get("format"),
                 language=lang_id,
                 files=files,
                 thumbnail_file_id=thumbnail_id,
@@ -807,7 +770,6 @@ async def _save_anime(
                 mini_series_code=data["code"],
                 series_num=data["series"],
                 language=lang_id,
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 files=files,
                 name=data.get("name"),
@@ -818,10 +780,8 @@ async def _save_anime(
                 mini_series_code=data["code"],
                 mini_series_name=data["name"],
                 series=data["series"],
-                video_file_id=data["file_id"],
                 caption=data.get("caption"),
                 genres=genres,
-                format=data.get("format"),
                 language=lang_id,
                 files=files,
                 thumbnail_file_id=thumbnail_id,
@@ -1548,27 +1508,6 @@ add_movie_dialog = Dialog(
         getter=get_type_specific_prompts,
     ),
     Window(
-        Format("{format_prompt}"),
-        MessageInput(on_format_input, content_types=ContentType.TEXT),
-        Button(
-            Format(_("⏭ O'tkazib yuborish")),
-            id="skip_format",
-            on_click=on_skip_format,
-        ),
-        Row(
-            SwitchTo(
-                Format(_("🔙 Ortga")),
-                id="back_to_file_step",
-                state=AddMovieWizardSG.input_file,
-            ),
-            Button(
-                Format(_("❌ Bekor")), id="cancel_to_type_fmt", on_click=on_cancel_to_type
-            ),
-        ),
-        state=AddMovieWizardSG.input_format,
-        getter=get_type_specific_prompts,
-    ),
-    Window(
         Format("{caption_prompt}"),
         MessageInput(on_caption_input, content_types=ContentType.TEXT),
         Button(
@@ -1579,8 +1518,8 @@ add_movie_dialog = Dialog(
         Row(
             SwitchTo(
                 Format(_("🔙 Ortga")),
-                id="back_to_format",
-                state=AddMovieWizardSG.input_format,
+                id="back_to_file_after_skip_format",
+                state=AddMovieWizardSG.input_file,
             ),
             Button(
                 Format(_("❌ Bekor")), id="cancel_to_type_c", on_click=on_cancel_to_type
@@ -1727,9 +1666,6 @@ add_movie_dialog = Dialog(
             ),
             Button(
                 Format(_("📹 Video")), id="e_video", on_click=on_edit_field_selected
-            ),
-            Button(
-                Format(_("💿 Format")), id="e_format", on_click=on_edit_field_selected
             ),
             Button(Format(_("🌍 Til")), id="e_language", on_click=on_edit_language),
             Button(

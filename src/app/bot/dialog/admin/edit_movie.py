@@ -200,7 +200,7 @@ async def on_code_search(m: Message, widget: Any, manager: DialogManager):
 
         if not result:
             continue
-        
+
         matches.append((result, m_type, cat))
 
     if not matches:
@@ -216,9 +216,7 @@ async def on_code_search(m: Message, widget: Any, manager: DialogManager):
         obj_data = {
             "name": result.name,
             "caption": result.captions,
-            "file_id": result.video_file_id,
             "genres": result.genres,
-            "format": result.format,
             "language": result.language,
             "files": result.files,
             "thumbnails": result.thumbnails,
@@ -228,7 +226,6 @@ async def on_code_search(m: Message, widget: Any, manager: DialogManager):
         obj_data = {
             "name": result[0].name,
             "genres": result[0].genres,
-            "format": result[0].format,
             "language": result[0].language,
             "thumbnails": result[0].thumbnails,
         }
@@ -382,28 +379,6 @@ async def on_edit_caption(m: Message, widget: Any, manager: DialogManager):
                     ]
                 await m.answer(str(_("✅ Tavsif yangilandi!")))
                 await manager.switch_to(EditMovieSG.select_action)
-    except Exception as e:
-        await m.answer(str(_("❌ Xato: {error}")).format(error=html.escape(str(e))))
-
-
-async def on_edit_format(m: Message, widget: Any, manager: DialogManager):
-    session: AsyncSession = manager.middleware_data["session"]
-    code = manager.dialog_data["code"]
-    m_type = manager.dialog_data["type"]
-    new_format = m.text
-    category = manager.dialog_data["category"]
-    actions = get_actions(session, category, m_type)
-
-    try:
-        if m_type == "feature_film":
-            await actions.update_feature_film(code, format=new_format)
-        elif m_type == "series":
-            await actions.update_series(code, format=new_format)
-        elif m_type == "mini_series":
-            await actions.update_mini_series(code, format=new_format)
-        manager.dialog_data["obj"]["format"] = new_format
-        await m.answer(str(_("✅ Format yangilandi!")))
-        await manager.switch_to(EditMovieSG.select_action)
     except Exception as e:
         await m.answer(str(_("❌ Xato: {error}")).format(error=html.escape(str(e))))
 
@@ -982,9 +957,7 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
                 "caption": fresh_data.captions,
                 "files": fresh_data.files,
                 "genres": fresh_data.genres,
-                "format": fresh_data.format,
                 "language": fresh_data.language,
-                "video_file_id": fresh_data.video_file_id,
                 "thumbnails": fresh_data.thumbnails,
                 "captions": fresh_data.captions,
             }
@@ -1029,7 +1002,6 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
             self.files = d.get("files")
             self.captions = d.get("captions")
             self.language = d.get("language")
-            self.video_file_id = d.get("video_file_id")
             self.name = d.get("name")
 
     try:
@@ -1038,7 +1010,7 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
         )
         file_id = res_file
     except Exception:
-        file_id = data.get("video_file_id")
+        file_id = None
 
     # Sifat: files dict kalitlaridan format nomlarini olamiz
     # files = {"original": "file_id", "1080p": "file_id2", ...}
@@ -1121,8 +1093,8 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
                     )
 
                     try:
-                        res_file, _n, _c, _d, _tq, _e, _f, thumbnail_id = resolve_movie_media(
-                            match, preview_lang
+                        res_file, _n, _c, _d, _tq, _e, _f, thumbnail_id = (
+                            resolve_movie_media(match, preview_lang)
                         )
                     except Exception:
                         res_file = match.video_file_id
@@ -1164,8 +1136,8 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
                     )
 
                     try:
-                        res_file, _n, _c, _d, _tq, _e, _f, thumbnail_id = resolve_movie_media(
-                            match, preview_lang
+                        res_file, _n, _c, _d, _tq, _e, _f, thumbnail_id = (
+                            resolve_movie_media(match, preview_lang)
                         )
                     except Exception:
                         res_file = match.video_file_id
@@ -1331,9 +1303,6 @@ async def get_edit_prompts(dialog_manager: DialogManager, **kwargs):
         ).format(prefix=cat_prefix, target=target),
         "season_prompt": str(_("📅 <b>Yangi sezon raqamini kiriting:</b>")),
         "series_prompt": str(_("🔢 <b>Yangi qism raqamini kiriting:</b>")),
-        "format_prompt": str(
-            _("💿 <b>Yangi format kiriting ({prefix}{target}):</b>")
-        ).format(prefix=cat_prefix, target=target),
         "language_prompt": str(
             _("🌍 <b>Yangi til kiriting ({prefix}{target}):</b>")
         ).format(prefix=cat_prefix, target=target),
@@ -1566,13 +1535,6 @@ edit_movie_dialog = Dialog(
         ),
         Button(Format(_("⬅️ Ortga")), id="b4_th", on_click=on_back_click),
         state=EditMovieSG.edit_thumbnail,
-    ),
-    Window(
-        Format("{format_prompt}"),
-        MessageInput(on_edit_format, content_types=ContentType.TEXT),
-        Button(Format(_("« Ortga")), id="b4_f", on_click=on_back_click),
-        state=EditMovieSG.edit_format,
-        getter=get_edit_prompts,
     ),
     Window(
         Format("{language_prompt}"),

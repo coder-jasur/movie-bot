@@ -19,7 +19,7 @@ TARGET_QUALITIES = {
     "360p": 360,
 }
 
-MAX_PARALLEL_WORKERS = 3
+MAX_PARALLEL_WORKERS = 1
 
 BASE_DIR = "/app"
 INTRO_MKV = os.path.join(BASE_DIR, "media/videos/intro.mkv")
@@ -529,7 +529,9 @@ class Transcoder:
         try:
             api_server = self.bot.session.api
         except Exception:
-            api_server = TelegramAPIServer.from_base("http://localhost:8081")
+            api_server = TelegramAPIServer.from_base(
+                "http://localhost:8081", is_local=True
+            )
 
         max_retries = 3
         for attempt in range(1, max_retries + 1):
