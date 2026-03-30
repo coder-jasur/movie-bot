@@ -30,7 +30,7 @@ TMP_BASE = "/var/lib/telegram-bot-api/temp"
 
 # ✅ Videoga Intro va Watermark qo'shishni boshqarish
 # True bo'lsa qo'shadi, False bo'lsa yo'q.
-ADD_INTRO_AND_WATERMARK_TO_VIDEO = False
+ADD_INTRO_AND_WATERMARK_TO_VIDEO = True
 
 LOCAL_API_BASE = "/var/lib/telegram-bot-api"
 
@@ -130,7 +130,7 @@ async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
             "-i",
             WATERMARK_PATH,
             "-filter_complex",
-            "[1:v]scale=iw*0.15:-1[wm];[0:v][wm]overlay=W-w-10:10",
+            "[1:v]scale=iw*0.25:-1[wm];[0:v][wm]overlay=W-w-10:10",
             "-frames:v",
             "1",
             "-q:v",
@@ -336,13 +336,13 @@ class Transcoder:
                 self._fsync_file(out_orig)
                 self._ensure_permissions(out_orig)
                 await _verify_video_file(out_orig)
-                
+
                 if os.path.exists(out_orig):
                     file_sizes[q_name] = os.path.getsize(out_orig) / (1024 * 1024)
 
                 res = await self._upload(out_orig, user_id, q_name, thumb_wm_path)
                 results[q_name] = res if res else file_id
-                
+
                 if res:
                     for name, q_h in TARGET_QUALITIES.items():
                         if q_h == orig_h:
@@ -407,11 +407,14 @@ class Transcoder:
                 _t("✅ Tayyor! {n} ta format.", locale, n=len(results)),
             )
             logger.info(f"process_video done: {list(results.keys())}")
-            
+
             size_summary = ", ".join([f"{q}: {s:.2f}MB" for q, s in file_sizes.items()])
             logger.info(f"Transcoding complete. Sizes: {size_summary}")
             if status_callback:
-                await self._notify(status_callback, _t("✅ Tayyor! Hajmlar: {s}", locale, s=size_summary))
+                await self._notify(
+                    status_callback,
+                    _t("✅ Tayyor! Hajmlar: {s}", locale, s=size_summary),
+                )
 
             return results, local_to_cleanup
 
@@ -567,7 +570,7 @@ class Transcoder:
         on_quality_ready: QualityCallback,
         thumb_wm_path: Optional[str],
         locale: str,
-        file_sizes: Dict[str, float], # ✅ Hajmlarni yig'ish uchun
+        file_sizes: Dict[str, float],  # ✅ Hajmlarni yig'ish uchun
     ) -> Optional[str]:
         async with sem:
             out = os.path.join(tmp_dir, f"v_{height}p.mp4")
@@ -583,7 +586,7 @@ class Transcoder:
                     ),
                 )
                 await self._scale_only(base, out, height)
-                
+
                 # ✅ Havmni o'lchash
                 if os.path.exists(out):
                     file_sizes[name] = os.path.getsize(out) / (1024 * 1024)
