@@ -144,7 +144,7 @@ async def series_player(
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
         await call.answer(str(_("💎 VIP obuna talab qilinadi")), show_alert=False)
-        await vip_tarif_handler(call.message, session=session)
+        await vip_tarif_handler(call.message, session=session, user=call.from_user)
         return
 
     (
@@ -168,7 +168,7 @@ async def series_player(
             str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")),
             show_alert=True,
         )
-        await vip_tarif_handler(call.message, session=session)
+        await vip_tarif_handler(call.message, session=session, user=call.from_user)
         return
 
     show_quality_menu = callback_data.action == ActionType.open_quality_menu
@@ -343,7 +343,7 @@ async def feature_movies_player(
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
         await call.answer(str(_("💎 VIP obuna talab qilinadi")), show_alert=False)
-        await vip_tarif_handler(call.message, session=session)
+        await vip_tarif_handler(call.message, session=session, user=call.from_user)
         return
 
     (
@@ -367,7 +367,7 @@ async def feature_movies_player(
             str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")),
             show_alert=True,
         )
-        await vip_tarif_handler(call.message, session=session)
+        await vip_tarif_handler(call.message, session=session, user=call.from_user)
         return
 
     # files is now the parsed dictionary
@@ -508,7 +508,7 @@ async def mini_series_player(
         from src.app.bot.handlers.user.account import vip_tarif_handler
 
         await call.answer(str(_("💎 VIP obuna talab qilinadi")), show_alert=False)
-        await vip_tarif_handler(call.message, session=session)
+        await vip_tarif_handler(call.message, session=session, user=call.from_user)
         return
 
     (
@@ -532,7 +532,7 @@ async def mini_series_player(
             str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")),
             show_alert=True,
         )
-        await vip_tarif_handler(call.message, session=session)
+        await vip_tarif_handler(call.message, session=session, user=call.from_user)
         return
 
     # files is now the parsed dictionary

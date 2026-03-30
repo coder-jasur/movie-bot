@@ -204,7 +204,9 @@ async def payment_history_handler(callback: CallbackQuery, session: AsyncSession
 
 @account_router.callback_query(F.data == "buy_vip_from_profile")
 async def buy_vip_callback(callback: CallbackQuery, session: AsyncSession):
-    await vip_tarif_handler(callback.message, session=session, edit=True)
+    await vip_tarif_handler(
+        callback.message, session=session, edit=True, user=callback.from_user
+    )
     await callback.answer()
 
 
@@ -216,11 +218,15 @@ async def back_to_profile_callback(callback: CallbackQuery, session: AsyncSessio
 
 @account_router.message(or_f(F.text == BTN_VIP, Command("vip")))
 async def vip_tarif_handler(
-    message: Message, session: AsyncSession, edit: bool = False
+    message: Message,
+    session: AsyncSession,
+    edit: bool = False,
+    user: "User" = None,
 ):
     from src.app.bot.common.utils import get_user_language
 
-    locale = await get_user_language(message.from_user, session)
+    target_user = user or message.from_user
+    locale = await get_user_language(target_user, session)
     text = (
         f"<b>⭐ {_('VIP Obuna')}</b>\n\n"
         f"<b>✨ {_('Imkoniyatlar:')}</b>\n"
