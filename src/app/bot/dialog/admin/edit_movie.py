@@ -1380,13 +1380,6 @@ edit_movie_dialog = Dialog(
             Format(_("<b>📄 Tavsif:</b>\n{caption}\n"), when="is_film"),
             Format(_("━━━━━━━━━━━━━━━━━━━━━\n<b>AMALLAR:</b>")),
         ),
-        Row(
-            Button(
-                Format("{toggle_text}"),
-                id="toggle_preview_edit",
-                on_click=on_toggle_edit_preview,
-            ),
-        ),
         Column(
             SwitchTo(
                 Format(_("✏️ Nomini o'zgartirish")),
@@ -1638,13 +1631,6 @@ edit_movie_dialog = Dialog(
                     "<b>📄 Tavsif:</b>\n{selected_ep[caption]}"
                 ),
                 when="is_mini_series",
-            ),
-        ),
-        Row(
-            Button(
-                Format("{toggle_text}"),
-                id="toggle_preview_edit_ep",
-                on_click=on_toggle_edit_preview,
             ),
         ),
         Column(
