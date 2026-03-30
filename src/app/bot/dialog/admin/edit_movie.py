@@ -396,14 +396,35 @@ async def on_edit_language(m: Message, widget: Any, manager: DialogManager):
 
     try:
         lang_id = get_lang_code(new_lang)
+        # Instead of overwriting the whole language column, we use update_language_track 
+        # which appends the language to the comma-separated list.
         if m_type == "feature_film":
-            await actions.update_feature_film(code, language=lang_id)
+            await actions.update_language_track(code, lang_id)
         elif m_type == "series":
-            await actions.update_series(code, language=lang_id)
+            # For series, it needs to update the specific episode or all episodes?
+            # Standard behavior is to update the metadata or the selected episode.
+            ep_id = manager.dialog_data.get("selected_episode_id")
+            if ep_id:
+                s, n = map(int, ep_id.split(":"))
+                await actions.update_language_track(code, s, n, lang_id)
+            else:
+                await actions.update_series(code, language=lang_id)
         elif m_type == "mini_series":
-            await actions.update_mini_series(code, language=lang_id)
-        manager.dialog_data["obj"]["language"] = lang_id
-        await m.answer(str(_("✅ Til yangilandi!")))
+            ep_id = manager.dialog_data.get("selected_episode_id")
+            if ep_id:
+                n = int(ep_id)
+                await actions.update_language_track(code, n, lang_id)
+            else:
+                await actions.update_mini_series(code, language=lang_id)
+        
+        # Sync dialog_data if object exists
+        if "obj" in manager.dialog_data:
+            curr_langs = str(manager.dialog_data["obj"].get("language") or "").split(",")
+            if lang_id not in curr_langs:
+                curr_langs.append(lang_id)
+                manager.dialog_data["obj"]["language"] = ",".join(filter(None, curr_langs))
+        
+        await m.answer(str(_("✅ Til tracki qo'shildi!")))
         await manager.switch_to(EditMovieSG.select_action)
     except Exception as e:
         await m.answer(str(_("❌ Xato: {error}")).format(error=html.escape(str(e))))
@@ -1010,6 +1031,7 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
             self.captions = d.get("captions")
             self.language = d.get("language")
             self.name = d.get("name")
+            self.thumbnails = d.get("thumbnails")
 
     if sel_lang:
         try:

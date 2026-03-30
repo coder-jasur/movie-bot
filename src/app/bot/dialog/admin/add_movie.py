@@ -188,7 +188,9 @@ async def on_add_language(c: CallbackQuery, widget: Any, manager: DialogManager)
             "language",
         ],
     )
-    await manager.switch_to(AddMovieWizardSG.input_language)
+    # Redirect to input_file so the user can upload the video for the new language.
+    # The wizard will then naturally flow to input_caption and input_language.
+    await manager.switch_to(AddMovieWizardSG.input_file)
 
 
 async def on_quick_new_season(c: CallbackQuery, widget: Any, manager: DialogManager):
@@ -537,7 +539,8 @@ async def on_confirm(c: CallbackQuery, widget: Any, manager: DialogManager):
             "genres": data.get("genres"),
             "format": data.get("format"),
             "language": data.get("language"),
-            "is_adding_track": data.get("is_adding_track", False),
+            # Ensure is_adding_track is passed correctly from dialog_data
+            "is_adding_track": data.get("is_adding_track", False) or data.get("exists", False),
             "season": data.get("season"),
             "series": data.get("series"),
         }
