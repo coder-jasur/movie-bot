@@ -134,17 +134,17 @@ async def profile_handler(message: Message, session: AsyncSession, edit: bool = 
     )
 
     if locale == "ru":
-        banner_file_id = "AgACAgIAAxkBAAICwWnI9rkEQVucoXGjXeDpGWijC69GAAITFWsb_utJSujS1XZlIOrJAQADAgADeAADOgQ"
+        file_id = "AgACAgIAAxkBAAICwWnI9rkEQVucoXGjXeDpGWijC69GAAITFWsb_utJSujS1XZlIOrJAQADAgADeAADOgQ"
     elif locale == "en":
-        banner_file_id = "AgACAgIAAxkBAAICxWnI9wx28eppVmST9mRIfuQpk6scAAIfFWsb_utJSriYqPdtMqAbAQADAgADeAADOgQ"
+        file_id = "AgACAgIAAxkBAAICxWnI9wx28eppVmST9mRIfuQpk6scAAIfFWsb_utJSriYqPdtMqAbAQADAgADeAADOgQ"
     else:
-        banner_file_id = "AgACAgIAAxkBAAICsGnI7MzcPYkSPeYnBFnSaUinvbV7AALhFGsb_utJSv1gCeoq-4aMAQADAgADeAADOgQ"
+        file_id = "AgACAgIAAxkBAAICsGnI7MzcPYkSPeYnBFnSaUinvbV7AALhFGsb_utJSv1gCeoq-4aMAQADAgADeAADOgQ"
 
     if edit:
         await smart_edit(message, text, reply_markup=kbd)
     else:
         await message.answer_photo(
-            photo=banner_file_id, caption=text, reply_markup=kbd, parse_mode="HTML"
+            photo=file_id, caption=text, reply_markup=kbd, parse_mode="HTML"
         )
 
 
@@ -303,7 +303,19 @@ async def select_payment_method_handler(callback: CallbackQuery):
         ]
     )
 
-    await smart_edit(callback.message, text, reply_markup=kbd)
+    if locale == "ru":
+        file_id = "AgACAgIAAxkBAAICwWnI9rkEQVucoXGjXeDpGWijC69GAAITFWsb_utJSujS1XZlIOrJAQADAgADeAADOgQ"
+    elif locale == "en":
+        file_id = "AgACAgIAAxkBAAICxWnI9wx28eppVmST9mRIfuQpk6scAAIfFWsb_utJSriYqPdtMqAbAQADAgADeAADOgQ"
+    else:
+        file_id = "AgACAgIAAxkBAAICsGnI7MzcPYkSPeYnBFnSaUinvbV7AALhFGsb_utJSv1gCeoq-4aMAQADAgADeAADOgQ"
+
+    if edit:
+        await smart_edit(message, text, reply_markup=kbd)
+    else:
+        await message.answer_photo(
+            photo=file_id, caption=text, reply_markup=kbd, parse_mode="HTML"
+        )
     await callback.answer()
 
 
