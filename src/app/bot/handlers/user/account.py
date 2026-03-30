@@ -274,28 +274,24 @@ async def vip_tarif_handler(
             photo=file_id, caption=text, reply_markup=kbd, parse_mode="HTML"
         )
 
+@account_router.callback_query(F.data.startswith("select_plan:"))
+async def select_payment_method_handler(callback: CallbackQuery, session: AsyncSession):
+    plan_key = callback.data.split(":")[1]
+    plan = VIP_PRICES.get(plan_key)
+
+    if not plan:
+        await callback.answer(str(_("Xatolik.")))
+        return
+
     text = (
         f"<b>💳 {_('To\'lov usuli')}</b>\n\n"
         f"🎫 {str(plan['label'])}\n"
-        # f"🔹 {_('Click / Payme (Humo, Uzcard):')} {plan['uzs']:,} {_('so\'m')}\n"
         f"🔹 {_('Admin orqali:')} {plan['uzs']:,} {_('so\'m')}\n"
         f"🔹 {_('Stars:')} {plan['stars']} Stars"
     )
 
     kbd = InlineKeyboardMarkup(
         inline_keyboard=[
-            # [
-            #     InlineKeyboardButton(
-            #         text=str(_("Click (Humo, Uzcard)")),
-            #         callback_data=f"pay:{plan_key}:click",
-            #     )
-            # ],
-            # [
-            #     InlineKeyboardButton(
-            #         text=str(_("Payme (Humo, Uzcard)")),
-            #         callback_data=f"pay:{plan_key}:payme",
-            #     )
-            # ],
             [
                 InlineKeyboardButton(
                     text=str(_("Stars (XTR)")), callback_data=f"pay:{plan_key}:stars"
@@ -316,7 +312,9 @@ async def vip_tarif_handler(
 
     from src.app.bot.common.utils import get_user_language
 
-    locale = await get_user_language(callback.from_user, session=None)
+    # Now correctly passing session to get the user's DB language preference
+    locale = await get_user_language(callback.from_user, session=session)
+
     if locale == "ru":
         banner_file_id = "AgACAgIAAxkBAAICwWnI9rkEQVucoXGjXeDpGWijC69GAAITFWsb_utJSujS1XZlIOrJAQADAgADeAADOgQ"
     elif locale == "en":
