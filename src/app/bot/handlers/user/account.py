@@ -33,19 +33,40 @@ account_router = Router()
 
 
 async def smart_edit(
-    message: Message, text: str, reply_markup: InlineKeyboardMarkup = None
+    message: Message,
+    text: str,
+    reply_markup: InlineKeyboardMarkup = None,
+    photo: str = None,
 ):
-    """Edits message if possible, otherwise answers with new message.
+    """Edits message if possible, correctly handling photos/captions/media.
     Used to prevent TelegramBadRequest when editing invoices or old messages.
     """
     try:
-        if message.invoice or message.successful_payment:
-            await message.answer(text, reply_markup=reply_markup, parse_mode="HTML")
+        if message.photo or message.caption:
+            if photo:
+                # Update photo AND caption/text
+                from aiogram.types import InputMediaPhoto
+
+                await message.edit_media(
+                    media=InputMediaPhoto(media=photo, caption=text, parse_mode="HTML"),
+                    reply_markup=reply_markup,
+                )
+            else:
+                # Only update caption (previous message had a photo)
+                await message.edit_caption(
+                    caption=text, reply_markup=reply_markup, parse_mode="HTML"
+                )
         else:
+            # Regular text message
             await message.edit_text(text, reply_markup=reply_markup, parse_mode="HTML")
     except Exception as e:
-        logger.debug(f"Edit failed, falling back to answer: {e}")
-        await message.answer(text, reply_markup=reply_markup, parse_mode="HTML")
+        logger.debug(f"Smart edit failed, falling back to new message: {e}")
+        if photo:
+            await message.answer_photo(
+                photo=photo, caption=text, reply_markup=reply_markup, parse_mode="HTML"
+            )
+        else:
+            await message.answer(text, reply_markup=reply_markup, parse_mode="HTML")
 
 
 # VIP Prices
@@ -247,21 +268,11 @@ async def vip_tarif_handler(
         file_id = "AgACAgIAAxkBAAICsGnI7MzcPYkSPeYnBFnSaUinvbV7AALhFGsb_utJSv1gCeoq-4aMAQADAgADeAADOgQ"
 
     if edit:
-        await smart_edit(message, text, reply_markup=kbd)
+        await smart_edit(message, text, reply_markup=kbd, photo=file_id)
     else:
         await message.answer_photo(
             photo=file_id, caption=text, reply_markup=kbd, parse_mode="HTML"
         )
-
-
-@account_router.callback_query(F.data.startswith("select_plan:"))
-async def select_payment_method_handler(callback: CallbackQuery):
-    plan_key = callback.data.split(":")[1]
-    plan = VIP_PRICES.get(plan_key)
-
-    if not plan:
-        await callback.answer(str(_("Xatolik.")))
-        return
 
     text = (
         f"<b>💳 {_('To\'lov usuli')}</b>\n\n"
@@ -303,19 +314,17 @@ async def select_payment_method_handler(callback: CallbackQuery):
         ]
     )
 
-    if locale == "ru":
-        file_id = "AgACAgIAAxkBAAICwWnI9rkEQVucoXGjXeDpGWijC69GAAITFWsb_utJSujS1XZlIOrJAQADAgADeAADOgQ"
-    elif locale == "en":
-        file_id = "AgACAgIAAxkBAAICxWnI9wx28eppVmST9mRIfuQpk6scAAIfFWsb_utJSriYqPdtMqAbAQADAgADeAADOgQ"
-    else:
-        file_id = "AgACAgIAAxkBAAICsGnI7MzcPYkSPeYnBFnSaUinvbV7AALhFGsb_utJSv1gCeoq-4aMAQADAgADeAADOgQ"
+    from src.app.bot.common.utils import get_user_language
 
-    if edit:
-        await smart_edit(message, text, reply_markup=kbd)
+    locale = await get_user_language(callback.from_user, session=None)
+    if locale == "ru":
+        banner_file_id = "AgACAgIAAxkBAAICwWnI9rkEQVucoXGjXeDpGWijC69GAAITFWsb_utJSujS1XZlIOrJAQADAgADeAADOgQ"
+    elif locale == "en":
+        banner_file_id = "AgACAgIAAxkBAAICxWnI9wx28eppVmST9mRIfuQpk6scAAIfFWsb_utJSriYqPdtMqAbAQADAgADeAADOgQ"
     else:
-        await message.answer_photo(
-            photo=file_id, caption=text, reply_markup=kbd, parse_mode="HTML"
-        )
+        banner_file_id = "AgACAgIAAxkBAAICsGnI7MzcPYkSPeYnBFnSaUinvbV7AALhFGsb_utJSv1gCeoq-4aMAQADAgADeAADOgQ"
+
+    await smart_edit(callback.message, text, reply_markup=kbd, photo=banner_file_id)
     await callback.answer()
 
 
