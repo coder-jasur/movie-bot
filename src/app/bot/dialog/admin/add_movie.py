@@ -1322,7 +1322,6 @@ async def get_summary(dialog_manager: DialogManager, **kwargs):
         f"{_('SUM_NAME')} {display_name}\n"
         f"{_('SUM_GENRES')} {get_genre_display_text(data.get('genres', []))}\n"
     )
-    summary += f"{_('SUM_FORMAT')} {data.get('format') or 'Original'}\n"
     if movie_type == "series":
         summary += f"{_('SUM_SEASON')} {data.get('season')}\n"
         summary += f"{_('SUM_SERIES')} {data.get('series')}\n"

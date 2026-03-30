@@ -19,7 +19,7 @@ TARGET_QUALITIES = {
     "360p": 360,
 }
 
-MAX_PARALLEL_WORKERS = 4
+MAX_PARALLEL_WORKERS = 2
 
 BASE_DIR = "/app"
 INTRO_MKV = os.path.join(BASE_DIR, "media/videos/intro.mkv")
@@ -27,6 +27,10 @@ INTRO_MP4 = os.path.join(BASE_DIR, "media/videos/intro.mp4")
 INTRO_PATH = INTRO_MKV if os.path.exists(INTRO_MKV) else INTRO_MP4
 WATERMARK_PATH = os.path.join(BASE_DIR, "media/photos/bot_watermark.png")
 TMP_BASE = "/var/lib/telegram-bot-api/temp"
+
+# ✅ Videoga Intro va Watermark qo'shishni boshqarish
+# True bo'lsa qo'shadi, False bo'lsa yo'q.
+ADD_INTRO_AND_WATERMARK_TO_VIDEO = False
 
 LOCAL_API_BASE = "/var/lib/telegram-bot-api"
 
@@ -68,14 +72,15 @@ async def _check_nvenc() -> bool:
 
 
 def _enc(nvenc: bool, h: int) -> list:
+    # ✅ Hajmni optimallashtirish uchun CRF qiymatlari (balandroq = kichikroq hajm)
     if h >= 1080:
-        crf = "24"
+        crf, maxrate, bufsize = "26", "4M", "8M"
     elif h >= 720:
-        crf = "26"
+        crf, maxrate, bufsize = "28", "2M", "4M"
     elif h >= 480:
-        crf = "28"
+        crf, maxrate, bufsize = "30", "1M", "2M"
     else:
-        crf = "40"
+        crf, maxrate, bufsize = "40", "500k", "1M"
 
     if nvenc:
         return [
@@ -85,6 +90,10 @@ def _enc(nvenc: bool, h: int) -> list:
             "p2",
             "-cq",
             crf,
+            "-maxrate:v",
+            maxrate,
+            "-bufsize:v",
+            bufsize,
             "-c:a",
             "aac",
             "-b:a",
@@ -94,9 +103,13 @@ def _enc(nvenc: bool, h: int) -> list:
         "-c:v",
         "libx264",
         "-preset",
-        "fast",
+        "medium",
         "-crf",
         crf,
+        "-maxrate:v",
+        maxrate,
+        "-bufsize:v",
+        bufsize,
         "-c:a",
         "aac",
         "-b:a",
@@ -256,11 +269,25 @@ class Transcoder:
                     await _make_thumb_with_watermark(thumb_raw, thumb_wm)
                     thumb_wm_path = thumb_wm if os.path.exists(thumb_wm) else thumb_raw
 
+            def get_standard_label(h: int) -> str:
+                if h >= 1080:
+                    return "1080p"
+                if h >= 720:
+                    return "720p"
+                if h >= 480:
+                    return "480p"
+                return "360p"
+
             orig_h = await self._get_height(source)
             logger.info(f"Detected video height: {orig_h} (source: {source})")
             if not orig_h:
                 logger.warning("Could not detect video height, skipping scaling.")
                 return {"original": file_id}, local_to_cleanup
+
+            # ✅ Eng yaqin standart sifat nomini aniqlash
+            # Masalan: 886p bo'lsa, q_name = "720p" bo'ladi.
+            q_name = get_standard_label(orig_h)
+            q_h_val = TARGET_QUALITIES.get(q_name, 720)  # 720 default
 
             a_main = await self._has_audio(source)
             a_intro = (
@@ -269,17 +296,33 @@ class Transcoder:
                 else False
             )
 
-            await self._notify(
-                status_callback, _t("🎬 Base video tayyorlanmoqda...", locale)
+            # 🎬 Base video tayyorlash (faqat intro yoki watermark qo'shish yoqilgan bo'lsa)
+            has_intro = (
+                (os.path.isfile(INTRO_PATH) if INTRO_PATH else False)
+                if ADD_INTRO_AND_WATERMARK_TO_VIDEO
+                else False
             )
-            base_path = os.path.join(tmp, "base.mp4")
-            try:
-                await self._make_base(source, base_path, orig_h, a_main, a_intro)
-            except Exception as e:
-                logger.error(f"Base video xato: {e}", exc_info=True)
+            has_wm = (
+                (os.path.isfile(WATERMARK_PATH) if WATERMARK_PATH else False)
+                if ADD_INTRO_AND_WATERMARK_TO_VIDEO
+                else False
+            )
+
+            if has_intro or has_wm:
+                await self._notify(
+                    status_callback, _t("🎬 Base video tayyorlanmoqda...", locale)
+                )
+                base_path = os.path.join(tmp, "base.mp4")
+                try:
+                    await self._make_base(source, base_path, orig_h, a_main, a_intro)
+                except Exception as e:
+                    logger.error(f"Base video xato: {e}", exc_info=True)
+                    base_path = source
+            else:
                 base_path = source
 
             results: Dict[str, str] = {}
+            file_sizes: Dict[str, float] = {}
 
             q_name = f"{orig_h}p"
             await self._notify(
@@ -287,14 +330,19 @@ class Transcoder:
             )
             try:
                 out_orig = os.path.join(tmp, "orig.mp4")
-                await self._scale_only(base_path, out_orig, orig_h)
-                # ✅ Fayl diskka to'liq yozilganini ta'minlash
+                target_h = q_h_val
+                await self._scale_only(base_path, out_orig, target_h)
+
                 self._fsync_file(out_orig)
                 self._ensure_permissions(out_orig)
-                # ✅ Yaxlitlikni tekshirish
                 await _verify_video_file(out_orig)
+                
+                if os.path.exists(out_orig):
+                    file_sizes[q_name] = os.path.getsize(out_orig) / (1024 * 1024)
+
                 res = await self._upload(out_orig, user_id, q_name, thumb_wm_path)
                 results[q_name] = res if res else file_id
+                
                 if res:
                     for name, q_h in TARGET_QUALITIES.items():
                         if q_h == orig_h:
@@ -315,7 +363,7 @@ class Transcoder:
                     except Exception:
                         pass
 
-            to_do = [(name, h) for name, h in TARGET_QUALITIES.items() if h < orig_h]
+            to_do = [(name, h) for name, h in TARGET_QUALITIES.items() if h < q_h_val]
             logger.info(f"Qualities to process: {to_do}")
 
             if to_do:
@@ -338,6 +386,7 @@ class Transcoder:
                         on_quality_ready,
                         thumb_wm_path,
                         locale,
+                        file_sizes,
                     )
                     for i, (name, h) in enumerate(to_do, 1)
                 ]
@@ -358,6 +407,12 @@ class Transcoder:
                 _t("✅ Tayyor! {n} ta format.", locale, n=len(results)),
             )
             logger.info(f"process_video done: {list(results.keys())}")
+            
+            size_summary = ", ".join([f"{q}: {s:.2f}MB" for q, s in file_sizes.items()])
+            logger.info(f"Transcoding complete. Sizes: {size_summary}")
+            if status_callback:
+                await self._notify(status_callback, _t("✅ Tayyor! Hajmlar: {s}", locale, s=size_summary))
+
             return results, local_to_cleanup
 
     async def _prepare_thumbnail(self, file_id: str, tmp_dir: str) -> Optional[str]:
@@ -373,8 +428,16 @@ class Transcoder:
     async def _make_base(
         self, source: str, dest: str, h: int, a_main: bool, a_intro: bool
     ):
-        has_intro = False
-        has_wm = False
+        has_intro = (
+            (os.path.isfile(INTRO_PATH) if INTRO_PATH else False)
+            if ADD_INTRO_AND_WATERMARK_TO_VIDEO
+            else False
+        )
+        has_wm = (
+            (os.path.isfile(WATERMARK_PATH) if WATERMARK_PATH else False)
+            if ADD_INTRO_AND_WATERMARK_TO_VIDEO
+            else False
+        )
         nvenc = await _check_nvenc()
 
         w_raw = await self._get_width(source)
@@ -504,6 +567,7 @@ class Transcoder:
         on_quality_ready: QualityCallback,
         thumb_wm_path: Optional[str],
         locale: str,
+        file_sizes: Dict[str, float], # ✅ Hajmlarni yig'ish uchun
     ) -> Optional[str]:
         async with sem:
             out = os.path.join(tmp_dir, f"v_{height}p.mp4")
@@ -519,6 +583,11 @@ class Transcoder:
                     ),
                 )
                 await self._scale_only(base, out, height)
+                
+                # ✅ Havmni o'lchash
+                if os.path.exists(out):
+                    file_sizes[name] = os.path.getsize(out) / (1024 * 1024)
+
                 # ✅ Fayl diskka to'liq yozilganini ta'minlash
                 self._fsync_file(out)
                 self._ensure_permissions(out)

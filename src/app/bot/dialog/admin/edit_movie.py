@@ -985,10 +985,12 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
     seasons = []
     episodes = []
     selected_ep = {}
+    
+    # 🚀 MEDIA RESOLUTION LOGIC
+    # User requirement: No video until language is selected.
     file_id = None
-    total_eps = 0
-    total_seasons = 0
-    target_quality = "Original"
+    thumbnail_id = None
+    target_quality = None
 
     from src.app.bot.common.utils import get_user_language, resolve_movie_media
 
@@ -1004,61 +1006,37 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
             self.language = d.get("language")
             self.name = d.get("name")
 
-    try:
-        res_file, _n, _c, _d, _q, _e, _f, thumbnail_id = resolve_movie_media(
-            MovieProxy(data), preview_lang
-        )
-        file_id = res_file
-    except Exception:
-        file_id = None
+    if sel_lang:
+        try:
+            # We treat admins as VIPs (is_vip=True) to allow 720p/1080p previews.
+            res_file, _n, _c, _d, _q, _e, _f, res_thumb = resolve_movie_media(
+                MovieProxy(data), sel_lang, is_vip=True
+            )
+            file_id = res_file
+            thumbnail_id = res_thumb
+            target_quality = _q
+        except Exception as e:
+            logger.debug(f"Initial resolve_movie_media failed: {e}")
 
     # Sifat: files dict kalitlaridan format nomlarini olamiz
-    # files = {"original": "file_id", "1080p": "file_id2", ...}
-    # Til kodlari (uz, ru, en...) ni filtrlaymiz
     LANG_CODES = {
-        "uz",
-        "ru",
-        "en",
-        "kz",
-        "uk",
-        "de",
-        "fr",
-        "es",
-        "it",
-        "tr",
-        "ar",
-        "fa",
-        "hi",
-        "zh",
-        "ja",
+        "uz", "ru", "en", "kz", "uk", "de", "fr", "es", "it", "tr", "ar", "fa", "hi", "zh", "ja",
     }
 
     def extract_quality(files) -> str:
-        """
-        files dict dan format nomlarini oladi.
-        Quyidagi formatlarni qo'llab-quvvatlaydi:
-          - {"1080p": "file_id", "720p": "file_id2"}          — to'g'ridan format
-          - {"uz": {"1080p": "file_id"}, "ru": {...}}          — til -> format nested
-          - {"uz": "file_id"}                                  — til -> file_id (eski format)
-        """
         if not files or not isinstance(files, dict):
             return "Original"
-
-        # Nested dict tekshiruv: {"uz": {"1080p": ...}} yoki {"uz": "file_id"}
         first_val = next(iter(files.values()), None)
         if isinstance(first_val, dict):
-            # Nested: barcha tillardan format kalitlarini yig'amiz
             all_fmt = set()
             for v in files.values():
                 if isinstance(v, dict):
                     for k in v.keys():
                         k_str = str(k).lower()
                         if k_str not in LANG_CODES:
-                            # If it's 'original', capitalize it. If it's a number like 720, keep it.
                             all_fmt.add("Original" if k_str == "original" else str(k))
             return ", ".join(sorted(all_fmt)) if all_fmt else "Original"
         else:
-            # Flat: {"1080p": "file_id"} yoki {"uz": "file_id"}
             fmt_keys = []
             for k in files.keys():
                 k_str = str(k).lower()
@@ -1083,7 +1061,7 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
                 s_eps = [e for e in eps if e.season == sel_s]
                 episodes = [(f"{e.season}:{e.series}", str(e.series)) for e in s_eps]
             selected_ep_id = dialog_manager.dialog_data.get("selected_episode_id")
-            if selected_ep_id:
+            if selected_ep_id and sel_lang:
                 s, n = map(int, selected_ep_id.split(":"))
                 match = next((e for e in eps if e.season == s and e.series == n), None)
                 if match:
@@ -1094,16 +1072,17 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
 
                     try:
                         res_file, _n, _c, _d, _tq, _e, _f, thumbnail_id = (
-                            resolve_movie_media(match, preview_lang)
+                            resolve_movie_media(match, sel_lang, is_vip=True)
                         )
+                        file_id = res_file
+                        target_quality = _tq
                     except Exception:
-                        res_file = match.video_file_id
-                    ep_files = match.files or {}
-                    ep_quality = extract_quality(ep_files)
+                        file_id = match.video_file_id
+                    
                     selected_ep = {
                         "season": match.season,
                         "episode": match.series,
-                        "file_id": res_file,
+                        "file_id": file_id,
                         "name": format_multi_name(match.name, sel_lang),
                         "caption": format_multi_caption(match.captions, sel_lang),
                         "code": match.code,
@@ -1111,10 +1090,8 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
                         "languages": [
                             l for l in (match.language or "").split(",") if l
                         ],
-                        "quality": ep_quality,
+                        "quality": target_quality or "Original",
                     }
-                    target_quality = ep_quality
-                    file_id = res_file
         except Exception:
             pass
 
@@ -1126,7 +1103,7 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
             total_eps = len(eps)
             episodes = [(str(e.series), str(e.series)) for e in eps]
             selected_ep_id = dialog_manager.dialog_data.get("selected_episode_id")
-            if selected_ep_id:
+            if selected_ep_id and sel_lang:
                 n = int(selected_ep_id)
                 match = next((e for e in eps if e.series == n), None)
                 if match:
@@ -1137,15 +1114,16 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
 
                     try:
                         res_file, _n, _c, _d, _tq, _e, _f, thumbnail_id = (
-                            resolve_movie_media(match, preview_lang)
+                            resolve_movie_media(match, sel_lang, is_vip=True)
                         )
+                        file_id = res_file
+                        target_quality = _tq
                     except Exception:
-                        res_file = match.video_file_id
-                    ep_files = match.files or {}
-                    ep_quality = extract_quality(ep_files)
+                        file_id = match.video_file_id
+
                     selected_ep = {
                         "episode": match.series,
-                        "file_id": res_file,
+                        "file_id": file_id,
                         "name": format_multi_name(match.name, sel_lang),
                         "caption": format_multi_caption(match.captions, sel_lang),
                         "code": match.code,
@@ -1153,16 +1131,23 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
                         "languages": [
                             l for l in (match.language or "").split(",") if l
                         ],
-                        "quality": ep_quality,
+                        "quality": target_quality or "Original",
                     }
-                    target_quality = ep_quality
-                    file_id = res_file
         except Exception:
             pass
 
+    preview_mode = dialog_manager.dialog_data.get("preview_mode", "video")
     media = None
-    if file_id:
+    if preview_mode == "thumbnail" and thumbnail_id:
+        media = MediaAttachment(type=ContentType.PHOTO, file_id=MediaId(thumbnail_id))
+    elif file_id:
         media = MediaAttachment(type=ContentType.VIDEO, file_id=MediaId(file_id))
+
+    toggle_text = (
+        str(_("🖼 Muqovani ko'rish"))
+        if preview_mode == "video"
+        else str(_("📹 Videoni ko'rish"))
+    )
 
     existing_langs = (
         (data.get("language") or "").split(",")
@@ -1183,23 +1168,6 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
             (str(l["label"]) for l in LANGUAGES if l["id"] == sel_lang),
             sel_lang.upper(),
         )
-
-    from src.app.bot.common.utils import format_multi_caption, format_multi_name
-
-    preview_mode = dialog_manager.dialog_data.get("preview_mode", "video")
-    # resolve_movie_media dan olingan thumbnail_id (yoki _th) ishlatiladi
-
-    media = None
-    if preview_mode == "thumbnail" and thumbnail_id:
-        media = MediaAttachment(type=ContentType.PHOTO, file_id=MediaId(thumbnail_id))
-    elif file_id:
-        media = MediaAttachment(type=ContentType.VIDEO, file_id=MediaId(file_id))
-
-    toggle_text = (
-        str(_("🖼 Muqovani ko'rish"))
-        if preview_mode == "video"
-        else str(_("📹 Videoni ko'rish"))
-    )
 
     from src.app.bot.common.utils import format_multi_caption, format_multi_name
 
