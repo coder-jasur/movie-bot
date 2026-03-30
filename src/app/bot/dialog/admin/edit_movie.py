@@ -985,6 +985,8 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
     seasons = []
     episodes = []
     selected_ep = {}
+    total_eps = 0
+    total_seasons = 0
     
     # 🚀 MEDIA RESOLUTION LOGIC
     # User requirement: No video until language is selected.
