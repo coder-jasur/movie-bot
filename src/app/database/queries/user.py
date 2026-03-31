@@ -149,13 +149,18 @@ class UserActions:
         await self.update_user(tg_id, status=new_status)
 
     async def increment_joined_count(self, tg_id: int) -> int:
-        stmt = update(User).where(User.tg_id == tg_id).values(
-            joined_count=User.joined_count + 1
-        ).returning(User.joined_count)
+        from sqlalchemy import func as sa_func
+        stmt = (
+            update(User)
+            .where(User.tg_id == tg_id)
+            .values(joined_count=sa_func.coalesce(User.joined_count, 0) + 1)
+            .returning(User.joined_count)
+        )
         result = await self.session.execute(stmt)
         await self.session.commit()
         value = result.scalar()
         return value if value is not None else 0
+
 
     async def get_user_ids_batch(self, offset: int, limit: int = 5000) -> list[int]:
         stmt = select(User.tg_id).order_by(User.tg_id).offset(offset).limit(limit)

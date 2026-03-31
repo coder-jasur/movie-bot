@@ -42,49 +42,63 @@ async def start_bot(
         if args and args.startswith("ref_"):
             try:
                 referral_id = int(args.split("_")[1])
-                # Increment in User table (used by profile)
-                new_count = await user_actions.increment_joined_count(referral_id)
+                logger.info(f"Referral link clicked: referral_id={referral_id}, new_user={message.from_user.id}")
 
-                # Reward: 3 days for every 5 referrals
-                if new_count is not None and new_count >= 5:
-                    referrer = await user_actions.get_user(referral_id)
-                    if referrer:
-                        from datetime import timedelta
+                # 1. Avval admin Referral jadvalidan tekshiramiz
+                from src.app.database.queries.referral import ReferralActions
+                referral_actions = ReferralActions(session)
+                admin_referral = await referral_actions.get_referral(referral_id)
 
-                        from src.app.bot.handlers.user.account import get_tashkent_time
+                if admin_referral:
+                    # ✅ Admin tomonidan yaratilgan referral
+                    await referral_actions.increment_joined_count(referral_id)
+                    logger.info(f"Admin referral incremented: referral_id={referral_id}, new_count={admin_referral.joined_count + 1}")
+                else:
+                    # 2. Foydalanuvchi o'zining tg_id si bo'yicha referral yuborgan
+                    new_count = await user_actions.increment_joined_count(referral_id)
+                    logger.info(f"User referral incremented: tg_id={referral_id}, new_count={new_count}")
 
-                        now = get_tashkent_time()
-                        current_expiry = (
-                            referrer.vip_expires_at
-                            if referrer.vip_expires_at and referrer.vip_expires_at > now
-                            else now
-                        )
-                        new_expiry = current_expiry + timedelta(days=3)
+                    # Reward: 3 days for every 5 referrals
+                    if new_count is not None and new_count >= 5:
+                        referrer = await user_actions.get_user(referral_id)
+                        if referrer:
+                            from datetime import timedelta
+                            from src.app.bot.handlers.user.account import get_tashkent_time
 
-                        await user_actions.update_user(
-                            tg_id=referral_id,
-                            vip_status="active",
-                            vip_expires_at=new_expiry,
-                            joined_count=0,  # Reset count as requested
-                        )
-
-                        # Notify the referrer
-                        try:
-                            invite_msg = _(
-                                "<b>🎁 Tabriklaymiz!</b>\n\n"
-                                "Siz 5 ta do'stingizni taklif qildingiz va <b>3 kunlik VIP</b> statusiga ega bo'ldingiz! 🍿"
+                            now = get_tashkent_time()
+                            current_expiry = (
+                                referrer.vip_expires_at
+                                if referrer.vip_expires_at and referrer.vip_expires_at > now
+                                else now
                             )
-                            await message.bot.send_message(
-                                chat_id=referral_id,
-                                text=str(invite_msg),
-                                parse_mode="HTML",
+                            new_expiry = current_expiry + timedelta(days=3)
+
+                            await user_actions.update_user(
+                                tg_id=referral_id,
+                                vip_status="active",
+                                vip_expires_at=new_expiry,
+                                joined_count=0,  # Reset count
                             )
-                        except Exception as e:
-                            logger.error(
-                                f"Failed to notify referrer {referral_id}: {e}"
-                            )
-            except (ValueError, IndexError):
-                pass
+
+                            # Notify the referrer
+                            try:
+                                invite_msg = _(
+                                    "<b>🎁 Tabriklaymiz!</b>\n\n"
+                                    "Siz 5 ta do'stingizni taklif qildingiz va <b>3 kunlik VIP</b> statusiga ega bo'ldingiz! 🍿"
+                                )
+                                await message.bot.send_message(
+                                    chat_id=referral_id,
+                                    text=str(invite_msg),
+                                    parse_mode="HTML",
+                                )
+                            except Exception as e:
+                                logger.error(f"Failed to notify referrer {referral_id}: {e}")
+
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Referral parse error for args={args!r}: {e}")
+            except Exception as e:
+                logger.error(f"Referral processing error for args={args!r}: {e}", exc_info=True)
+
 
         # user_data yangilash
         user_data = await user_actions.get_user(message.from_user.id)
