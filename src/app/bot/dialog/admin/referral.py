@@ -17,7 +17,9 @@ async def get_referrals(dialog_manager: DialogManager, **kwargs):
     referrals = await actions.get_all_referrals()
     return {
         "referrals": referrals,
-        "title": str(_("🔗 <b>Рефералы</b>\n\nВыберите из списка или создайте нового:")),
+        "title": str(
+            _("🔗 <b>Рефералы</b>\n\nВыберите из списка или создайте нового:")
+        ),
         "add_ref": str(_("➕ Создать реферала")),
         "back": str(_("⬅️ Назад")),
     }
@@ -45,23 +47,16 @@ async def get_referral_details(dialog_manager: DialogManager, **kwargs):
     bot_link = f"https://t.me/{bot_info.username}"
 
     # Evaluate proxy dynamically at runtime
-    info_text = str(_(
-        "ℹ️ <b>Информация о реферале:</b>\n\n"
-        "🆔 ID: {id}\n"
-        "🏷 Название: {name}\n"
-        "👥 Приглашено: {joined_count}\n"
-        "📅 Создан: {created_at}\n\n"
-        "🔗 <b>Ссылка:</b>\n<code>{link}?start=ref_{id}</code>"
-    )).format(
+    info_text = str(_("Referal info")).format(
         id=referral.referral_id,
         name=referral.name,
         joined_count=referral.joined_count,
         created_at=referral.created_at,
-        link=bot_link
+        link=bot_link,
     )
 
     return {
-        "referral": referral, 
+        "referral": referral,
         "bot_link": bot_link,
         "info": info_text,
         "delete": str(_("🗑 Удалить")),
@@ -72,7 +67,7 @@ async def get_referral_details(dialog_manager: DialogManager, **kwargs):
 async def get_add_texts(dialog_manager: DialogManager, **kwargs):
     return {
         "title": str(_("✏️ <b>Новый реферал:</b>\n\nВведите название:")),
-        "cancel": str(_("❌ Отмена"))
+        "cancel": str(_("❌ Отмена")),
     }
 
 
@@ -123,9 +118,7 @@ referral_dialog = Dialog(
     ),
     Window(
         Format("{info}"),
-        Button(
-            Format("{delete}"), id="delete_ref", on_click=on_referral_delete
-        ),
+        Button(Format("{delete}"), id="delete_ref", on_click=on_referral_delete),
         SwitchTo(Format("{back}"), id="back_list", state=ReferralSG.menu),
         state=ReferralSG.view,
         getter=get_referral_details,
