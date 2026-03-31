@@ -46,7 +46,7 @@ async def start_bot(
                 new_count = await user_actions.increment_joined_count(referral_id)
 
                 # Reward: 3 days for every 5 referrals
-                if new_count >= 5:
+                if new_count is not None and new_count >= 5:
                     referrer = await user_actions.get_user(referral_id)
                     if referrer:
                         from datetime import timedelta

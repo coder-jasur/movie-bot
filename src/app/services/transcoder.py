@@ -471,7 +471,7 @@ class Transcoder:
         if has_intro and has_wm:
             fp.append(norm_intro)
             fp.append(norm_main)
-            fp.append(f"[{wm_idx}:v]scale={w}*0.15:-2[wm_s];[wm_s]split[wm1][wm2]")
+            fp.append(f"[{wm_idx}:v]format=rgba,colorchannelmixer=aa=0.5,scale={w}*0.15:-2[wm_s];[wm_s]split[wm1][wm2]")
             fp.append("[intro_v][wm1]overlay=W-w-15:H-h-30[intro_wm]")
             fp.append("[main_v][wm2]overlay=W-w-15:H-h-30[main_wm]")
             if a_intro and a_main:
@@ -501,7 +501,7 @@ class Transcoder:
 
         elif not has_intro and has_wm:
             fp.append(norm_main)
-            fp.append(f"[{wm_idx}:v]scale={w}*0.22:-2[wm]")
+            fp.append(f"[{wm_idx}:v]format=rgba,colorchannelmixer=aa=0.5,scale={w}*0.22:-2[wm]")
             fp.append("[main_v][wm]overlay=W-w-15:H-h-30[v]")
             ma = ["-map", "[v]", "-map", "0:a?"]
 

@@ -213,22 +213,6 @@ async def on_backup_movies(c: CallbackQuery, button: Button, manager: DialogMana
         await _cleanup(*paths)
 
 
-# ─── MUAMMO BU YERDA EDI ────────────────────────────────────────────────────
-#
-# XATO:   Const(str(_("matni")))
-#          └─ str() lazy_gettext'ni darhol bajaradi → bot start bo'lganida,
-#             foydalanuvchi tili yo'q → default "uz" ishlatiladi, hech qachon
-#             o'zgarmaydi.
-#
-# TO'G'RI: Format("{text}") + getter orqali yoki shunchaki
-#          aiogram-dialog'ning o18n integratsiyasidan foydalanish.
-#
-#  Eng sodda yechim — Const ichida lazy string'ni str() ga O'RAMASLIK va
-#  I18NFormat widgetini ishlatish (agar o'rnatilgan bo'lsa), yoki quyidagi
-#  kabi getter bilan Format ishlatish.
-# ────────────────────────────────────────────────────────────────────────────
-
-
 async def _backup_menu_getter(**kwargs):
     return {
         "menu_title": str(

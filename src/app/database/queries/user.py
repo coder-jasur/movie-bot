@@ -154,7 +154,8 @@ class UserActions:
         ).returning(User.joined_count)
         result = await self.session.execute(stmt)
         await self.session.commit()
-        return result.scalar()
+        value = result.scalar()
+        return value if value is not None else 0
 
     async def get_user_ids_batch(self, offset: int, limit: int = 5000) -> list[int]:
         stmt = select(User.tg_id).order_by(User.tg_id).offset(offset).limit(limit)

@@ -83,6 +83,9 @@ async def profile_handler(message: Message, session: AsyncSession, edit: bool = 
     from src.app.bot.common.utils import get_user_language
 
     locale = await get_user_language(message.from_user, session)
+    # ✅ i18n kontekstini to'g'ri o'rnatamiz — barcha _() chaqiruvlari shu tildan foydalanadi
+    i18n.ctx_locale.set(locale)
+
     user_actions = UserActions(session)
     user = await user_actions.get_user(message.from_user.id)
 
@@ -227,6 +230,8 @@ async def vip_tarif_handler(
 
     target_user = user or message.from_user
     locale = await get_user_language(target_user, session)
+    # ✅ i18n kontekstini to'g'ri o'rnatamiz
+    i18n.ctx_locale.set(locale)
     text = (
         f"<b>⭐ {_('VIP Obuna')}</b>\n\n"
         f"<b>✨ {_('Imkoniyatlar:')}</b>\n"
