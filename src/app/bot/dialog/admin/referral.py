@@ -46,19 +46,9 @@ async def get_referral_details(dialog_manager: DialogManager, **kwargs):
     bot_info = await bot.get_me()
     bot_link = f"https://t.me/{bot_info.username}"
 
-    # Evaluate proxy dynamically at runtime
-    info_text = str(_("Referal info")).format(
-        id=referral.referral_id,
-        name=referral.name,
-        joined_count=referral.joined_count,
-        created_at=referral.created_at,
-        link=bot_link,
-    )
-
     return {
         "referral": referral,
         "bot_link": bot_link,
-        "info": info_text,
         "delete": str(_("🗑 Удалить")),
         "back": str(_("⬅️ Назад")),
     }
@@ -117,7 +107,16 @@ referral_dialog = Dialog(
         getter=get_add_texts,
     ),
     Window(
-        Format("{info}"),
+        Format(
+            str(_(
+                "ℹ️ <b>Информация о реферале:</b>\n\n"
+                "🆔 ID: {referral.referral_id}\n"
+                "🏷 Название: {referral.name}\n"
+                "👥 Приглашено: {referral.joined_count}\n"
+                "📅 Создан: {referral.created_at}\n\n"
+                "🔗 <b>Ссылка:</b>\n<code>{bot_link}?start=ref_{referral.referral_id}</code>"
+            ))
+        ),
         Button(Format("{delete}"), id="delete_ref", on_click=on_referral_delete),
         SwitchTo(Format("{back}"), id="back_list", state=ReferralSG.menu),
         state=ReferralSG.view,
