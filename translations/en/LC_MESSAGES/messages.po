@@ -1774,7 +1774,7 @@ msgstr "❌ Cancel"
 
 #: src/app/bot/dialog/admin/referral.py:96
 #, python-brace-format
-msgid "Referal info"
+msgid "Referral info"
 msgstr ""
 "ℹ️ <b>Referral info:</b>\n"
 "\n"

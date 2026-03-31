@@ -1776,7 +1776,7 @@ msgstr "❌ Bekor qilish"
 
 #: src/app/bot/dialog/admin/referral.py:96
 #, python-brace-format
-msgid "Referal info"
+msgid "Referral info"
 msgstr ""
 "ℹ️ <b>Referal ma'lumoti:</b>\n"
 "\n"
