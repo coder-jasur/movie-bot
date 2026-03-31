@@ -1774,16 +1774,7 @@ msgstr "❌ Cancel"
 
 #: src/app/bot/dialog/admin/referral.py:96
 #, python-brace-format
-msgid ""
-"ℹ️ <b>Информация о реферале:</b>\n"
-"\n"
-"🆔 ID: {referral.referral_id}\n"
-"🏷 Название: {referral.name}\n"
-"👥 Приглашено: {referral.joined_count}\n"
-"📅 Создан: {referral.created_at}\n"
-"\n"
-"🔗 <b>Ссылка:</b>\n"
-"<code>{bot_link}?start=ref_{referral.referral_id}</code>"
+msgid "Referal info"
 msgstr ""
 "ℹ️ <b>Referral info:</b>\n"
 "\n"
