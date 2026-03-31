@@ -45,7 +45,6 @@ async def start_bot(
                 logger.info(f"Referral link clicked: referral_id={referral_id}, new_user={message.from_user.id}")
 
                 # 1. Avval admin Referral jadvalidan tekshiramiz
-                from src.app.database.queries.referral import ReferralActions
                 referral_actions = ReferralActions(session)
                 admin_referral = await referral_actions.get_referral(referral_id)
 
