@@ -73,12 +73,12 @@ async def _check_nvenc() -> bool:
 
 def _enc(nvenc: bool, h: int) -> list:
     # ✅ Hajmni optimallashtirish uchun CRF qiymatlari (balandroq = kichikroq hajm)
-    if h >= 1080:
+    if h >= 900:
         crf, maxrate, bufsize = "28", "4M", "8M"
-    elif h >= 720:
-        crf, maxrate, bufsize = "30", "2M", "4M"
-    elif h >= 480:
-        crf, maxrate, bufsize = "32", "1M", "2M"
+    elif h >= 550:
+        crf, maxrate, bufsize = "28", "2M", "4M"
+    elif h >= 400:
+        crf, maxrate, bufsize = "30", "1M", "2M"
     else:
         crf, maxrate, bufsize = "40", "500k", "1M"
 
@@ -270,11 +270,11 @@ class Transcoder:
                     thumb_wm_path = thumb_wm if os.path.exists(thumb_wm) else thumb_raw
 
             def get_standard_label(h: int) -> str:
-                if h >= 1080:
+                if h >= 900:
                     return "1080p"
-                if h >= 720:
+                if h >= 550:
                     return "720p"
-                if h >= 480:
+                if h >= 400:
                     return "480p"
                 return "360p"
 
@@ -324,14 +324,15 @@ class Transcoder:
             results: Dict[str, str] = {}
             file_sizes: Dict[str, float] = {}
 
-            q_name = f"{orig_h}p"
+            q_name = get_standard_label(orig_h)
             await self._notify(
                 status_callback, _t("💾 Original tayyorlanmoqda...", locale)
             )
             try:
                 out_orig = os.path.join(tmp, "orig.mp4")
-                target_h = q_h_val
-                await self._scale_only(base_path, out_orig, target_h)
+                # Original faylning razmerini o'zgartirmaymiz (Option A), lekin uning 
+                # q_name ga mos CRF qo'llaniladi (chunki _enc da h>=550 tekshiruvi bor).
+                await self._scale_only(base_path, out_orig, orig_h)
 
                 self._fsync_file(out_orig)
                 self._ensure_permissions(out_orig)
@@ -343,15 +344,8 @@ class Transcoder:
                 res = await self._upload(out_orig, user_id, q_name, thumb_wm_path)
                 results[q_name] = res if res else file_id
 
-                if res:
-                    for name, q_h in TARGET_QUALITIES.items():
-                        if q_h == orig_h:
-                            results[name] = res
-                            if on_quality_ready:
-                                await on_quality_ready(name, res)
-                            break
-                    if on_quality_ready:
-                        await on_quality_ready(q_name, res)
+                if res and on_quality_ready:
+                    await on_quality_ready(q_name, res)
             except Exception as e:
                 logger.error(f"Original upload failed: {e}")
                 results[q_name] = file_id
