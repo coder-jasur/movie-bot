@@ -46,19 +46,11 @@ async def get_referral_details(dialog_manager: DialogManager, **kwargs):
     bot_info = await bot.get_me()
     bot_link = f"https://t.me/{bot_info.username}"
 
-    # Evaluate proxy dynamically at runtime
-    info_text = str(_("Referral info")).format(
-        id=referral.referral_id,
-        name=referral.name,
-        joined_count=referral.joined_count,
-        created_at=referral.created_at,
-        link=bot_link,
-    )
-
     return {
-        "referral": referral,
-        "bot_link": bot_link,
-        "info": info_text,
+        "info": str(_("Referral info")).format(
+            referral=referral,
+            bot_link=bot_link
+        ),
         "delete": str(_("🗑 Удалить")),
         "back": str(_("⬅️ Назад")),
     }
