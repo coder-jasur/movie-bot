@@ -15,7 +15,12 @@ async def get_referrals(dialog_manager: DialogManager, **kwargs):
     session: AsyncSession = dialog_manager.middleware_data["session"]
     actions = ReferralActions(session)
     referrals = await actions.get_all_referrals()
-    return {"referrals": referrals}
+    return {
+        "referrals": referrals,
+        "title": str(_("🔗 <b>Рефералы</b>\n\nВыберите из списка или создайте нового:")),
+        "add_ref": str(_("➕ Создать реферала")),
+        "back": str(_("⬅️ Назад")),
+    }
 
 
 async def on_referral_selected(
@@ -39,7 +44,36 @@ async def get_referral_details(dialog_manager: DialogManager, **kwargs):
     bot_info = await bot.get_me()
     bot_link = f"https://t.me/{bot_info.username}"
 
-    return {"referral": referral, "bot_link": bot_link}
+    # Evaluate proxy dynamically at runtime
+    info_text = str(_(
+        "ℹ️ <b>Информация о реферале:</b>\n\n"
+        "🆔 ID: {id}\n"
+        "🏷 Название: {name}\n"
+        "👥 Приглашено: {joined_count}\n"
+        "📅 Создан: {created_at}\n\n"
+        "🔗 <b>Ссылка:</b>\n<code>{link}?start=ref_{id}</code>"
+    )).format(
+        id=referral.referral_id,
+        name=referral.name,
+        joined_count=referral.joined_count,
+        created_at=referral.created_at,
+        link=bot_link
+    )
+
+    return {
+        "referral": referral, 
+        "bot_link": bot_link,
+        "info": info_text,
+        "delete": str(_("🗑 Удалить")),
+        "back": str(_("⬅️ Назад")),
+    }
+
+
+async def get_add_texts(dialog_manager: DialogManager, **kwargs):
+    return {
+        "title": str(_("✏️ <b>Новый реферал:</b>\n\nВведите название:")),
+        "cancel": str(_("❌ Отмена"))
+    }
 
 
 async def on_referral_created(message: Message, widget, manager: DialogManager):
@@ -61,7 +95,7 @@ async def on_referral_delete(c: CallbackQuery, widget, manager: DialogManager):
 
 referral_dialog = Dialog(
     Window(
-        Const(_("🔗 <b>Рефералы</b>\n\nВыберите из списка или создайте нового:")),
+        Format("{title}"),
         ScrollingGroup(
             Select(
                 Format("{item.name} | {item.joined_count}"),
@@ -75,32 +109,24 @@ referral_dialog = Dialog(
             height=10,
             hide_pager=True,
         ),
-        SwitchTo(Const(_("➕ Создать реферала")), id="add_ref", state=ReferralSG.add),
-        Cancel(Const(_("⬅️ Назад")), id="back"),
+        SwitchTo(Format("{add_ref}"), id="add_ref", state=ReferralSG.add),
+        Cancel(Format("{back}"), id="back"),
         state=ReferralSG.menu,
         getter=get_referrals,
     ),
     Window(
-        Const(_("✏️ <b>Новый реферал:</b>\n\nВведите название:")),
+        Format("{title}"),
         MessageInput(on_referral_created, content_types=ContentType.TEXT),
-        SwitchTo(Const(str(_("❌ Отмена"))), id="cancel_add", state=ReferralSG.menu),
+        SwitchTo(Format("{cancel}"), id="cancel_add", state=ReferralSG.menu),
         state=ReferralSG.add,
+        getter=get_add_texts,
     ),
     Window(
-        Format(
-            _(
-                "ℹ️ <b>Информация о реферале:</b>\n\n"
-                "🆔 ID: {referral.referral_id}\n"
-                "🏷 Название: {referral.name}\n"
-                "👥 Приглашено: {referral.joined_count}\n"
-                "📅 Создан: {referral.created_at}\n\n"
-                "🔗 <b>Ссылка:</b>\n<code>{bot_link}?start=ref_{referral.referral_id}</code>"
-            )
-        ),
+        Format("{info}"),
         Button(
-            Const(str(_("🗑 Удалить"))), id="delete_ref", on_click=on_referral_delete
+            Format("{delete}"), id="delete_ref", on_click=on_referral_delete
         ),
-        SwitchTo(Const(str(_("⬅️ Назад"))), id="back_list", state=ReferralSG.menu),
+        SwitchTo(Format("{back}"), id="back_list", state=ReferralSG.menu),
         state=ReferralSG.view,
         getter=get_referral_details,
     ),
