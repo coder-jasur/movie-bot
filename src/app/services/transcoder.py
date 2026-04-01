@@ -78,7 +78,7 @@ def _enc(nvenc: bool, h: int) -> list:
     elif h >= 550:
         crf, maxrate, bufsize = "28", "2M", "4M"
     elif h >= 400:
-        crf, maxrate, bufsize = "30", "1M", "2M"
+        crf, maxrate, bufsize = "26", "1M", "2M"
     else:
         crf, maxrate, bufsize = "40", "500k", "1M"
 
@@ -330,7 +330,7 @@ class Transcoder:
             )
             try:
                 out_orig = os.path.join(tmp, "orig.mp4")
-                # Original faylning razmerini o'zgartirmaymiz (Option A), lekin uning 
+                # Original faylning razmerini o'zgartirmaymiz (Option A), lekin uning
                 # q_name ga mos CRF qo'llaniladi (chunki _enc da h>=550 tekshiruvi bor).
                 await self._scale_only(base_path, out_orig, orig_h)
 
@@ -471,7 +471,9 @@ class Transcoder:
         if has_intro and has_wm:
             fp.append(norm_intro)
             fp.append(norm_main)
-            fp.append(f"[{wm_idx}:v]format=rgba,colorchannelmixer=aa=0.5,scale={w}*0.15:-2[wm_s];[wm_s]split[wm1][wm2]")
+            fp.append(
+                f"[{wm_idx}:v]format=rgba,colorchannelmixer=aa=0.5,scale={w}*0.15:-2[wm_s];[wm_s]split[wm1][wm2]"
+            )
             fp.append("[intro_v][wm1]overlay=W-w-15:H-h-30[intro_wm]")
             fp.append("[main_v][wm2]overlay=W-w-15:H-h-30[main_wm]")
             if a_intro and a_main:
@@ -501,7 +503,9 @@ class Transcoder:
 
         elif not has_intro and has_wm:
             fp.append(norm_main)
-            fp.append(f"[{wm_idx}:v]format=rgba,colorchannelmixer=aa=0.5,scale={w}*0.22:-2[wm]")
+            fp.append(
+                f"[{wm_idx}:v]format=rgba,colorchannelmixer=aa=0.5,scale={w}*0.22:-2[wm]"
+            )
             fp.append("[main_v][wm]overlay=W-w-15:H-h-30[v]")
             ma = ["-map", "[v]", "-map", "0:a?"]
 
