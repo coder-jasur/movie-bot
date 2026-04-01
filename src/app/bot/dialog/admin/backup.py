@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import html
 import json
 import os
 import tempfile
@@ -177,7 +178,7 @@ async def on_backup_movies(c: CallbackQuery, button: Button, manager: DialogMana
         ),
         (
             await queries.get_all_multi_film_features(),
-            [_film_row],
+            _film_row,
             "multi_film_features",
             _("🧸 BARCHA multfilmlarning to'liq zaxirasi"),
         ),
@@ -264,7 +265,11 @@ async def on_type_selected(c: CallbackQuery, button: Button, manager: DialogMana
 
 
 async def _restore_file_getter(dialog_manager: DialogManager, **kwargs):
-    return {"restore_type": dialog_manager.dialog_data.get("restore_type", "?")}
+    return {
+        "restore_type": dialog_manager.dialog_data.get("restore_type", "?"),
+        "restore_title": str(_("📥 <b>[{restore_type}]</b> ni tiklash.\n\nIltimos, zaxira (.json) faylini yuboring:")),
+        "btn_cancel": str(_("⬅️ Bekor qilish")),
+    }
 
 
 async def go_restore_type(c: CallbackQuery, button: Button, manager: DialogManager):
@@ -339,7 +344,8 @@ async def on_restore_file(m: Message, input: MessageInput, manager: DialogManage
         )
         await manager.switch_to(BackupSG.menu)
     except Exception as e:
-        await m.answer(f"❌ Xatolik yuz berdi: {e}")
+        error_msg = html.escape(str(e))
+        await m.answer(f"❌ Xatolik yuz berdi: <code>{error_msg}</code>", parse_mode="HTML")
 
 
 backup_dialog = Dialog(
@@ -391,11 +397,9 @@ backup_dialog = Dialog(
         getter=_restore_type_getter,
     ),
     Window(
-        Format(
-            "📥 <b>[{restore_type}]</b> ni tiklash.\n\nIltimos, zaxira (.json) faylini yuboring:"
-        ),
+        Format("{restore_title}"),
         MessageInput(on_restore_file, content_types=ContentType.DOCUMENT),
-        Button(Format("⬅️ Bekor qilish"), id="b", on_click=go_restore_type),
+        Button(Format("{btn_cancel}"), id="b", on_click=go_restore_type),
         state=BackupSG.restore_file,
         getter=_restore_file_getter,
     ),
