@@ -11,6 +11,15 @@ class CacheService:
     
     @classmethod
     async def get_redis(cls, redis_url: str) -> Redis:
+        import asyncio
+        try:
+            if cls._redis_pool is not None:
+                # Check if the event loop is still running
+                await cls._redis_pool.ping()
+        except (RuntimeError, Exception):
+            # If ping fails or loop is closed, reset the pool
+            cls._redis_pool = None
+
         if cls._redis_pool is None:
             cls._redis_pool = Redis.from_url(
                 redis_url,
@@ -19,7 +28,7 @@ class CacheService:
                 socket_connect_timeout=5,
                 socket_keepalive=True,
             )
-            logger.info("Redis connection pool created")
+            logger.info("Redis connection pool created/recreated")
         return cls._redis_pool
     
     @classmethod

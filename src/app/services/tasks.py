@@ -72,40 +72,51 @@ async def _save_to_db(data: dict, files: dict, is_incremental: bool = False):
 
         # Case 1: Incremental update or adding a new track
         if is_adding or is_incremental:
-            if movie_type == "feature_film":
-                await actions.update_language_track(
-                    code, lang_id, files=files, name=name, caption=caption, thumbnail_file_id=thumbnail_id
-                )
-            elif movie_type == "series":
-                await actions.update_language_track(
-                    code, data["season"], data["series"], lang_id, files=files, 
-                    name=name, caption=caption, thumbnail_file_id=thumbnail_id
-                )
-            elif movie_type == "mini_series":
-                await actions.update_language_track(
-                    code, data["series"], lang_id, files=files, 
-                    name=name, caption=caption, thumbnail_file_id=thumbnail_id
-                )
-        # Case 2: Adding a brand new film (very first quality)
-        else:
-            if movie_type == "feature_film":
-                await actions.add_feature_film(
-                    film_code=code, film_name=name, 
-                    caption=caption, genres=genres_serialized,
-                    language=lang_id, files=files, thumbnail_file_id=thumbnail_id,
-                )
-            elif movie_type == "series":
-                await actions.add_series(
-                    series_code=code, series_name=name, series_num=data["series"], season=data["season"],
-                    caption=caption, genres=genres_serialized,
-                    language=lang_id, files=files, thumbnail_file_id=thumbnail_id
-                )
-            elif movie_type == "mini_series":
-                await actions.add_mini_series(
-                    mini_series_code=code, mini_series_name=name, series=data["series"],
-                    caption=caption, genres=genres_serialized,
-                    language=lang_id, files=files, thumbnail_file_id=thumbnail_id
-                )
+            try:
+                if movie_type == "feature_film":
+                    await actions.update_language_track(
+                        code, lang_id, files=files, name=name, caption=caption, thumbnail_file_id=thumbnail_id
+                    )
+                elif movie_type == "series":
+                    await actions.update_language_track(
+                        code, data["season"], data["series"], lang_id, files=files, 
+                        name=name, caption=caption, thumbnail_file_id=thumbnail_id
+                    )
+                elif movie_type == "mini_series":
+                    await actions.update_language_track(
+                        code, data["series"], lang_id, files=files, 
+                        name=name, caption=caption, thumbnail_file_id=thumbnail_id
+                    )
+                await session.commit()
+                return # Success, we can return early
+            except (ValueError, Exception) as e:
+                if "not found" in str(e).lower():
+                    logger.info(f"Fallback to add_... because record not found: {e}")
+                    # Fallback to ADD below if not found
+                    pass
+                else:
+                    logger.error(f"Error in update_language_track: {e}")
+                    raise
+
+        # Case 2: Adding a brand new film/episode or Fallback from Case 1
+        if movie_type == "feature_film":
+            await actions.add_feature_film(
+                film_code=code, film_name=name, 
+                caption=caption, genres=genres_serialized,
+                language=lang_id, files=files, thumbnail_file_id=thumbnail_id,
+            )
+        elif movie_type == "series":
+            await actions.add_series(
+                series_code=code, series_name=name, series_num=data["series"], season=data["season"],
+                caption=caption, genres=genres_serialized,
+                language=lang_id, files=files, thumbnail_file_id=thumbnail_id
+            )
+        elif movie_type == "mini_series":
+            await actions.add_mini_series(
+                mini_series_code=code, mini_series_name=name, series=data["series"],
+                caption=caption, genres=genres_serialized,
+                language=lang_id, files=files, thumbnail_file_id=thumbnail_id
+            )
         
         await session.commit()
 
@@ -249,10 +260,10 @@ async def _run_task(data: dict):
                 existing_obj = await actions.get_feature_film(code)
             elif movie_type == "series":
                 eps = await actions.get_series(code)
-                existing_obj = next((e for e in eps if e.season == season and e.series == series), None) if eps else None
+                existing_obj = next((e for e in eps if int(e.season) == int(season) and int(e.series) == int(series)), None) if eps else None
             elif movie_type == "mini_series":
                 eps = await actions.get_mini_series(code)
-                existing_obj = next((e for e in eps if e.series == series), None) if eps else None
+                existing_obj = next((e for e in eps if int(e.series) == int(series)), None) if eps else None
             
             if existing_obj and existing_obj.files and lang_id in existing_obj.files:
                 current_files = existing_obj.files[lang_id]
