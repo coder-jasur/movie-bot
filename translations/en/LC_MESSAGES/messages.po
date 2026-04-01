@@ -2668,3 +2668,59 @@ msgid ""
 msgstr ""
 "Please transfer the money to this card number and send the payment "
 "screenshot to the admin @hikmatilloyev_J."
+msgid "📥 Tiklash (Restore)"
+msgstr "📥 Restore"
+
+msgid "📥 Qaysi turdagi ma'lumotlarni tiklamoqchisiz?"
+msgstr "📥 What type of data do you want to restore?"
+
+msgid "👥 Foydalanuvchilar"
+msgstr "👥 Users"
+
+msgid "⭐ Tanlanganlar"
+msgstr "⭐ Favorites"
+
+msgid "🎬 Filmlar"
+msgstr "🎬 Films"
+
+msgid "📺 Seriallar"
+msgstr "📺 Series"
+
+msgid "📽 Epizodli filmlar"
+msgstr "📽 Episodic Films"
+
+msgid "🧸 Multfilmlar"
+msgstr "🧸 Cartoons"
+
+msgid "📺 Mult-seriallar"
+msgstr "📺 Cartoon Series"
+
+msgid "📽 Epizodli multfilmlar"
+msgstr "📽 Episodic Cartoons"
+
+msgid "🏮 Anime filmlar"
+msgstr "🏮 Anime Films"
+
+msgid "📺 Anime seriallar"
+msgstr "📺 Anime Series"
+
+msgid "📽 Epizodli animelar"
+msgstr "📽 Episodic Animes"
+
+msgid "❌ Iltimos, faqat .json formatdagi zaxira faylini yuboring."
+msgstr "❌ Please send only .json backup file."
+
+msgid "❌ Faylni o'qishda xatolik yuz berdi. JSON formati noto'g'ri."
+msgstr "❌ Error reading file. Invalid JSON format."
+
+msgid "❌ Noto'g'ri format. JSON ro'yxat bo'lishi kerak."
+msgstr "❌ Invalid format. JSON must be a list."
+
+msgid "✅ Ma'lumotlar muvaffaqiyatli tiklandi! (Faqat yo'q qismlari qo'shildi)"
+msgstr "✅ Data successfully restored! (Only missing parts added)"
+
+msgid "📥 <b>[{restore_type}]</b> ni tiklash.\n\nIltimos, zaxira (.json) faylini yuboring:"
+msgstr "📥 Restoring <b>[{restore_type}]</b>.\n\nPlease send the (.json) backup file:"
+
+msgid "⬅️ Bekor qilish"
+msgstr "⬅️ Cancel"

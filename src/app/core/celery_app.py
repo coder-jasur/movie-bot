@@ -19,9 +19,9 @@ celery_app.conf.update(
     enable_utc=True,
     task_track_started=True,
     # BUG FIX #1: task_time_limit 1 soat — katta filmlar uchun yetmaydi
-    # 2 soatlik film = ~25-40 daqiqa, lekin upload ham qo'shilsa ko'proq
-    task_time_limit=7200,  # 2 soat hard limit
-    task_soft_time_limit=6000,  # 100 daqiqa — graceful stop
+    # 5 soatlik film = ~25-40 daqiqa, lekin upload ham qo'shilsa ko'proq
+    task_time_limit=18000,  # 5 soat hard limit
+    task_soft_time_limit=14400,  # 4 soat — graceful stop
     # BUG FIX #2: Redis connection yo'qolsa worker qayta ulansin
     broker_connection_retry_on_startup=True,
     broker_connection_retry=True,

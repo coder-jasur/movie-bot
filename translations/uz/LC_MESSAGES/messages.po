@@ -2669,3 +2669,60 @@ msgstr "Karta raqami:"
 
 msgid "Iltimos, ushbu karta raqamiga pul o'tkazing va to'lov rasmini (skrinshot) @hikmatilloyev_J adminga yuboring."
 msgstr "Iltimos, ushbu karta raqamiga pul o'tkazing va to'lov rasmini (skrinshot) @hikmatilloyev_J adminga yuboring."
+
+msgid "📥 Tiklash (Restore)"
+msgstr "📥 Tiklash (Restore)"
+
+msgid "📥 Qaysi turdagi ma'lumotlarni tiklamoqchisiz?"
+msgstr "📥 Qaysi turdagi ma'lumotlarni tiklamoqchisiz?"
+
+msgid "👥 Foydalanuvchilar"
+msgstr "👥 Foydalanuvchilar"
+
+msgid "⭐ Tanlanganlar"
+msgstr "⭐ Tanlanganlar"
+
+msgid "🎬 Filmlar"
+msgstr "🎬 Filmlar"
+
+msgid "📺 Seriallar"
+msgstr "📺 Seriallar"
+
+msgid "📽 Epizodli filmlar"
+msgstr "📽 Epizodli filmlar"
+
+msgid "🧸 Multfilmlar"
+msgstr "🧸 Multfilmlar"
+
+msgid "📺 Mult-seriallar"
+msgstr "📺 Mult-seriallar"
+
+msgid "📽 Epizodli multfilmlar"
+msgstr "📽 Epizodli multfilmlar"
+
+msgid "🏮 Anime filmlar"
+msgstr "🏮 Anime filmlar"
+
+msgid "📺 Anime seriallar"
+msgstr "📺 Anime seriallar"
+
+msgid "📽 Epizodli animelar"
+msgstr "📽 Epizodli animelar"
+
+msgid "❌ Iltimos, faqat .json formatdagi zaxira faylini yuboring."
+msgstr "❌ Iltimos, faqat .json formatdagi zaxira faylini yuboring."
+
+msgid "❌ Faylni o'qishda xatolik yuz berdi. JSON formati noto'g'ri."
+msgstr "❌ Faylni o'qishda xatolik yuz berdi. JSON formati noto'g'ri."
+
+msgid "❌ Noto'g'ri format. JSON ro'yxat bo'hib xabar berish kerak."
+msgstr "❌ Noto'g'ri format. JSON ro'yxat bo'lishi kerak."
+
+msgid "✅ Ma'lumotlar muvaffaqiyatli tiklandi! (Faqat yo'q qismlari qo'shildi)"
+msgstr "✅ Ma'lumotlar muvaffaqiyatli tiklandi! (Faqat yo'q qismlari qo'shildi)"
+
+msgid "📥 <b>[{restore_type}]</b> ni tiklash.\n\nIltimos, zaxira (.json) faylini yuboring:"
+msgstr "📥 <b>[{restore_type}]</b> ni tiklash.\n\nIltimos, zaxira (.json) faylini yuboring:"
+
+msgid "⬅️ Bekor qilish"
+msgstr "⬅️ Bekor qilish"

@@ -2674,3 +2674,59 @@ msgid ""
 msgstr ""
 "Пожалуйста, переведите деньги на этот номер карты и отправьте скриншот "
 "оплаты админу @hikmatilloyev_J."
+msgid "📥 Tiklash (Restore)"
+msgstr "📥 Восстановить (Restore)"
+
+msgid "📥 Qaysi turdagi ma'lumotlarni tiklamoqchisiz?"
+msgstr "📥 Какой тип данных вы хотите восстановить?"
+
+msgid "👥 Foydalanuvchilar"
+msgstr "👥 Пользователи"
+
+msgid "⭐ Tanlanganlar"
+msgstr "⭐ Избранное"
+
+msgid "🎬 Filmlar"
+msgstr "🎬 Фильмы"
+
+msgid "📺 Seriallar"
+msgstr "📺 Сериалы"
+
+msgid "📽 Epizodli filmlar"
+msgstr "📽 Фильмы с эпизодами"
+
+msgid "🧸 Multfilmlar"
+msgstr "🧸 Мультфильмы"
+
+msgid "📺 Mult-seriallar"
+msgstr "📺 Мультсериалы"
+
+msgid "📽 Epizodli multfilmlar"
+msgstr "📽 Мультфильмы с эпизодами"
+
+msgid "🏮 Anime filmlar"
+msgstr "🏮 Аниме фильмы"
+
+msgid "📺 Anime seriallar"
+msgstr "📺 Аниме сериалы"
+
+msgid "📽 Epizodli animelar"
+msgstr "📽 Аниме с эпизодами"
+
+msgid "❌ Iltimos, faqat .json formatdagi zaxira faylini yuboring."
+msgstr "❌ Пожалуйста, отправьте только .json файл бэкапа."
+
+msgid "❌ Faylni o'qishda xatolik yuz berdi. JSON formati noto'g'ri."
+msgstr "❌ Ошибка при чтении файла. Неверный формат JSON."
+
+msgid "❌ Noto'g'ri format. JSON ro'yxat bo'lishi kerak."
+msgstr "❌ Неверный формат. JSON должен быть списком."
+
+msgid "✅ Ma'lumotlar muvaffaqiyatli tiklandi! (Faqat yo'q qismlari qo'shildi)"
+msgstr "✅ Данные успешно восстановлены! (Добавлены только отсутствующие части)"
+
+msgid "📥 <b>[{restore_type}]</b> ni tiklash.\n\nIltimos, zaxira (.json) faylini yuboring:"
+msgstr "📥 Восстановление <b>[{restore_type}]</b>.\n\nПожалуйста, отправьте (.json) файл бэкапа:"
+
+msgid "⬅️ Bekor qilish"
+msgstr "⬅️ Отмена"

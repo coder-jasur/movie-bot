@@ -19,7 +19,7 @@ TARGET_QUALITIES = {
     "360p": 360,
 }
 
-MAX_PARALLEL_WORKERS = 2
+MAX_PARALLEL_WORKERS = 1
 
 BASE_DIR = "/app"
 INTRO_MKV = os.path.join(BASE_DIR, "media/videos/intro.mkv")
@@ -630,6 +630,7 @@ class Transcoder:
         from aiogram.client.telegram import TelegramAPIServer
         from aiogram.methods import SendVideo
         from aiogram.types import FSInputFile
+        from aiohttp import TCPConnector
 
         token = self.bot.token
 
@@ -653,12 +654,14 @@ class Transcoder:
                 TELEGRAM_BOT_API_URL, is_local=True
             )
 
-        max_retries = 3
+        max_retries = 5
         for attempt in range(1, max_retries + 1):
             # ✅ Har urinishda yangi sessiya va bot yaratamiz
+            connector = TCPConnector(force_close=True)
             session = AiohttpSession(
                 api=api_server,
                 timeout=3600,
+                connector=connector,
             )
             thumb_tg_path = None
             try:
@@ -726,8 +729,8 @@ class Transcoder:
                         f"Upload {label} finally failed after {max_retries} attempts."
                     )
                     return None
-                # ✅ Ko'proq kutish
-                await asyncio.sleep(15 * attempt)
+                # ✅ Ko'proq kutish (backoff)
+                await asyncio.sleep(30 * attempt)
             finally:
                 if thumb_tg_path and os.path.exists(thumb_tg_path):
                     try:

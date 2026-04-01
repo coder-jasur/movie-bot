@@ -10,6 +10,8 @@ class AdminMenuSG(StatesGroup):
 
 class BackupSG(StatesGroup):
     menu = State()
+    restore_type = State()
+    restore_file = State()
 
 
 class AddMovieWizardSG(StatesGroup):
