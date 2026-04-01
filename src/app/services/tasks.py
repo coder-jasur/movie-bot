@@ -288,92 +288,94 @@ async def _run_task(data: dict):
     # Lock o'rnatish (TTL: 4 soat)
     await CacheService.set_cached(redis_url, lock_key, "processing", ttl=14400)
 
+    cleanup_list = []
+
+    async def _cleanup_local_api_cache(paths: list):
+        """Local API server keshini jarrohlik yo'li bilan tozalash"""
+        try:
+            import os
+            for path in paths:
+                if os.path.exists(path):
+                    os.remove(path)
+                    logger.info(f"Surgical cleanup: {path}")
+        except Exception as e:
+            logger.warning(f"Cleanup failed: {e}")
+
     try:
         async with Bot(
             token=settings.bot_token,
             session=session,
             default=DefaultBotProperties(parse_mode="HTML"),
         ) as bot:
-        transcoder = Transcoder(bot)
-        user_id = data.get("admin_id")
-        status_msg_id = data.get("status_msg_id")
-        admin_locale = data.get("admin_locale") or "uz"
-
-        async def update_status(text: str):
-            if status_msg_id and user_id:
+            transcoder = Transcoder(bot)
+            user_id = data.get("admin_id")
+            status_msg_id = data.get("status_msg_id")
+            admin_locale = data.get("admin_locale") or "uz"
+    
+            async def update_status(text: str):
+                if status_msg_id and user_id:
+                    try:
+                        await bot.edit_message_text(
+                            chat_id=user_id,
+                            message_id=status_msg_id,
+                            text=text,
+                        )
+                    except Exception:
+                        pass
+    
+            ready_files = {}
+    
+            async def on_quality_ready(quality: str, file_id: str):
+                is_first = (len(ready_files) == 0)
+                ready_files[quality] = file_id
                 try:
-                    await bot.edit_message_text(
-                        chat_id=user_id,
-                        message_id=status_msg_id,
-                        text=text,
-                    )
-                except Exception:
-                    pass
+                    # Use partial files dict for incremental update
+                    partial = {quality: file_id}
+                    if data.get("is_editing"):
+                        await _update_db_files(data, partial)
+                    else:
+                        # Har bir sifat tayyor bo'lganda incremental saqlaymiz.
+                        # Birinchi sifat bo'lganda add_..., qolganlarida update_...
+                        await _save_to_db(data, partial, is_incremental=not is_first)
+                    logger.info(f"Incremental save done: {quality}")
+                except Exception as e:
+                    logger.error(f"Incremental save failed for {quality}: {e}")
+    
 
-        ready_files = {}
-
-        async def on_quality_ready(quality: str, file_id: str):
-            is_first = (len(ready_files) == 0)
-            ready_files[quality] = file_id
+    
             try:
-                # Use partial files dict for incremental update
-                partial = {quality: file_id}
-                if data.get("is_editing"):
-                    await _update_db_files(data, partial)
-                else:
-                    # Har bir sifat tayyor bo'lganda incremental saqlaymiz.
-                    # Birinchi sifat bo'lganda add_..., qolganlarida update_...
-                    await _save_to_db(data, partial, is_incremental=not is_first)
-                logger.info(f"Incremental save done: {quality}")
+                files, cleanup_list = await transcoder.process_video(
+                    file_id=data.get("file_id"),
+                    user_id=user_id,
+                    status_callback=update_status,
+                    on_quality_ready=on_quality_ready,
+                    thumbnail_file_id=data.get("thumbnail_file_id"),
+                    locale=admin_locale,
+                )
+    
+                if not files or not isinstance(files, dict):
+                    raise ValueError("Transcoder bo'sh natija qaytardi")
+    
+                success_msg = i18n.gettext(
+                    "✅ Video muvaffaqiyatli saqlandi! Kod: {code}",
+                    locale=admin_locale,
+                ).format(code=data.get("code"))
+    
+                await bot.send_message(chat_id=user_id, text=success_msg)
+                return files
+    
             except Exception as e:
-                logger.error(f"Incremental save failed for {quality}: {e}")
-
-        cleanup_list = []
-
-        async def _cleanup_local_api_cache(paths: list):
-            """Local API server keshini jarrohlik yo'li bilan tozalash"""
-            try:
-                import os
-                for path in paths:
-                    if os.path.exists(path):
-                        os.remove(path)
-                        logger.info(f"Surgical cleanup: {path}")
-            except Exception as e:
-                logger.warning(f"Cleanup failed: {e}")
-
-        try:
-            files, cleanup_list = await transcoder.process_video(
-                file_id=data.get("file_id"),
-                user_id=user_id,
-                status_callback=update_status,
-                on_quality_ready=on_quality_ready,
-                thumbnail_file_id=data.get("thumbnail_file_id"),
-                locale=admin_locale,
-            )
-
-            if not files or not isinstance(files, dict):
-                raise ValueError("Transcoder bo'sh natija qaytardi")
-
-            success_msg = i18n.gettext(
-                "✅ Video muvaffaqiyatli saqlandi! Kod: {code}",
-                locale=admin_locale,
-            ).format(code=data.get("code"))
-
-            await bot.send_message(chat_id=user_id, text=success_msg)
-            return files
-
-        except Exception as e:
-            logger.error(f"Task run failed: {e}", exc_info=True)
-            if user_id:
-                try:
-                    error_text = i18n.gettext(
-                        "❌ Xato: {error}", locale=admin_locale
-                    ).format(error=str(e)[:200])
-                    await bot.send_message(chat_id=user_id, text=error_text)
-                except Exception:
-                    pass
-            raise
-        finally:
-            await _cleanup_local_api_cache(cleanup_list)
-            # Lockni o'chirish
-            await CacheService.delete_cached(redis_url, lock_key)
+                logger.error(f"Task run failed: {e}", exc_info=True)
+                if user_id:
+                    try:
+                        error_text = i18n.gettext(
+                            "❌ Xato: {error}", locale=admin_locale
+                        ).format(error=str(e)[:200])
+                        await bot.send_message(chat_id=user_id, text=error_text)
+                    except Exception:
+                        pass
+                raise
+    finally:
+        await _cleanup_local_api_cache(cleanup_list)
+        # Lockni o'chirish
+        await CacheService.delete_cached(redis_url, lock_key)
