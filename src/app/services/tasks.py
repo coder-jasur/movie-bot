@@ -26,6 +26,7 @@ from src.app.database.queries.movie.multi_films import (
 )
 from src.app.database.queries.movie.series import SeriesActions
 from src.app.services.transcoder import Transcoder
+from src.app.services.cache_service import CacheService
 
 logger = logging.getLogger(__name__)
 
@@ -212,11 +213,87 @@ async def _run_task(data: dict):
         timeout=3600,
     )
 
-    async with Bot(
-        token=settings.bot_token,
-        session=session,
-        default=DefaultBotProperties(parse_mode="HTML"),
-    ) as bot:
+    # ─────────────────────────────────────────────
+    #  LOCK & IDEMPOTENCY CHECK
+    # ─────────────────────────────────────────────
+    category = data.get("category")
+    movie_type = data.get("movie_type")
+    code = data.get("code")
+    lang_id = get_lang_code(data.get("language", "uz"))
+    is_editing = data.get("is_editing", False)
+    season = data.get("season")
+    series = data.get("series")
+
+    # 1. Lock key yaratish
+    lock_id = f"{category}:{movie_type}:{code}:{lang_id}"
+    if movie_type == "series":
+        lock_id += f":s{season}:e{series}"
+    elif movie_type == "mini_series":
+        lock_id += f":e{series}"
+    
+    lock_key = f"lock:transcode:{lock_id}"
+
+    # 2. Database tekshiruvi (Idempotency)
+    # Agar tahrirlash bo'lmasa, bazada allaqachon fayllar borligini tekshiramiz
+    if not is_editing:
+        db = Database(settings.construct_postgresql_url())
+        async with db.session_factory() as db_session:
+            from src.app.bot.dialog.admin.edit_movie import get_actions
+            # Normalize category for get_actions
+            cat_map = {"cat_film": "film", "cat_multi": "multi_film", "cat_anime": "anime"}
+            norm_cat = cat_map.get(category, category)
+            
+            actions = get_actions(db_session, norm_cat, movie_type)
+            existing_obj = None
+            if movie_type == "feature_film":
+                existing_obj = await actions.get_feature_film(code)
+            elif movie_type == "series":
+                eps = await actions.get_series(code)
+                existing_obj = next((e for e in eps if e.season == season and e.series == series), None) if eps else None
+            elif movie_type == "mini_series":
+                eps = await actions.get_mini_series(code)
+                existing_obj = next((e for e in eps if e.series == series), None) if eps else None
+            
+            if existing_obj and existing_obj.files and lang_id in existing_obj.files:
+                current_files = existing_obj.files[lang_id]
+                if current_files and len(current_files) > 0:
+                    logger.info(f"Idempotency: Video already transcoded for {lock_id}. Skipping.")
+                    # Adminni xabardor qilish
+                    async with Bot(token=settings.bot_token, session=session, default=DefaultBotProperties(parse_mode="HTML")) as notify_bot:
+                        msg = i18n.gettext("⚠️ Ushbu video allaqachon transkoding qilingan (Kod: {code}, Til: {lang}).", locale=data.get("admin_locale", "uz")).format(code=code, lang=lang_id)
+                        try:
+                            if data.get("status_msg_id"):
+                                await notify_bot.edit_message_text(chat_id=data.get("admin_id"), message_id=data.get("status_msg_id"), text=msg)
+                            else:
+                                await notify_bot.send_message(chat_id=data.get("admin_id"), text=msg)
+                        except Exception:
+                            pass
+                    return {"status": "already_exists", "files": current_files}
+
+    # 3. Redis Lock tekshiruvi
+    redis_url = settings.redis_url
+    is_locked = await CacheService.get_cached(redis_url, lock_key)
+    if is_locked:
+        logger.warning(f"Task Lock: {lock_key} is already being processed. Skipping duplicate.")
+        # Adminni xabardor qilish
+        async with Bot(token=settings.bot_token, session=session, default=DefaultBotProperties(parse_mode="HTML")) as notify_bot:
+            msg = i18n.gettext("⏳ Ushbu video hozirda boshqa worker tomonidan transkoding qilinmoqda...", locale=data.get("admin_locale", "uz"))
+            try:
+                if data.get("status_msg_id"):
+                    await notify_bot.edit_message_text(chat_id=data.get("admin_id"), message_id=data.get("status_msg_id"), text=msg)
+            except Exception:
+                pass
+        return {"status": "locked"}
+
+    # Lock o'rnatish (TTL: 4 soat)
+    await CacheService.set_cached(redis_url, lock_key, "processing", ttl=14400)
+
+    try:
+        async with Bot(
+            token=settings.bot_token,
+            session=session,
+            default=DefaultBotProperties(parse_mode="HTML"),
+        ) as bot:
         transcoder = Transcoder(bot)
         user_id = data.get("admin_id")
         status_msg_id = data.get("status_msg_id")
@@ -298,3 +375,5 @@ async def _run_task(data: dict):
             raise
         finally:
             await _cleanup_local_api_cache(cleanup_list)
+            # Lockni o'chirish
+            await CacheService.delete_cached(redis_url, lock_key)

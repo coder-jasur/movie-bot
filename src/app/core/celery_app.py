@@ -36,6 +36,11 @@ celery_app.conf.update(
     worker_concurrency=1,
     # Katta fayllar uchun result backend timeout
     result_expires=86400,  # 24 soat
+    # Redis visibility_timeout: 6 soat (21600s)
+    # Long tasklar uchun redelivery oldini olish
+    broker_transport_options={
+        "visibility_timeout": 21600,
+    },
 )
 
 
