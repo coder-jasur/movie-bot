@@ -77,7 +77,7 @@ def _enc(nvenc: bool, h: int) -> list:
     if h >= 900:
         crf, maxrate, bufsize = "28", "4M", "8M"
     elif h >= 550:
-        crf, maxrate, bufsize = "28", "2M", "4M"
+        crf, maxrate, bufsize = "26", "2M", "4M"
     elif h >= 400:
         crf, maxrate, bufsize = "26", "1M", "2M"
     else:
@@ -302,7 +302,9 @@ class Transcoder:
 
             if manual_quality:
                 q_name = manual_quality
-                orig_h = await self._get_height(source) or TARGET_QUALITIES.get(q_name, 720)
+                orig_h = await self._get_height(source) or TARGET_QUALITIES.get(
+                    q_name, 720
+                )
             else:
                 orig_h = await self._get_height(source)
                 if not orig_h:
