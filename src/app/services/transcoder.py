@@ -119,9 +119,27 @@ def _enc(nvenc: bool, h: int) -> list:
 
 async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
     if not os.path.isfile(WATERMARK_PATH):
-        shutil.copy2(thumb_in, thumb_out)
-        return True
+        try:
+            # ✅ Agarda watermark bo'lmasa ham, rasmni 1280x720 (HD) ga keltiramiz (xiralashmasligi uchun)
+            cmd = [
+                "ffmpeg",
+                "-y",
+                "-i",
+                thumb_in,
+                "-vf",
+                "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2",
+                "-q:v",
+                "2",
+                thumb_out,
+            ]
+            proc = await asyncio.create_subprocess_exec(*cmd, stderr=subprocess.PIPE)
+            await proc.communicate()
+            return True
+        except Exception:
+            shutil.copy2(thumb_in, thumb_out)
+            return True
     try:
+        # ✅ Rasmni 1280x720 kvadratga "sig'dirish" va watermarkni o'ng pastga qo'yish
         cmd = [
             "ffmpeg",
             "-y",
@@ -130,7 +148,9 @@ async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
             "-i",
             WATERMARK_PATH,
             "-filter_complex",
-            "[1:v]scale=iw*0.25:-1[wm];[0:v][wm]overlay=W-w-10:10",
+            "[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2[bg];"
+            "[1:v]scale=iw*0.20:-2,format=rgba,colorchannelmixer=aa=0.6[wm];"
+            "[bg][wm]overlay=W-w-15:H-h-15",
             "-frames:v",
             "1",
             "-q:v",
@@ -656,12 +676,12 @@ class Transcoder:
 
         max_retries = 5
         for attempt in range(1, max_retries + 1):
-            # ✅ Har urinishda yangi sessiya va bot yaratamiz
-            connector = TCPConnector(force_close=True)
+            # ✅ Har urinishda yangi sessiya va bot yaratamiz (BaseSession xatosi tuzatildi)
             session = AiohttpSession(
                 api=api_server,
-                timeout=3600,
-                connector=connector,
+                timeout=ClientTimeout(
+                    total=3600, connect=60, sock_read=3600, sock_connect=60
+                ),
             )
             thumb_tg_path = None
             try:
@@ -672,27 +692,9 @@ class Transcoder:
                 ) as upload_bot:
                     tg_thumb = None
 
+                    # ✅ Sifatni saqlash: rasm allaqachon _make_thumb_with_watermark orqali 1280x720 qilingan
                     if thumb_path and os.path.exists(thumb_path):
-                        thumb_tg_path = path.replace(".mp4", "_tgthumb.jpg")
-                        resize_cmd = [
-                            "ffmpeg",
-                            "-y",
-                            "-i",
-                            thumb_path,
-                            "-vf",
-                            "scale=320:320:force_original_aspect_ratio=decrease",
-                            "-frames:v",
-                            "1",
-                            "-q:v",
-                            "5",
-                            thumb_tg_path,
-                        ]
-                        proc = await asyncio.create_subprocess_exec(
-                            *resize_cmd, stderr=subprocess.PIPE
-                        )
-                        await proc.communicate()
-                        if os.path.exists(thumb_tg_path):
-                            tg_thumb = FSInputFile(thumb_tg_path)
+                        tg_thumb = FSInputFile(thumb_path)
 
                     # ✅ Yuklashdan oldin fayl hali mavjudligini tekshirish
                     if not os.path.exists(path):
@@ -708,7 +710,8 @@ class Transcoder:
                         supports_streaming=True,
                     )
                     if tg_thumb:
-                        send_kwargs["thumbnail"] = tg_thumb
+                        # ✅ 'thumbnail' o'rniga 'cover' ishlatamiz (sifat uchun)
+                        send_kwargs["cover"] = tg_thumb
 
                     msg = await upload_bot(
                         SendVideo(**send_kwargs),
