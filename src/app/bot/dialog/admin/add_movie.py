@@ -321,6 +321,18 @@ async def on_series_num_input(m: Message, widget: Any, manager: DialogManager):
     await manager.switch_to(AddMovieWizardSG.input_file)
 
 
+async def on_quality_selected(
+    c: CallbackQuery, widget: Any, manager: DialogManager, item_id: str
+):
+    manager.dialog_data["input_quality"] = item_id
+    await manager.switch_to(AddMovieWizardSG.input_caption)
+
+
+async def on_skip_quality(c: CallbackQuery, widget: Any, manager: DialogManager):
+    manager.dialog_data["input_quality"] = None
+    await manager.switch_to(AddMovieWizardSG.input_caption)
+
+
 async def on_file_input(m: Message, widget: Any, manager: DialogManager):
     # ✅ Yangi video keldi — eski files keshini tozalab tashlaymiz
     manager.dialog_data.pop("files", None)
@@ -335,7 +347,7 @@ async def on_file_input(m: Message, widget: Any, manager: DialogManager):
     else:
         await m.answer(str(_("❌ Video yoki fayl yuboring!")))
         return
-    await manager.switch_to(AddMovieWizardSG.input_caption)
+    await manager.switch_to(AddMovieWizardSG.select_input_quality)
 
 
 async def on_caption_input(m: Message, widget: Any, manager: DialogManager):
@@ -539,6 +551,7 @@ async def on_confirm(c: CallbackQuery, widget: Any, manager: DialogManager):
             "genres": data.get("genres"),
             "format": data.get("format"),
             "language": data.get("language"),
+            "input_quality": data.get("input_quality"),
             # Ensure is_adding_track is passed correctly from dialog_data
             "is_adding_track": data.get("is_adding_track", False)
             or data.get("exists", False),
@@ -1049,6 +1062,17 @@ async def get_type_selection_data(dialog_manager: DialogManager, **kwargs):
     }
 
 
+async def get_quality_data(dialog_manager: DialogManager, **kwargs):
+    return {
+        "qualities": [
+            ("1080p", "1080p"),
+            ("720p", "720p"),
+            ("480p", "480p"),
+            ("360p", "360p"),
+        ]
+    }
+
+
 async def get_type_specific_prompts(dialog_manager: DialogManager, **kwargs):
     category = dialog_manager.dialog_data.get("category")
     movie_type = dialog_manager.dialog_data.get("movie_type")
@@ -1503,6 +1527,33 @@ add_movie_dialog = Dialog(
         ),
         state=AddMovieWizardSG.input_file,
         getter=get_type_specific_prompts,
+    ),
+    Window(
+        Format(_("💿 <b>Video sifatini tanlang:</b>\n(Bu sifat asosida transkodlash amalga oshiriladi)")),
+        Group(
+            Select(
+                Format("{item[1]}"),
+                id="q_select",
+                item_id_getter=lambda x: x[0],
+                items="qualities",
+                on_click=on_quality_selected,
+            ),
+            width=2,
+        ),
+        Button(
+            Format(_("⏭ Avtomatik (Aniqlash)")),
+            id="skip_quality",
+            on_click=on_skip_quality,
+        ),
+        Row(
+            SwitchTo(
+                Format(_("🔙 Ortga")),
+                id="back_to_file_q",
+                state=AddMovieWizardSG.input_file,
+            ),
+        ),
+        state=AddMovieWizardSG.select_input_quality,
+        getter=get_quality_data,
     ),
     Window(
         Format("{caption_prompt}"),

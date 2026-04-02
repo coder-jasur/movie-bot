@@ -23,6 +23,7 @@ class AddMovieWizardSG(StatesGroup):
     input_series_number = State()
     input_season_number = State()
     input_file = State()
+    select_input_quality = State()
     input_caption = State()
     input_thumbnail = State()  # Muqova rasm (ixtiyoriy)
     input_language = State()

@@ -7,6 +7,7 @@ from asyncio import subprocess
 from typing import Awaitable, Callable, Dict, List, Optional, Tuple
 
 from aiogram import Bot
+from aiohttp import ClientTimeout
 
 from src.app.bot.common.i18n import i18n
 
@@ -148,9 +149,9 @@ async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
             "-i",
             WATERMARK_PATH,
             "-filter_complex",
-            "[0:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2[bg];"
-            "[1:v]scale=iw*0.20:-2,format=rgba,colorchannelmixer=aa=0.6[wm];"
-            "[bg][wm]overlay=W-w-15:H-h-15",
+            "[0:v]scale=320:320:force_original_aspect_ratio=decrease,pad=320:320:(ow-iw)/2:(oh-ih)/2[bg];"
+            "[1:v]scale=iw*0.15:-2,format=rgba,colorchannelmixer=aa=0.6[wm];"
+            "[bg][wm]overlay=W-w-10:H-h-10",
             "-frames:v",
             "1",
             "-q:v",
@@ -260,6 +261,7 @@ class Transcoder:
         on_quality_ready: Optional[QualityCallback] = None,
         thumbnail_file_id: Optional[str] = None,
         locale: str = "uz",
+        manual_quality: Optional[str] = None,
     ) -> Tuple[Dict[str, str], List[str]]:
         local_to_cleanup = []
         os.makedirs(TMP_BASE, exist_ok=True)
@@ -298,16 +300,18 @@ class Transcoder:
                     return "480p"
                 return "360p"
 
-            orig_h = await self._get_height(source)
-            logger.info(f"Detected video height: {orig_h} (source: {source})")
-            if not orig_h:
-                logger.warning("Could not detect video height, skipping scaling.")
-                return {"original": file_id}, local_to_cleanup
+            if manual_quality:
+                q_name = manual_quality
+                orig_h = await self._get_height(source) or TARGET_QUALITIES.get(q_name, 720)
+            else:
+                orig_h = await self._get_height(source)
+                if not orig_h:
+                    logger.warning("Could not detect video height, skipping scaling.")
+                    return {"original": file_id}, local_to_cleanup
+                q_name = get_standard_label(orig_h)
 
-            # ✅ Eng yaqin standart sifat nomini aniqlash
-            # Masalan: 886p bo'lsa, q_name = "720p" bo'ladi.
-            q_name = get_standard_label(orig_h)
-            q_h_val = TARGET_QUALITIES.get(q_name, 720)  # 720 default
+            logger.info(f"Target quality: {q_name} (Source Height: {orig_h})")
+            q_h_val = TARGET_QUALITIES.get(q_name, 720)
 
             a_main = await self._has_audio(source)
             a_intro = (
@@ -539,6 +543,7 @@ class Transcoder:
 
         cmd.extend(["-filter_complex", ";".join(fp)])
         cmd.extend(ma)
+        cmd.extend(["-movflags", "+faststart"])
         cmd.extend(_enc(nvenc, h))
         cmd.append(dest)
 
@@ -566,6 +571,7 @@ class Transcoder:
         cmd.extend(
             ["-vf", f"scale={w_str}:{h},format=yuv420p", "-map", "0:v", "-map", "0:a?"]
         )
+        cmd.extend(["-movflags", "+faststart"])
         cmd.extend(_enc(nvenc, h))
         cmd.append(dest)
 

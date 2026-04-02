@@ -362,6 +362,7 @@ async def _run_task(data: dict):
                     on_quality_ready=on_quality_ready,
                     thumbnail_file_id=data.get("thumbnail_file_id"),
                     locale=admin_locale,
+                    manual_quality=data.get("input_quality"),
                 )
     
                 if not files or not isinstance(files, dict):
