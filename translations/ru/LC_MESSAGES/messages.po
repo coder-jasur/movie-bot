@@ -2725,6 +2725,27 @@ msgstr "❌ Неверный формат. JSON должен быть списк
 msgid "✅ Ma'lumotlar muvaffaqiyatli tiklandi! (Faqat yo'q qismlari qo'shildi)"
 msgstr "✅ Данные успешно восстановлены! (Добавлены только отсутствующие части)"
 
+msgid "💿 <b>Video sifatini tanlang:</b>\n(Bu sifat asosida transkodlash amalga oshiriladi)"
+msgstr "💿 <b>Выберите качество видео:</b>\n(На основе этого качества будет выполнен транскодинг)"
+
+msgid "1080p"
+msgstr "1080p"
+
+msgid "720p"
+msgstr "720p"
+
+msgid "480p"
+msgstr "480p"
+
+msgid "360p"
+msgstr "360p"
+
+msgid "⏭ Avtomatik (Aniqlash)"
+msgstr "⏭ Автоматически (Определить)"
+
+msgid "🔙 Ortga"
+msgstr "🔙 Назад"
+
 msgid "📥 <b>[{restore_type}]</b> ni tiklash.\n\nIltimos, zaxira (.json) faylini yuboring:"
 msgstr "📥 Восстановление <b>[{restore_type}]</b>.\n\nПожалуйста, отправьте (.json) файл бэкапа:"
 

@@ -1065,10 +1065,10 @@ async def get_type_selection_data(dialog_manager: DialogManager, **kwargs):
 async def get_quality_data(dialog_manager: DialogManager, **kwargs):
     return {
         "qualities": [
-            ("1080p", "1080p"),
-            ("720p", "720p"),
-            ("480p", "480p"),
-            ("360p", "360p"),
+            ("1080p", str(_("1080p"))),
+            ("720p", str(_("720p"))),
+            ("480p", str(_("480p"))),
+            ("360p", str(_("360p"))),
         ]
     }
 

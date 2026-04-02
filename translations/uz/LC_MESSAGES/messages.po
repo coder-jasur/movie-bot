@@ -2721,6 +2721,27 @@ msgstr "❌ Noto'g'ri format. JSON ro'yxat bo'lishi kerak."
 msgid "✅ Ma'lumotlar muvaffaqiyatli tiklandi! (Faqat yo'q qismlari qo'shildi)"
 msgstr "✅ Ma'lumotlar muvaffaqiyatli tiklandi! (Faqat yo'q qismlari qo'shildi)"
 
+msgid "💿 <b>Video sifatini tanlang:</b>\n(Bu sifat asosida transkodlash amalga oshiriladi)"
+msgstr "💿 <b>Video sifatini tanlang:</b>\n(Bu sifat asosida transkodlash amalga oshiriladi)"
+
+msgid "1080p"
+msgstr "1080p"
+
+msgid "720p"
+msgstr "720p"
+
+msgid "480p"
+msgstr "480p"
+
+msgid "360p"
+msgstr "360p"
+
+msgid "⏭ Avtomatik (Aniqlash)"
+msgstr "⏭ Avtomatik (Aniqlash)"
+
+msgid "🔙 Ortga"
+msgstr "🔙 Ortga"
+
 msgid "📥 <b>[{restore_type}]</b> ni tiklash.\n\nIltimos, zaxira (.json) faylini yuboring:"
 msgstr "📥 <b>[{restore_type}]</b> ni tiklash.\n\nIltimos, zaxira (.json) faylini yuboring:"
 

@@ -2719,6 +2719,27 @@ msgstr "❌ Invalid format. JSON must be a list."
 msgid "✅ Ma'lumotlar muvaffaqiyatli tiklandi! (Faqat yo'q qismlari qo'shildi)"
 msgstr "✅ Data successfully restored! (Only missing parts added)"
 
+msgid "💿 <b>Video sifatini tanlang:</b>\n(Bu sifat asosida transkodlash amalga oshiriladi)"
+msgstr "💿 <b>Select video quality:</b>\n(Transcoding will be based on this quality)"
+
+msgid "1080p"
+msgstr "1080p"
+
+msgid "720p"
+msgstr "720p"
+
+msgid "480p"
+msgstr "480p"
+
+msgid "360p"
+msgstr "360p"
+
+msgid "⏭ Avtomatik (Aniqlash)"
+msgstr "⏭ Automatic (Detect)"
+
+msgid "🔙 Ortga"
+msgstr "🔙 Back"
+
 msgid "📥 <b>[{restore_type}]</b> ni tiklash.\n\nIltimos, zaxira (.json) faylini yuboring:"
 msgstr "📥 Restoring <b>[{restore_type}]</b>.\n\nPlease send the (.json) backup file:"
 
