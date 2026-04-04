@@ -121,14 +121,14 @@ def _enc(nvenc: bool, h: int) -> list:
 async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
     if not os.path.isfile(WATERMARK_PATH):
         try:
-            # ✅ Agarda watermark bo'lmasa ham, rasmni 1280x720 (HD) ga keltiramiz (xiralashmasligi uchun)
+            # ✅ Watermark yo'q — rasmni 320x320 ga crop bilan to'ldiramiz (qora chegara yo'q)
             cmd = [
                 "ffmpeg",
                 "-y",
                 "-i",
                 thumb_in,
                 "-vf",
-                "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2",
+                "scale=320:320:force_original_aspect_ratio=increase,crop=320:320,setsar=1",
                 "-q:v",
                 "2",
                 thumb_out,
@@ -140,7 +140,7 @@ async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
             shutil.copy2(thumb_in, thumb_out)
             return True
     try:
-        # ✅ Rasmni 1280x720 kvadratga "sig'dirish" va watermarkni o'ng pastga qo'yish
+        # ✅ 320x320 crop bilan to'ldirish + watermark tepada (top-right) + shafoflik YO'Q
         cmd = [
             "ffmpeg",
             "-y",
@@ -149,9 +149,9 @@ async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
             "-i",
             WATERMARK_PATH,
             "-filter_complex",
-            "[0:v]scale=320:320:force_original_aspect_ratio=decrease,pad=320:320:(ow-iw)/2:(oh-ih)/2[bg];"
-            "[1:v]scale=iw*0.15:-2,format=rgba,colorchannelmixer=aa=0.6[wm];"
-            "[bg][wm]overlay=W-w-10:H-h-10",
+            "[0:v]scale=320:320:force_original_aspect_ratio=increase,crop=320:320,setsar=1[bg];"
+            "[1:v]scale=iw*0.20:-2[wm];"
+            "[bg][wm]overlay=W-w-10:10",
             "-frames:v",
             "1",
             "-q:v",

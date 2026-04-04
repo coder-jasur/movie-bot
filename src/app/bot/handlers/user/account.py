@@ -31,6 +31,13 @@ def get_tashkent_time():
 
 account_router = Router()
 
+# VIP Banners (centralized for easy updates)
+VIP_BANNERS = {
+    "uz": "AgACAgIAAxkBAAICsGnI7MzcPYkSPeYnBFnSaUinvbV7AALhFGsb_utJSv1gCeoq-4aMAQADAgADeAADOgQ",
+    "ru": "AgACAgIAAxkBAAICwWnI9rkEQVucoXGjXeDpGWijC69GAAITFWsb_utJSujS1XZlIOrJAQADAgADeAADOgQ",
+    "en": "AgACAgIAAxkBAAICxWnI9wx28eppVmST9mRIfuQpk6scAAIfFWsb_utJSriYqPdtMqAbAQADAgADeAADOgQ",
+}
+
 
 async def smart_edit(
     message: Message,
@@ -157,12 +164,7 @@ async def profile_handler(message: Message, session: AsyncSession, edit: bool = 
         ]
     )
 
-    if locale == "ru":
-        file_id = "AgACAgIAAxkBAAICwWnI9rkEQVucoXGjXeDpGWijC69GAAITFWsb_utJSujS1XZlIOrJAQADAgADeAADOgQ"
-    elif locale == "en":
-        file_id = "AgACAgIAAxkBAAICxWnI9wx28eppVmST9mRIfuQpk6scAAIfFWsb_utJSriYqPdtMqAbAQADAgADeAADOgQ"
-    else:
-        file_id = "AgACAgIAAxkBAAICsGnI7MzcPYkSPeYnBFnSaUinvbV7AALhFGsb_utJSv1gCeoq-4aMAQADAgADeAADOgQ"
+    file_id = VIP_BANNERS.get(locale, VIP_BANNERS["uz"])
 
     if edit:
         await smart_edit(message, text, reply_markup=kbd)
@@ -271,12 +273,7 @@ async def vip_tarif_handler(
             ],
         ]
     )
-    if locale == "ru":
-        file_id = "AgACAgIAAxkBAAICwWnI9rkEQVucoXGjXeDpGWijC69GAAITFWsb_utJSujS1XZlIOrJAQADAgADeAADOgQ"
-    elif locale == "en":
-        file_id = "AgACAgIAAxkBAAICxWnI9wx28eppVmST9mRIfuQpk6scAAIfFWsb_utJSriYqPdtMqAbAQADAgADeAADOgQ"
-    else:
-        file_id = "AgACAgIAAxkBAAICsGnI7MzcPYkSPeYnBFnSaUinvbV7AALhFGsb_utJSv1gCeoq-4aMAQADAgADeAADOgQ"
+    file_id = VIP_BANNERS.get(locale, VIP_BANNERS["uz"])
 
     if edit:
         await smart_edit(message, text, reply_markup=kbd, photo=file_id)
@@ -284,6 +281,7 @@ async def vip_tarif_handler(
         await message.answer_photo(
             photo=file_id, caption=text, reply_markup=kbd, parse_mode="HTML"
         )
+
 
 @account_router.callback_query(F.data.startswith("select_plan:"))
 async def select_payment_method_handler(callback: CallbackQuery, session: AsyncSession):
@@ -326,12 +324,7 @@ async def select_payment_method_handler(callback: CallbackQuery, session: AsyncS
     # Now correctly passing session to get the user's DB language preference
     locale = await get_user_language(callback.from_user, session=session)
 
-    if locale == "ru":
-        banner_file_id = "AgACAgIAAxkBAAICwWnI9rkEQVucoXGjXeDpGWijC69GAAITFWsb_utJSujS1XZlIOrJAQADAgADeAADOgQ"
-    elif locale == "en":
-        banner_file_id = "AgACAgIAAxkBAAICxWnI9wx28eppVmST9mRIfuQpk6scAAIfFWsb_utJSriYqPdtMqAbAQADAgADeAADOgQ"
-    else:
-        banner_file_id = "AgACAgIAAxkBAAICsGnI7MzcPYkSPeYnBFnSaUinvbV7AALhFGsb_utJSv1gCeoq-4aMAQADAgADeAADOgQ"
+    banner_file_id = VIP_BANNERS.get(locale, VIP_BANNERS["uz"])
 
     await smart_edit(callback.message, text, reply_markup=kbd, photo=banner_file_id)
     await callback.answer()
@@ -351,7 +344,7 @@ async def admin_payment_handler(callback: CallbackQuery):
         return
 
     text = (
-        f"{_('Admin orqali to\'lov')}\n\n"
+        f"<b>{_('Admin orqali to\'lov')}</b>\n\n"
         f"🎫 {str(plan['label'])}\n"
         f"💰 {_('Narx:')} {plan['uzs']:,} {_('so\'m')}\n"
         f"💳 {_('Karta raqami:')} <code>{settings.payment_card}</code>\n\n"
@@ -368,7 +361,12 @@ async def admin_payment_handler(callback: CallbackQuery):
         ]
     )
 
-    await smart_edit(callback.message, text, reply_markup=kbd)
+    from src.app.bot.common.utils import get_user_language
+
+    locale = await get_user_language(callback.from_user, session=None)
+    banner_file_id = VIP_BANNERS.get(locale, VIP_BANNERS["uz"])
+
+    await smart_edit(callback.message, text, reply_markup=kbd, photo=banner_file_id)
     await callback.answer()
 
 
