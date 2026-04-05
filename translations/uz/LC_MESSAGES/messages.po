@@ -2747,3 +2747,6 @@ msgstr "📥 <b>[{restore_type}]</b> ni tiklash.\n\nIltimos, zaxira (.json) fayl
 
 msgid "⬅️ Bekor qilish"
 msgstr "⬅️ Bekor qilish"
+
+msgid "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi"
+msgstr "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi"

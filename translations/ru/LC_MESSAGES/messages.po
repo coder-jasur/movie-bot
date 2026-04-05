@@ -2751,3 +2751,6 @@ msgstr "📥 Восстановление <b>[{restore_type}]</b>.\n\nПожал
 
 msgid "⬅️ Bekor qilish"
 msgstr "⬅️ Отмена"
+
+msgid "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi"
+msgstr "💎 Для просмотра этого фильма требуется VIP-подписка"

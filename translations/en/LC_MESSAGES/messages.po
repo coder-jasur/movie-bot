@@ -2745,3 +2745,6 @@ msgstr "📥 Restoring <b>[{restore_type}]</b>.\n\nPlease send the (.json) backu
 
 msgid "⬅️ Bekor qilish"
 msgstr "⬅️ Cancel"
+
+msgid "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi"
+msgstr "💎 VIP subscription is required to watch this movie"
