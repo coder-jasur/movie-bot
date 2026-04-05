@@ -723,7 +723,7 @@ class Transcoder:
 
                     msg = await upload_bot(
                         SendVideo(**send_kwargs),
-                        request_timeout=3600,
+                        request_timeout=7200,
                     )
 
                     if msg and msg.video:
@@ -740,8 +740,8 @@ class Transcoder:
                         f"Upload {label} finally failed after {max_retries} attempts."
                     )
                     return None
-                # ✅ Ko'proq kutish (backoff)
-                await asyncio.sleep(30 * attempt)
+                # ✅ Ko'proq kutish (backoff x5): 150s, 300s, 450s, 600s, 750s
+                await asyncio.sleep(400 * attempt)
             finally:
                 if thumb_tg_path and os.path.exists(thumb_tg_path):
                     try:

@@ -86,6 +86,36 @@ logger = logging.getLogger(__name__)
 
 movie_search_router = Router()
 
+# ─────────────────────────────────────────────
+# KONTENT TURI TARJIMALARI (3 tilda)
+# ─────────────────────────────────────────────
+TYPE_TRANSLATIONS = {
+    "Film":            {"uz": "Film",             "ru": "Фильм",                  "en": "Film"},
+    "Serial":          {"uz": "Serial",           "ru": "Сериал",                 "en": "Series"},
+    "Epizodli film":   {"uz": "Epizodli film",   "ru": "Фильм с эпизодами",     "en": "Film with episodes"},
+    "Multfilm":        {"uz": "Multfilm",         "ru": "Мультфильм",             "en": "Cartoon"},
+    "Multserial":      {"uz": "Multserial",       "ru": "Мультсериал",            "en": "Cartoon series"},
+    "Epizodli multfilm": {"uz": "Epizodli multfilm", "ru": "Мультфильм с эпизодами", "en": "Cartoon with episodes"},
+    "Anime (film)":    {"uz": "Anime (film)",     "ru": "Аниме (фильм)",          "en": "Anime (film)"},
+    "Anime (serial)":  {"uz": "Anime (serial)",   "ru": "Аниме (сериал)",         "en": "Anime (series)"},
+    "Anime (mini)":    {"uz": "Anime (mini)",     "ru": "Аниме (мини)",           "en": "Anime (mini)"},
+}
+
+
+async def _send_chunks(message, text: str, parse_mode: str = "HTML"):
+    """4096 belgidan uzun xabarlarni bo'lib yuboradi (HTML teglar buzilmasligi uchun)."""
+    MAX = 4096
+    while len(text) > MAX:
+        cut = text.rfind("\n\n", 0, MAX)
+        if cut == -1:
+            cut = MAX
+        else:
+            cut += 2
+        await message.answer(text[:cut].strip(), parse_mode=parse_mode)
+        text = text[cut:]
+    if text.strip():
+        await message.answer(text.strip(), parse_mode=parse_mode)
+
 
 def _get_name_from_dict(name_obj, user_lang: str) -> str:
     """
@@ -425,12 +455,9 @@ async def send_top_movies(
     else:
         user_lang = await get_user_language(message.from_user, session)
         for index, m in enumerate(top_20, start=1):
-            # m["name"] endi dict — get_localized_name ni to'g'ri ishlaydi
             name = _get_name_from_dict(m["name"], user_lang)
-            # type — top_movies.py dan TYPE_LABELS kaliti bilan keladi
-            # movie_search.py da _(m["type"]) chaqirsa, .po faylda msgid bo'lishi kerak
-            # Xavfsiz yondashuv: to'g'ridan-to'g'ri ishlatamiz
-            type_label = str(m["type"])
+            # ✅ Kontent turini foydalanuvchi tiliga qarab tarjima qilish
+            type_label = TYPE_TRANSLATIONS.get(m["type"], {}).get(user_lang, m["type"])
             text += (
                 f"<b>{index}</b>. <b>{name}</b>\n"
                 f"   ├─ <b>{str(_('Turi'))}</b>: <b>{type_label}</b>\n"
@@ -439,7 +466,8 @@ async def send_top_movies(
                 f"   └─ <b>{str(_('Ko\'rilgan'))}</b>: <b>{m['views']}</b>\n\n"
             )
 
-    await message.answer(str(text), parse_mode="HTML")
+    # ✅ Uzun xabarlarni bo'lib yuborish (Telegram 4096 belgi cheklovi)
+    await _send_chunks(message, str(text))
 
 
 # ─────────────────────────────────────────────
@@ -585,19 +613,21 @@ async def genre_search_execute(message, state, session):
         user_lang = await get_user_language(message.from_user, session)
         for index, m in enumerate(results, start=1):
             name = _get_name_from_dict(m["name"], user_lang)
-            type_label = str(m["type"])
+            # ✅ Kontent turini foydalanuvchi tiliga qarab tarjima qilish
+            type_label = TYPE_TRANSLATIONS.get(m["type"], {}).get(user_lang, m["type"])
             text += (
                 f"<b>{index}. {name}</b>\n"
-                f"   ├─ <b>{str(_('Turi'))}</b>: {type_label}\n"
+                f"   ├─ <b>{str(_('Turi'))}</b>: <b>{type_label}</b>\n"
                 f"   ├─ <b>{str(_('Kod'))}</b>: <code>{m['code']}</code>\n"
-                f"   ├─ <b>{str(_('Saqlangan'))}</b>: {m['favs']}\n"
-                f"   └─ <b>{str(_('Ko\'rilgan'))}</b>: {m['views']}\n\n"
+                f"   ├─ <b>{str(_('Saqlangan'))}</b>: <b>{m['favs']}</b>\n"
+                f"   └─ <b>{str(_('Ko\'rilgan'))}</b>: <b>{m['views']}</b>\n\n"
             )
         text += str(_("<b>Ko'rish uchun film kodini yuboring.</b>"))
     else:
         text += str(_("Hozircha ma'lumotlar yo'q."))
 
-    await message.answer(text, parse_mode="HTML")
+    # ✅ Uzun xabarlarni bo'lib yuborish
+    await _send_chunks(message, text)
 
 
 # FIX #4: IsGenreButton() Filter class ishlatilmoqda
