@@ -90,15 +90,27 @@ movie_search_router = Router()
 # KONTENT TURI TARJIMALARI (3 tilda)
 # ─────────────────────────────────────────────
 TYPE_TRANSLATIONS = {
-    "Film":            {"uz": "Film",             "ru": "Фильм",                  "en": "Film"},
-    "Serial":          {"uz": "Serial",           "ru": "Сериал",                 "en": "Series"},
-    "Epizodli film":   {"uz": "Epizodli film",   "ru": "Фильм с эпизодами",     "en": "Film with episodes"},
-    "Multfilm":        {"uz": "Multfilm",         "ru": "Мультфильм",             "en": "Cartoon"},
-    "Multserial":      {"uz": "Multserial",       "ru": "Мультсериал",            "en": "Cartoon series"},
-    "Epizodli multfilm": {"uz": "Epizodli multfilm", "ru": "Мультфильм с эпизодами", "en": "Cartoon with episodes"},
-    "Anime (film)":    {"uz": "Anime (film)",     "ru": "Аниме (фильм)",          "en": "Anime (film)"},
-    "Anime (serial)":  {"uz": "Anime (serial)",   "ru": "Аниме (сериал)",         "en": "Anime (series)"},
-    "Anime (mini)":    {"uz": "Anime (mini)",     "ru": "Аниме (мини)",           "en": "Anime (mini)"},
+    "Film": {"uz": "Film", "ru": "Фильм", "en": "Film"},
+    "Serial": {"uz": "Serial", "ru": "Сериал", "en": "Series"},
+    "Epizodli film": {
+        "uz": "Epizodli film",
+        "ru": "Фильм с эпизодами",
+        "en": "Film with episodes",
+    },
+    "Multfilm": {"uz": "Multfilm", "ru": "Мультфильм", "en": "Cartoon"},
+    "Multserial": {"uz": "Multserial", "ru": "Мультсериал", "en": "Cartoon series"},
+    "Epizodli multfilm": {
+        "uz": "Epizodli multfilm",
+        "ru": "Мультфильм с эпизодами",
+        "en": "Cartoon with episodes",
+    },
+    "Anime (film)": {"uz": "Anime (film)", "ru": "Аниме (фильм)", "en": "Anime (film)"},
+    "Anime (serial)": {
+        "uz": "Anime (serial)",
+        "ru": "Аниме (сериал)",
+        "en": "Anime (series)",
+    },
+    "Anime (mini)": {"uz": "Anime (mini)", "ru": "Аниме (мини)", "en": "Anime (mini)"},
 }
 
 
@@ -286,10 +298,18 @@ async def random_film_handler(message: Message, session: AsyncSession):
     _movie = random_movie
 
     if not video_to_send:
-        # 1. Ogohlantirish (UZ/RU/EN tillarida i18n orqali)
-        await message.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")))
+        # 1. Qo'lda tarjima
+        prompts = {
+            "uz": "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi",
+            "ru": "💎 Для просмотра этого фильма требуется VIP-подписка",
+            "en": "💎 VIP subscription is required to watch this movie",
+        }
+        prompt_text = prompts.get(user_lang, prompts["uz"])
+        await message.answer(prompt_text)
+
         # 2. VIP menyuni chiqarish
         from src.app.bot.handlers.user.account import vip_tarif_handler
+
         await vip_tarif_handler(message, session=session)
         return
 
@@ -329,7 +349,14 @@ async def random_film_handler(message: Message, session: AsyncSession):
         serias_count = len(filtered_ms)
 
         if not video_to_send:
-            await message.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")))
+            prompts = {
+                "uz": "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi",
+                "ru": "💎 Для просмотра этого фильма требуется VIP-подписка",
+                "en": "💎 VIP subscription is required to watch this movie",
+            }
+            prompt_text = prompts.get(user_lang, prompts["uz"])
+            await message.answer(prompt_text)
+
             from src.app.bot.handlers.user.account import vip_tarif_handler
             await vip_tarif_handler(message, session=session)
             return
@@ -377,7 +404,14 @@ async def random_film_handler(message: Message, session: AsyncSession):
         seasons_count = len(set(s.season for s in filtered_s)) if filtered_s else 0
 
         if not video_to_send:
-            await message.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")))
+            prompts = {
+                "uz": "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi",
+                "ru": "💎 Для просмотра этого фильма требуется VIP-подписка",
+                "en": "💎 VIP subscription is required to watch this movie",
+            }
+            prompt_text = prompts.get(user_lang, prompts["uz"])
+            await message.answer(prompt_text)
+
             from src.app.bot.handlers.user.account import vip_tarif_handler
             await vip_tarif_handler(message, session=session)
             return
@@ -787,7 +821,14 @@ async def movie_search_handler(message: Message, session: AsyncSession):
             ) = resolve_movie_media(found_movie, user_lang, is_vip=is_vip)
 
             if not video_to_send:
-                await message.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")))
+                prompts = {
+                    "uz": "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi",
+                    "ru": "💎 Для просмотра этого фильма требуется VIP-подписка",
+                    "en": "💎 VIP subscription is required to watch this movie",
+                }
+                prompt_text = prompts.get(user_lang, prompts["uz"])
+                await message.answer(prompt_text)
+
                 from src.app.bot.handlers.user.account import vip_tarif_handler
                 await vip_tarif_handler(message, session=session)
                 return
@@ -848,7 +889,14 @@ async def movie_search_handler(message: Message, session: AsyncSession):
             serias_count = len(filtered_ms)
 
             if not video_to_send:
-                await message.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")))
+                prompts = {
+                    "uz": "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi",
+                    "ru": "💎 Для просмотра этого фильма требуется VIP-подписка",
+                    "en": "💎 VIP subscription is required to watch this movie",
+                }
+                prompt_text = prompts.get(user_lang, prompts["uz"])
+                await message.answer(prompt_text)
+
                 from src.app.bot.handlers.user.account import vip_tarif_handler
                 await vip_tarif_handler(message, session=session)
                 return
@@ -915,7 +963,14 @@ async def movie_search_handler(message: Message, session: AsyncSession):
             seasons_count = len(set(s.season for s in filtered_s)) if filtered_s else 0
 
             if not video_to_send:
-                await message.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")))
+                prompts = {
+                    "uz": "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi",
+                    "ru": "💎 Для просмотра этого фильма требуется VIP-подписка",
+                    "en": "💎 VIP subscription is required to watch this movie",
+                }
+                prompt_text = prompts.get(user_lang, prompts["uz"])
+                await message.answer(prompt_text)
+
                 from src.app.bot.handlers.user.account import vip_tarif_handler
                 await vip_tarif_handler(message, session=session)
                 return
