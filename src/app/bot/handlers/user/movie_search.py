@@ -285,6 +285,14 @@ async def random_film_handler(message: Message, session: AsyncSession):
     _actions = actions
     _movie = random_movie
 
+    if not video_to_send:
+        # 1. Ogohlantirish (UZ/RU/EN tillarida i18n orqali)
+        await message.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")))
+        # 2. VIP menyuni chiqarish
+        from src.app.bot.handlers.user.account import vip_tarif_handler
+        await vip_tarif_handler(message, session=session)
+        return
+
     if isinstance(random_movie, (FeatureFilm, MultiFilmFeature, AnimeFeature)):
         await message.answer_video(
             video=video_to_send,
@@ -319,6 +327,12 @@ async def random_film_handler(message: Message, session: AsyncSession):
         if not filtered_ms:
             filtered_ms = ms_all
         serias_count = len(filtered_ms)
+
+        if not video_to_send:
+            await message.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")))
+            from src.app.bot.handlers.user.account import vip_tarif_handler
+            await vip_tarif_handler(message, session=session)
+            return
 
         await message.answer_video(
             video=video_to_send,
@@ -361,6 +375,12 @@ async def random_film_handler(message: Message, session: AsyncSession):
         )
         series_count = len(filtered_s)
         seasons_count = len(set(s.season for s in filtered_s)) if filtered_s else 0
+
+        if not video_to_send:
+            await message.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")))
+            from src.app.bot.handlers.user.account import vip_tarif_handler
+            await vip_tarif_handler(message, session=session)
+            return
 
         await message.answer_video(
             video=video_to_send,
@@ -766,6 +786,12 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                 thumbnail_id,
             ) = resolve_movie_media(found_movie, user_lang, is_vip=is_vip)
 
+            if not video_to_send:
+                await message.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")))
+                from src.app.bot.handlers.user.account import vip_tarif_handler
+                await vip_tarif_handler(message, session=session)
+                return
+
             await message.answer_video(
                 video=video_to_send,
                 caption=caption,
@@ -820,6 +846,12 @@ async def movie_search_handler(message: Message, session: AsyncSession):
             if not filtered_ms:
                 filtered_ms = ms
             serias_count = len(filtered_ms)
+
+            if not video_to_send:
+                await message.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")))
+                from src.app.bot.handlers.user.account import vip_tarif_handler
+                await vip_tarif_handler(message, session=session)
+                return
 
             await message.answer_video(
                 video=video_to_send,
@@ -881,6 +913,12 @@ async def movie_search_handler(message: Message, session: AsyncSession):
             )
             series_count = len(filtered_s)
             seasons_count = len(set(s.season for s in filtered_s)) if filtered_s else 0
+
+            if not video_to_send:
+                await message.answer(str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")))
+                from src.app.bot.handlers.user.account import vip_tarif_handler
+                await vip_tarif_handler(message, session=session)
+                return
 
             await message.answer_video(
                 video=video_to_send,

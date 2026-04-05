@@ -688,7 +688,7 @@ class Transcoder:
             session = AiohttpSession(
                 api=api_server,
                 timeout=ClientTimeout(
-                    total=3600, connect=60, sock_read=3600, sock_connect=60
+                    total=14400, connect=60, sock_read=14400, sock_connect=60
                 ),
             )
             thumb_tg_path = None
@@ -723,7 +723,7 @@ class Transcoder:
 
                     msg = await upload_bot(
                         SendVideo(**send_kwargs),
-                        request_timeout=7200,
+                        request_timeout=14400,
                     )
 
                     if msg and msg.video:
@@ -740,8 +740,8 @@ class Transcoder:
                         f"Upload {label} finally failed after {max_retries} attempts."
                     )
                     return None
-                # ✅ Ko'proq kutish (backoff x5): 150s, 300s, 450s, 600s, 750s
-                await asyncio.sleep(400 * attempt)
+                # ✅ 30 sekund kutish (backoff): 30s, 60s, 90s...
+                await asyncio.sleep(30 * attempt)
             finally:
                 if thumb_tg_path and os.path.exists(thumb_tg_path):
                     try:

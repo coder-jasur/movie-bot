@@ -326,12 +326,16 @@ class Broadcaster:
         """
         try:
             if self.message_id:
-                await self._bot.copy_message(
+                copy_kwargs = dict(
                     chat_id=user_id,
                     from_chat_id=self.from_chat_id,
                     message_id=self.message_id,
-                    reply_markup=self.reply_markup,
                 )
+                # reply_markup faqat alohida belgilangan bo'lsa uzatamiz.
+                # Aks holda Telegram asl xabarning inline buttonlarini o'zi ko'chiradi.
+                if self.reply_markup is not None:
+                    copy_kwargs["reply_markup"] = self.reply_markup
+                await self._bot.copy_message(**copy_kwargs)
             else:
                 await self._bot.send_media_group(
                     chat_id=user_id, media=self._make_sendable_album(self.album)
