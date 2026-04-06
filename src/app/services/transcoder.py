@@ -17,7 +17,7 @@ TARGET_QUALITIES = {
     "1080p": 1080,
     "720p": 720,
     "480p": 480,
-    "360p": 360,
+    # "360p": 360,
 }
 
 MAX_PARALLEL_WORKERS = 1
@@ -128,7 +128,7 @@ async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
                 "-i",
                 thumb_in,
                 "-vf",
-                "scale=320:320:force_original_aspect_ratio=increase,crop=320:320,setsar=1",
+                "scale=320:320,setsar=1",
                 "-q:v",
                 "2",
                 thumb_out,
@@ -149,7 +149,7 @@ async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
             "-i",
             WATERMARK_PATH,
             "-filter_complex",
-            "[0:v]scale=320:320:force_original_aspect_ratio=increase,crop=320:320,setsar=1[bg];"
+            "[0:v]scale=320:320,setsar=1[bg];"
             "[1:v]scale=iw*0.20:-2[wm];"
             "[bg][wm]overlay=W-w-10:10",
             "-frames:v",
@@ -687,8 +687,9 @@ class Transcoder:
             # ✅ Har urinishda yangi sessiya va bot yaratamiz (BaseSession xatosi tuzatildi)
             session = AiohttpSession(
                 api=api_server,
+                connector=TCPConnector(keepalive_timeout=3600, limit=1),
                 timeout=ClientTimeout(
-                    total=14400, connect=60, sock_read=14400, sock_connect=60
+                    total=86400, connect=600, sock_read=86400, sock_connect=600
                 ),
             )
             thumb_tg_path = None
@@ -723,7 +724,7 @@ class Transcoder:
 
                     msg = await upload_bot(
                         SendVideo(**send_kwargs),
-                        request_timeout=14400,
+                        request_timeout=86400,
                     )
 
                     if msg and msg.video:
@@ -740,8 +741,10 @@ class Transcoder:
                         f"Upload {label} finally failed after {max_retries} attempts."
                     )
                     return None
-                # ✅ 30 sekund kutish (backoff): 30s, 60s, 90s...
-                await asyncio.sleep(30 * attempt)
+                # ✅ 10 daqiqadan boshlab kutish (Backoff): 10min, 20min, 30min...
+                retry_delay = 600 * attempt
+                logger.info(f"Retrying in {retry_delay} seconds...")
+                await asyncio.sleep(retry_delay)
             finally:
                 if thumb_tg_path and os.path.exists(thumb_tg_path):
                     try:
