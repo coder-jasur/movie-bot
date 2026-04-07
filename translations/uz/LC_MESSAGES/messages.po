@@ -2393,13 +2393,13 @@ msgstr "💎 VIP obuna talab qilinadi"
 
 #: src/app/bot/handlers/user/player.py:306
 #: src/app/bot/handlers/user/player.py:469
-msgid "❌ Film sevimlilardan o‘chirildi"
-msgstr "❌ Film sevimlilardan o‘chirildi"
+msgid "❌ Sevimlilardan o'chirildi"
+msgstr "❌ Sevimlilardan o'chirildi"
 
 #: src/app/bot/handlers/user/player.py:313
 #: src/app/bot/handlers/user/player.py:463
-msgid "💾 Film sevimlilarga qo‘shildi"
-msgstr "💾 Film sevimlilarga qo‘shildi"
+msgid "💾 Sevimlilarga qo'shildi"
+msgstr "💾 Sevimlilarga qo'shildi"
 
 #: src/app/bot/handlers/user/player.py:332
 msgid "❌ Film topilmadi"

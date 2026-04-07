@@ -132,9 +132,11 @@ async def series_player(
     if callback_data.action == "save_to_favorites":
         await favorites_actions.add_favorite_movie(callback_data.code, user_id)
         saved = True
+        await call.answer(str(_("💾 Sevimlilarga qo'shildi")))
     elif callback_data.action == ActionType.remove_in_favorites:
         await favorites_actions.delete_favorite_movie(callback_data.code, user_id)
         saved = False
+        await call.answer(str(_("❌ Sevimlilardan o'chirildi")))
 
     if (
         callback_data.action == ActionType.set_quality
@@ -301,14 +303,14 @@ async def feature_movies_player(
             callback_data.code, call.from_user.id
         )
         saved = False
-        await call.answer(str(_("❌ Film sevimlilardan o‘chirildi")))
+        await call.answer(str(_("❌ Sevimlilardan o'chirildi")))
 
     elif callback_data.actions == "add_to_favorites" and not saved:
         await favorite_films_actions.add_favorite_movie(
             callback_data.code, call.from_user.id
         )
         saved = True
-        await call.answer(str(_("💾 Film sevimlilarga qo‘shildi")))
+        await call.answer(str(_("💾 Sevimlilarga qo'shildi")))
 
     saved = bool(saved)
 
@@ -457,13 +459,13 @@ async def mini_series_player(
             callback_data.code, call.from_user.id
         )
         saved = True
-        await call.answer(str(_("💾 Film sevimlilarga qo‘shildi")))
+        await call.answer(str(_("💾 Sevimlilarga qo'shildi")))
     elif callback_data.action == "delete_for_favorites":
         await favorite_films_actions.delete_favorite_movie(
             callback_data.code, call.from_user.id
         )
         saved = False
-        await call.answer(str(_("❌ Film sevimlilardan o‘chirildi")))
+        await call.answer(str(_("❌ Sevimlilardan o'chirildi")))
 
     saved = bool(saved)
 

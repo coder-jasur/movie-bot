@@ -2388,13 +2388,13 @@ msgstr "💎 VIP subscripton required"
 
 #: src/app/bot/handlers/user/player.py:306
 #: src/app/bot/handlers/user/player.py:469
-msgid "❌ Film sevimlilardan o‘chirildi"
-msgstr "❌ Movie removed from favorites"
+msgid "❌ Sevimlilardan o'chirildi"
+msgstr "❌ Removed from favorites"
 
 #: src/app/bot/handlers/user/player.py:313
 #: src/app/bot/handlers/user/player.py:463
-msgid "💾 Film sevimlilarga qo‘shildi"
-msgstr "💾 Movie added to favorites"
+msgid "💾 Sevimlilarga qo'shildi"
+msgstr "💾 Added to favorites"
 
 #: src/app/bot/handlers/user/player.py:332
 msgid "❌ Film topilmadi"

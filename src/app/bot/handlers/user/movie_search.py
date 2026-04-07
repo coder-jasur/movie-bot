@@ -300,7 +300,7 @@ async def random_film_handler(message: Message, session: AsyncSession):
     if not video_to_send:
         # 1. Qo'lda tarjima
         prompt_text = str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi"))
-        await message.answer(prompt_text)
+        await message.call.answer(prompt_text)
 
         # 2. VIP menyuni chiqarish
         from src.app.bot.handlers.user.account import vip_tarif_handler
@@ -345,7 +345,7 @@ async def random_film_handler(message: Message, session: AsyncSession):
 
         if not video_to_send:
             prompt_text = str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi"))
-            await message.answer(prompt_text)
+            await message.call.answer(prompt_text)
 
             from src.app.bot.handlers.user.account import vip_tarif_handler
 
@@ -396,7 +396,7 @@ async def random_film_handler(message: Message, session: AsyncSession):
 
         if not video_to_send:
             prompt_text = str(_("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi"))
-            await message.answer(prompt_text)
+            await message.call.answer(prompt_text)
 
             from src.app.bot.handlers.user.account import vip_tarif_handler
 
@@ -811,7 +811,7 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                 prompt_text = str(
                     _("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")
                 )
-                await message.answer(prompt_text)
+                await message.call.answer(prompt_text)
 
                 from src.app.bot.handlers.user.account import vip_tarif_handler
 
@@ -949,7 +949,7 @@ async def movie_search_handler(message: Message, session: AsyncSession):
                 prompt_text = str(
                     _("💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi")
                 )
-                await message.answer(prompt_text)
+                await message.call.answer(prompt_text)
 
                 from src.app.bot.handlers.user.account import vip_tarif_handler
 

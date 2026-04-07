@@ -302,18 +302,18 @@ class Transcoder:
 
             if manual_quality:
                 q_name = manual_quality
-                orig_h = await self._get_height(source) or TARGET_QUALITIES.get(
-                    q_name, 720
-                )
+                q_h_val = TARGET_QUALITIES.get(q_name, 720)
+                # ✅ Manual sifat bo'lganda ham o'lchamni (orig_h) manba kabi qoldiramiz (No upscale)
+                orig_h = await self._get_height(source) or q_h_val
             else:
                 orig_h = await self._get_height(source)
                 if not orig_h:
                     logger.warning("Could not detect video height, skipping scaling.")
                     return {"original": file_id}, local_to_cleanup
                 q_name = get_standard_label(orig_h)
+                q_h_val = TARGET_QUALITIES.get(q_name, 720)
 
-            logger.info(f"Target quality: {q_name} (Source Height: {orig_h})")
-            q_h_val = TARGET_QUALITIES.get(q_name, 720)
+            logger.info(f"Target quality: {q_name} (Source Height: {orig_h}, Label Height: {q_h_val})")
 
             a_main = await self._has_audio(source)
             a_intro = (
@@ -350,15 +350,14 @@ class Transcoder:
             results: Dict[str, str] = {}
             file_sizes: Dict[str, float] = {}
 
-            q_name = get_standard_label(orig_h)
+            # (q_name avvalroq manual yoki avtomatik aniqlangan)
             await self._notify(
                 status_callback, _t("💾 Original tayyorlanmoqda...", locale)
             )
             try:
-                out_orig = os.path.join(tmp, "orig.mp4")
                 # Original faylning razmerini o'zgartirmaymiz (Option A), lekin uning
-                # q_name ga mos CRF qo'llaniladi (chunki _enc da h>=550 tekshiruvi bor).
-                await self._scale_only(base_path, out_orig, orig_h)
+                # q_name ga mos CRF qo'llaniladi.
+                await self._scale_only(base_path, out_orig, orig_h, settings_h=q_h_val)
 
                 self._fsync_file(out_orig)
                 self._ensure_permissions(out_orig)
@@ -554,7 +553,7 @@ class Transcoder:
         if proc.returncode != 0:
             raise Exception(f"FFmpeg base error: {stderr.decode()[-500:]}")
 
-    async def _scale_only(self, base: str, dest: str, h: int):
+    async def _scale_only(self, base: str, dest: str, h: int, settings_h: Optional[int] = None):
         w_orig = await self._get_width(base)
         h_orig = await self._get_height(base)
         nvenc = await _check_nvenc()
@@ -574,7 +573,10 @@ class Transcoder:
             ["-vf", f"scale={w_str}:{h},format=yuv420p", "-map", "0:v", "-map", "0:a?"]
         )
         cmd.extend(["-movflags", "+faststart"])
-        cmd.extend(_enc(nvenc, h))
+        
+        # ✅ settings_h berilgan bo'lsa sifat sozlamalari (CRF/Bitrate) undan olinadi
+        sh = settings_h if settings_h else h
+        cmd.extend(_enc(nvenc, sh))
         cmd.append(dest)
 
         proc = await asyncio.create_subprocess_exec(*cmd, stderr=subprocess.PIPE)
@@ -687,7 +689,6 @@ class Transcoder:
             # ✅ Har urinishda yangi sessiya va bot yaratamiz (BaseSession xatosi tuzatildi)
             session = AiohttpSession(
                 api=api_server,
-                connector=TCPConnector(keepalive_timeout=3600, limit=1),
                 timeout=ClientTimeout(
                     total=86400, connect=600, sock_read=86400, sock_connect=600
                 ),

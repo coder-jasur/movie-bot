@@ -2394,13 +2394,13 @@ msgstr "💎 Требуется VIP подписка"
 
 #: src/app/bot/handlers/user/player.py:306
 #: src/app/bot/handlers/user/player.py:469
-msgid "❌ Film sevimlilardan o‘chirildi"
-msgstr "❌ Фильм удален из избранного"
+msgid "❌ Sevimlilardan o'chirildi"
+msgstr "❌ Удалено из избранного"
 
 #: src/app/bot/handlers/user/player.py:313
 #: src/app/bot/handlers/user/player.py:463
-msgid "💾 Film sevimlilarga qo‘shildi"
-msgstr "💾 Фильм добавлен в избранное"
+msgid "💾 Sevimlilarga qo'shildi"
+msgstr "💾 Добавлено в избранное"
 
 #: src/app/bot/handlers/user/player.py:332
 msgid "❌ Film topilmadi"
