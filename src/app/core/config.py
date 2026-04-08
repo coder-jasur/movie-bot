@@ -22,6 +22,9 @@ class Settings:
     webhook_url: str | None = None
     webhook_path: str = "/webhook"
     use_webhook: bool = False
+    userbot_session: str | None = None
+    telegram_api_id: int | None = None
+    telegram_api_hash: str | None = None
 
     def construct_postgresql_url(self):
         postgresql_dsn = (
@@ -51,5 +54,8 @@ def load_config() -> Settings:
         payment_card=env.str("PAYMENT_CARD", "8600 1234 5678 9012"),
         webhook_url=env.str("WEBHOOK_URL", None),
         webhook_path=env.str("WEBHOOK_PATH", "/webhook"),
-        use_webhook=env.bool("USE_WEBHOOK", False)
+        use_webhook=env.bool("USE_WEBHOOK", False),
+        userbot_session=env.str("USERBOT_SESSION_STRING", None),
+        telegram_api_id=env.int("TELEGRAM_API_ID", None),
+        telegram_api_hash=env.str("TELEGRAM_API_HASH", None)
     )

@@ -10,6 +10,7 @@ from aiogram import Bot
 from aiohttp import ClientTimeout
 
 from src.app.bot.common.i18n import i18n
+from src.app.services.userbot_service import userbot_service
 
 logger = logging.getLogger(__name__)
 
@@ -262,6 +263,7 @@ class Transcoder:
         thumbnail_file_id: Optional[str] = None,
         locale: str = "uz",
         manual_quality: Optional[str] = None,
+        movie_code: Optional[str] = None,
     ) -> Tuple[Dict[str, str], List[str]]:
         local_to_cleanup = []
         os.makedirs(TMP_BASE, exist_ok=True)
@@ -313,7 +315,9 @@ class Transcoder:
                 q_name = get_standard_label(orig_h)
                 q_h_val = TARGET_QUALITIES.get(q_name, 720)
 
-            logger.info(f"Target quality: {q_name} (Source Height: {orig_h}, Label Height: {q_h_val})")
+            logger.info(
+                f"Target quality: {q_name} (Source Height: {orig_h}, Label Height: {q_h_val})"
+            )
 
             a_main = await self._has_audio(source)
             a_intro = (
@@ -354,6 +358,7 @@ class Transcoder:
             await self._notify(
                 status_callback, _t("💾 Original tayyorlanmoqda...", locale)
             )
+            out_orig = os.path.join(tmp, "orig.mp4")
             try:
                 # Original faylning razmerini o'zgartirmaymiz (Option A), lekin uning
                 # q_name ga mos CRF qo'llaniladi.
@@ -366,7 +371,14 @@ class Transcoder:
                 if os.path.exists(out_orig):
                     file_sizes[q_name] = os.path.getsize(out_orig) / (1024 * 1024)
 
-                res = await self._upload(out_orig, user_id, q_name, thumb_wm_path)
+                res = await self._upload(
+                    out_orig,
+                    user_id,
+                    q_name,
+                    thumb_wm_path,
+                    movie_code=movie_code,
+                    on_quality_ready=on_quality_ready,
+                )
                 results[q_name] = res if res else file_id
 
                 if res and on_quality_ready:
@@ -375,10 +387,9 @@ class Transcoder:
                 logger.error(f"Original upload failed: {e}")
                 results[q_name] = file_id
             finally:
-                p = os.path.join(tmp, "orig.mp4")
-                if os.path.exists(p):
+                if out_orig and os.path.exists(out_orig):
                     try:
-                        os.remove(p)
+                        os.remove(out_orig)
                     except Exception:
                         pass
 
@@ -406,6 +417,7 @@ class Transcoder:
                         thumb_wm_path,
                         locale,
                         file_sizes,
+                        movie_code=movie_code,
                     )
                     for i, (name, h) in enumerate(to_do, 1)
                 ]
@@ -553,7 +565,9 @@ class Transcoder:
         if proc.returncode != 0:
             raise Exception(f"FFmpeg base error: {stderr.decode()[-500:]}")
 
-    async def _scale_only(self, base: str, dest: str, h: int, settings_h: Optional[int] = None):
+    async def _scale_only(
+        self, base: str, dest: str, h: int, settings_h: Optional[int] = None
+    ):
         w_orig = await self._get_width(base)
         h_orig = await self._get_height(base)
         nvenc = await _check_nvenc()
@@ -573,7 +587,7 @@ class Transcoder:
             ["-vf", f"scale={w_str}:{h},format=yuv420p", "-map", "0:v", "-map", "0:a?"]
         )
         cmd.extend(["-movflags", "+faststart"])
-        
+
         # ✅ settings_h berilgan bo'lsa sifat sozlamalari (CRF/Bitrate) undan olinadi
         sh = settings_h if settings_h else h
         cmd.extend(_enc(nvenc, sh))
@@ -599,6 +613,7 @@ class Transcoder:
         thumb_wm_path: Optional[str],
         locale: str,
         file_sizes: Dict[str, float],  # ✅ Hajmlarni yig'ish uchun
+        movie_code: Optional[str] = None,
     ) -> Optional[str]:
         async with sem:
             out = os.path.join(tmp_dir, f"v_{height}p.mp4")
@@ -634,7 +649,14 @@ class Transcoder:
                         t=total,
                     ),
                 )
-                res = await self._upload(out, user_id, name, thumb_wm_path)
+                res = await self._upload(
+                    out,
+                    user_id,
+                    name,
+                    thumb_wm_path,
+                    movie_code=movie_code,
+                    on_quality_ready=on_quality_ready,
+                )
                 if res and on_quality_ready:
                     await on_quality_ready(name, res)
                 return res
@@ -654,6 +676,8 @@ class Transcoder:
         user_id: int,
         label: str,
         thumb_path: Optional[str] = None,
+        movie_code: Optional[str] = None,
+        on_quality_ready: QualityCallback = None,
     ) -> Optional[str]:
         from aiogram.client.default import DefaultBotProperties
         from aiogram.client.session.aiohttp import AiohttpSession
@@ -675,6 +699,25 @@ class Transcoder:
         if file_size == 0:
             logger.error(f"File is empty: {path}")
             return None
+
+        # 🚀 2GB+ Check (Limit Bot API is 2GB, we use 1.9GB for safety)
+        if file_size > 1.9 * 1024 * 1024 * 1024:
+            logger.warning(
+                f"File {label} is too large for Bot API ({file_size / 1024 / 1024:.1f} MB). Routing through Userbot Premium."
+            )
+            caption = f"✅ {label} tayyor.\n\n<tg-spoiler>#MCODE_{movie_code}_{label}</tg-spoiler>"
+            res_id = await userbot_service.send_video(
+                chat_id=user_id, video_path=path, caption=caption, thumb_path=thumb_path
+            )
+            if res_id:
+                logger.info(f"Large file {label} uploaded successfully via Userbot.")
+                if on_quality_ready:
+                    await on_quality_ready(label, res_id)
+                return res_id
+            else:
+                logger.error(f"Userbot failed to upload large file {label}.")
+                # Retry logikasi davom etaveradi (balki retryda bot api local ruxsat berar?)
+                # Yo'q, yaxshisi Userbot xato qilsa shunchaki xato qaytaramiz yoki kutaveramiz.
 
         # ✅ Bot yaratilgan server URL ni olish, container nomi bilan
         try:
@@ -715,7 +758,7 @@ class Transcoder:
                     send_kwargs = dict(
                         chat_id=user_id,
                         video=FSInputFile(path),
-                        caption=f"✅ {label} tayyor.",
+                        caption=f"✅ {label} tayyor.\n\n<tg-spoiler>#MCODE_{movie_code}_{label}</tg-spoiler>",
                         disable_notification=True,
                         supports_streaming=True,
                     )
@@ -736,15 +779,44 @@ class Transcoder:
                     return None
 
             except Exception as e:
-                logger.warning(f"Upload {label} attempt {attempt} failed: {e}")
+                import traceback
+
+                error_msg = str(e) or "Unknown error"
+                logger.warning(f"Upload {label} attempt {attempt} failed: {error_msg}")
+                # ✅ Katta xatolik bo'lsa tracebackni ham chiqaramiz (faqat birinchi urinishda)
+                if attempt == 1:
+                    logger.debug(f"Full traceback: {traceback.format_exc()}")
+
+                # 🕵️‍♂️ Retry qilishdan oldin Userbot orqali chatni tekshiramiz (Idempotency)
+                if movie_code:
+                    try:
+                        file_size = os.path.getsize(path)
+                        existing_file_id = await userbot_service.find_video_in_chat(
+                            chat_id=user_id,
+                            movie_code=movie_code,
+                            quality=label,
+                        )
+                        if existing_file_id:
+                            logger.info(
+                                f"Accepted existing video via Userbot for {label}. Skipping retry."
+                            )
+                            if on_quality_ready:
+                                await on_quality_ready(label, existing_file_id)
+                            return existing_file_id
+                    except Exception as ub_err:
+                        logger.error(f"Userbot check failed during retry: {ub_err}")
+
                 if attempt == max_retries:
                     logger.error(
-                        f"Upload {label} finally failed after {max_retries} attempts."
+                        f"Upload {label} finally failed after {max_retries} attempts. Last error: {error_msg}"
                     )
                     return None
-                # ✅ 10 daqiqadan boshlab kutish (Backoff): 10min, 20min, 30min...
-                retry_delay = 600 * attempt
-                logger.info(f"Retrying in {retry_delay} seconds...")
+
+                # ✅ Retry vaqtini kamaytiramiz (15s, 30s...):
+                retry_delay = 15 * attempt
+                logger.info(
+                    f"Retrying in {retry_delay} seconds (Attempt {attempt}/{max_retries})..."
+                )
                 await asyncio.sleep(retry_delay)
             finally:
                 if thumb_tg_path and os.path.exists(thumb_tg_path):

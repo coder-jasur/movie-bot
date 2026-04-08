@@ -363,6 +363,7 @@ async def _run_task(data: dict):
                     thumbnail_file_id=data.get("thumbnail_file_id"),
                     locale=admin_locale,
                     manual_quality=data.get("input_quality"),
+                    movie_code=data.get("code"),
                 )
     
                 if not files or not isinstance(files, dict):
