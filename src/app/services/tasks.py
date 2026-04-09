@@ -27,6 +27,7 @@ from src.app.database.queries.movie.multi_films import (
 from src.app.database.queries.movie.series import SeriesActions
 from src.app.services.transcoder import Transcoder
 from src.app.services.cache_service import CacheService
+from src.app.services.userbot_service import userbot_service
 
 logger = logging.getLogger(__name__)
 
@@ -392,3 +393,5 @@ async def _run_task(data: dict):
         await _cleanup_local_api_cache(cleanup_list)
         # Lockni o'chirish
         await CacheService.delete_cached(redis_url, lock_key)
+        # Userbot ulanishini yopish (loop mismatch oldini olish uchun)
+        await userbot_service.close()

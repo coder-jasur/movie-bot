@@ -18,7 +18,7 @@ TARGET_QUALITIES = {
     "1080p": 1080,
     "720p": 720,
     "480p": 480,
-    # "360p": 360,
+    "360p": 360,
 }
 
 MAX_PARALLEL_WORKERS = 1
@@ -32,7 +32,7 @@ TMP_BASE = "/var/lib/telegram-bot-api/temp"
 
 # ✅ Videoga Intro va Watermark qo'shishni boshqarish
 # True bo'lsa qo'shadi, False bo'lsa yo'q.
-ADD_INTRO_AND_WATERMARK_TO_VIDEO = True
+ADD_INTRO_AND_WATERMARK_TO_VIDEO = False
 
 LOCAL_API_BASE = "/var/lib/telegram-bot-api"
 
@@ -790,7 +790,6 @@ class Transcoder:
                 # 🕵️‍♂️ Retry qilishdan oldin Userbot orqali chatni tekshiramiz (Idempotency)
                 if movie_code:
                     try:
-                        file_size = os.path.getsize(path)
                         existing_file_id = await userbot_service.find_video_in_chat(
                             chat_id=user_id,
                             movie_code=movie_code,

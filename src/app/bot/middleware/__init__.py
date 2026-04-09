@@ -15,8 +15,8 @@ def register_middleware(dp: Dispatcher, session_pool: async_sessionmaker) -> Cus
     dp.callback_query.outer_middleware(middleware)
     dp.chat_member.outer_middleware(middleware)
     
-    dp.message.middleware(vip_middleware)
-    dp.callback_query.middleware(vip_middleware)
+    dp.message.outer_middleware(vip_middleware)
+    dp.callback_query.outer_middleware(vip_middleware)
     
     # I18n middleware must be set up before setup_dialogs so aiogram-dialog
     # can use it to render LazyProxy objects correctly.

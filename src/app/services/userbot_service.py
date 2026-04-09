@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Optional
 
 from pyrogram import Client, types
@@ -21,13 +22,34 @@ class UserbotService:
             logger.warning("Userbot settings not properly configured.")
             return None
 
+        import asyncio
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        if self.client:
+            # Check if the client's loop is different from the current one
+            if self.client.loop != current_loop:
+                logger.info("Userbot loop mismatch detected. Stopping old client.")
+                try:
+                    await self.client.stop()
+                except Exception:
+                    pass
+                self.client = None
+
         if self.client is None:
+            # Sessiya fayllari uchun papka yaratish
+            os.makedirs("sessions", exist_ok=True)
+            
             self.client = Client(
-                name="movie_bot_userbot",
+                name="sessions/userbot",
                 session_string=self.session_string,
                 api_id=self.api_id,
                 api_hash=self.api_hash,
-                in_memory=True,
+                in_memory=False,
+                sleep_threshold=120,
+                max_concurrent_transmissions=1,
             )
             await self.client.start()
         return self.client
@@ -84,13 +106,18 @@ class UserbotService:
         try:
             logger.info(f"Userbot uploading video: {video_path} to {chat_id}")
 
+            last_pct = -5  # Birinchi harakatda log chiqishi uchun
+
             async def progress(current, total):
+                nonlocal last_pct
                 if total > 0:
                     pct = (current / total) * 100
-                    if int(pct) % 10 == 0:  # Har 10% da log chiqaramiz
+                    # Har 5% da log chiqaramiz (flood oldini olish uchun)
+                    if pct - last_pct >= 5:
                         logger.info(
                             f"Userbot Upload: {pct:.1f}% ({current/(1024*1024):.1f} / {total/(1024*1024):.1f} MB)"
                         )
+                        last_pct = pct
 
             msg = await client.send_video(
                 chat_id=chat_id,

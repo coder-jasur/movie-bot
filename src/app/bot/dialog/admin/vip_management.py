@@ -155,7 +155,7 @@ async def revoke_vip(callback: CallbackQuery, button: Button, manager: DialogMan
 
     await user_actions.update_user(
         tg_id=user_id,
-        vip_status="expired",
+        vip_status=None,
         vip_expires_at=get_tashkent_time() - timedelta(seconds=1),
     )
 
