@@ -12,6 +12,7 @@ from aiogram.types import (
     Message,
     PreCheckoutQuery,
     SuccessfulPayment,
+    User,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,6 +21,7 @@ from src.app.bot.common.i18n import gettext as _
 from src.app.bot.common.i18n import i18n
 from src.app.bot.common.i18n import lazy_gettext as __
 from src.app.database.queries.user import UserActions
+from src.app.core.config import Settings
 
 logger = logging.getLogger(__name__)
 
