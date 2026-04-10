@@ -1,6 +1,8 @@
 services:
   worker:
-    build: .
+    build: 
+      context: .
+      dockerfile: worker.Dockerfile
     container_name: movie_bot-worker
     command: celery -A src.app.core.celery_app worker --loglevel=info --concurrency=1
     env_file:
