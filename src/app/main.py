@@ -52,14 +52,8 @@ async def main():
         register_all_routers(dp, settings)
         setup_dialogs(dp)
 
-        session = AiohttpSession(
-            api=TelegramAPIServer.from_base(settings.tg_api_server_url),
-            timeout=300,
-        )
-
         bot = Bot(
             token=settings.bot_token,
-            session=session,
             default=DefaultBotProperties(parse_mode="HTML"),
         )
 
