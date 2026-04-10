@@ -68,10 +68,17 @@ Faylni ochib, quyidagi asosiy o'zgaruvchilarni to'ldiring:
 - `REDIS_URL`
 
 ### 3. Ishga tushirish (Docker)
-Loyiha to'liq Docker-compose bilan ta'minlangan:
+
+Loyihada bot va worker xizmatlari alohida ajratilgan (asosiy server yuklamasini kamaytirish maqsadida):
+- **Bot (`Dockerfile`)**: Yengil variant (FFmpeg o'rnatilmaydi).
+- **Worker (`worker.Dockerfile`)**: Celery worker va FFmpeg mavjud.
+
+Barcha xizmatlarni (bot + worker + db + redis) bir vaqtda ishga tushirish uchun:
 ```bash
 docker-compose up --build -d
 ```
+
+> **Eslatma:** Agar siz loyihani asosiy VPS da ko'tarayotgan bo'lsangiz va worker boshqa qurilmada (Local) bo'lsa, docker-compose dan worker qismini o'chirib qo'yishingiz mumkin.
 
 ---
 

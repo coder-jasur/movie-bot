@@ -57,3 +57,14 @@ pip-delete-this-directory.txt
 # OS
 .DS_Store
 Thumbs.db
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+*.pid
+celerybeat-schedule.db
+celerybeat-schedule.dir
+celerybeat-schedule.bak
+
+# Docker
+docker-compose.override.yml

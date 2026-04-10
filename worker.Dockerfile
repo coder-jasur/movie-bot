@@ -6,7 +6,8 @@ WORKDIR /app
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir uv
 
-# No system dependencies needed for the main bot image
+# Install system dependencies (ffmpeg is required for worker)
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
 
 # Copy configuration files
 COPY pyproject.toml /app/
@@ -23,4 +24,5 @@ COPY . /app/
 # Compile translations
 RUN pybabel compile -d translations
 
-CMD ["python", "-m", "src.app.main"]
+# Start Celery worker
+CMD ["celery", "-A", "src.app.core.celery_app", "worker", "--loglevel=info"]

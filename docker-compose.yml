@@ -48,6 +48,23 @@ services:
       - .:/app
       - telegram-bot-api-data:/var/lib/telegram-bot-api
 
+  worker:
+    image: "${WORKER_IMAGE_NAME:-movie_worker-image}"
+    container_name: "${WORKER_CONTAINER_NAME:-movie_bot-worker}"
+    env_file:
+      - ./.env
+    build:
+      context: .
+      dockerfile: worker.Dockerfile
+    restart: always
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - tg_bot
+    volumes:
+      - .:/app
+
 networks:
   tg_bot:
     driver: bridge
