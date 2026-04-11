@@ -52,9 +52,14 @@ async def main():
         register_all_routers(dp, settings)
         setup_dialogs(dp)
 
+        session = AiohttpSession(
+            api=TelegramAPIServer.from_url(settings.tg_api_server_url)
+        )
+
         bot = Bot(
             token=settings.bot_token,
             default=DefaultBotProperties(parse_mode="HTML"),
+            session=session,
         )
 
         # FastAPI state
