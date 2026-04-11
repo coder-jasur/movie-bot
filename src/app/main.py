@@ -53,7 +53,7 @@ async def main():
         setup_dialogs(dp)
 
         session = AiohttpSession(
-            api=TelegramAPIServer.from_url(settings.tg_api_server_url)
+            api=TelegramAPIServer.from_base(settings.tg_api_server_url, is_local=True)
         )
 
         bot = Bot(
