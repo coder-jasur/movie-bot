@@ -46,7 +46,7 @@ services:
     networks:
       - tg_bot
 
-bot:
+  bot:
     image: "${BOT_IMAGE_NAME:-tg_bot-image}"
     container_name: "${BOT_CONTAINER_NAME:-movie_bot-container}"
     ports:
@@ -64,7 +64,7 @@ bot:
       - tg_bot
     volumes:
       - .:/app
-      - telegram-bot-api-data:/var/lib/telegram-bot-api
+      - telegram-bot-api-data:/var/lib/telegram-bot-api 
 
 
 networks:
