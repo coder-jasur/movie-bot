@@ -46,7 +46,6 @@ services:
       - tg_bot
     volumes:
       - .:/app
-      - telegram-bot-api-data:/var/lib/telegram-bot-api
 
 
 networks:
