@@ -218,10 +218,9 @@ def process_video_task(self, data: dict):
 async def _run_task(data: dict):
     settings = load_config()
 
-    # BUG FIX #4: session yaratishda timeout juda kam edi
-    # Katta fayllar uchun 3600s kerak
+    # Masofaviy Local API dan fayllarni HTTP orqali yuklab olish uchun is_local=False bo'lishi shart
     session = AiohttpSession(
-        api=TelegramAPIServer.from_base(settings.tg_api_server_url, is_local=True),
+        api=TelegramAPIServer.from_base(settings.tg_api_server_url, is_local=False),
         timeout=3600,
     )
 

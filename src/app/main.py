@@ -52,8 +52,17 @@ async def main():
         register_all_routers(dp, settings)
         setup_dialogs(dp)
 
+        # Local API server sozlamalari
+        session = None
+        if settings.telegram_local:
+            session = AiohttpSession(
+                api=TelegramAPIServer.from_base(settings.tg_api_server_url, is_local=True),
+                timeout=3600,
+            )
+
         bot = Bot(
             token=settings.bot_token,
+            session=session,
             default=DefaultBotProperties(parse_mode="HTML"),
         )
 

@@ -200,18 +200,37 @@ def _resolve_local_path(token: str, file_path: str) -> Optional[str]:
 def _make_relative_path(token: str, file_path: str) -> str:
     """
     Local API HTTP download uchun nisbiy yo'l qaytaradi.
+    Masofaviy serverda 404 xatosini oldini olish uchun barcha ma'lum papkalarni qirqib tashlaydi.
     """
     bot_id = token.split(":")[0] if ":" in token else token
-
-    for prefix in [
+    
+    # Mumkin bo'lgan barcha prefikslarni qirqib tashlaymiz
+    # Agar file_path ichida 'botTOKEN' yoki 'botID' bo'lsa, ularni tozalaymiz
+    path = file_path
+    
+    prefixes = [
+        f"{LOCAL_API_BASE}/bot{token}/",
+        f"{LOCAL_API_BASE}/bot{bot_id}/",
         f"{LOCAL_API_BASE}/{token}/",
         f"{LOCAL_API_BASE}/{bot_id}/",
         f"{LOCAL_API_BASE}/",
-    ]:
-        if file_path.startswith(prefix):
-            return file_path[len(prefix) :]
+        "videos/",
+        "thumbnails/",
+        "documents/"
+    ]
+    
+    # Dastlab to'liq Lokal API bazasini qirqamiz
+    for prefix in prefixes:
+        if path.startswith(prefix):
+            path = path[len(prefix):]
+            break
+            
+    # Agar hali ham 'bot' bilan boshlansa (masalan 'bot12345/videos/...')
+    import re
+    path = re.sub(r'^bot\d+[:a-zA-Z0-9_\-]+/', '', path)
+    path = re.sub(r'^\d+[:a-zA-Z0-9_\-]+/', '', path)
 
-    return file_path.lstrip("/")
+    return path.lstrip("/")
 
 
 async def _verify_video_file(path: str) -> None:
