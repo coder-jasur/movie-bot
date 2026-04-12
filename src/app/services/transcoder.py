@@ -854,61 +854,61 @@ class Transcoder:
         return None
 
     async def _download(self, file_id: str, file_path: str, dest: str) -> Optional[str]:
+        import re
+        import aiohttp
         token = self.bot.token
-
-        # ── 1. Fayl tizimidan to'g'ridan-to'g'ri topish ──────────────────────
-        local_path = _resolve_local_path(token, file_path)
-        if local_path:
-            await asyncio.to_thread(shutil.copy2, local_path, dest)
-            return local_path
-
-        # ── 2. Local API HTTP orqali yuklab olish (Robust Mode) ─────────────
-        bot_id = token.split(":")[0] if ":" in token else token
-        relative = _make_relative_path(token, file_path)
         
-        # Har xil URL variantlarini sinab ko'ramiz
-        url_variants = [
-            relative,
-            f"bot{token}/{relative}",
-            f"bot{bot_id}/{relative}",
-            f"{bot_id}/{relative}",
-            file_path.lstrip("/")
-        ]
+        # 1. Relative pathni aniqlash
+        # /var/lib/telegram-bot-api/{anything}/{rest} -> {rest}
+        regex = r'^/var/lib/telegram-bot-api/[^/]+/(.+)$'
+        match = re.match(regex, file_path)
+        if match:
+            relative = match.group(1)
+        else:
+            relative = file_path.lstrip("/")
+            
+        # 2. URL yasash
+        # TELEGRAM_BOT_API_URL oxirida / bo'lsa, uni olib tashlaymiz
+        base_url = TELEGRAM_BOT_API_URL.rstrip("/")
+        download_url = f"{base_url}/file/bot{token}/{relative}"
         
-        last_err = ""
-        for variant in url_variants:
-            try:
-                logger.info(f"Trying download variant: {variant}")
-                await self.bot.download_file(variant, dest)
-                logger.info(f"Download success with variant: {variant}")
-                return dest # Success!
-            except Exception as e:
-                last_err = str(e)
-                continue
+        logger.info(f"Direct HTTP download start: {download_url}")
         
-        logger.warning(f"Local API download failure: {last_err}")
+        try:
+            timeout = aiohttp.ClientTimeout(total=3600) # 1 soat
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(download_url) as resp:
+                    if resp.status == 200:
+                        with open(dest, "wb") as f:
+                            async for chunk in resp.content.iter_chunked(4 * 1024 * 1024): # 4MB
+                                f.write(chunk)
+                        logger.info(f"HTTP Download successful: {dest}")
+                        return dest
+                    else:
+                        logger.warning(f"HTTP Download failed with status {resp.status}")
+        except Exception as e:
+            logger.warning(f"HTTP Download exception: {e}")
 
-        # ── 3. Global API — faqat 20MB dan kichik fayllar uchun ──────────────
+        # 3. Global API Fallback (faqat < 20MB bo'lsa)
         logger.warning("Falling back to Global API (20MB limit applies)")
-        from aiogram.client.session.aiohttp import AiohttpSession
-
-        async with AiohttpSession() as session:
-            temp_bot = Bot(token=token, session=session)
-            try:
-                fi = await temp_bot.get_file(file_id)
-                if fi.file_size and fi.file_size > 20 * 1024 * 1024:
-                    raise ValueError(
-                        f"File too big for Global API: {fi.file_size} bytes "
-                        f"({fi.file_size // 1024 // 1024}MB)"
-                    )
-                await temp_bot.download_file(fi.file_path, dest)
-                logger.info("Global API download OK")
-                return dest
-            except Exception as e:
-                logger.error(f"Global API failure: {e}")
-                raise
-            finally:
-                await temp_bot.session.close()
+        try:
+            from aiogram.client.session.aiohttp import AiohttpSession
+            async with AiohttpSession() as session:
+                temp_bot = Bot(token=token, session=session)
+                try:
+                    fi = await temp_bot.get_file(file_id)
+                    if fi.file_size and fi.file_size > 20 * 1024 * 1024:
+                        logger.error(f"File too big for Global API fallback: {fi.file_size} bytes")
+                        return None
+                    await temp_bot.download_file(fi.file_path, dest)
+                    logger.info("Global API download OK")
+                    return dest
+                finally:
+                    await temp_bot.session.close()
+        except Exception as e:
+            logger.error(f"Global API failure: {e}")
+            
+        return None
 
     async def _get_height(self, path: str) -> int:
         cmd = [
