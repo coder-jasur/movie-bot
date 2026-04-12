@@ -862,16 +862,31 @@ class Transcoder:
             await asyncio.to_thread(shutil.copy2, local_path, dest)
             return local_path
 
-        # ── 2. Local API HTTP orqali yuklab olish ─────────────────────────────
+        # ── 2. Local API HTTP orqali yuklab olish (Robust Mode) ─────────────
+        bot_id = token.split(":")[0] if ":" in token else token
         relative = _make_relative_path(token, file_path)
-        logger.info(f"Trying Local API HTTP download: relative_path={relative!r}")
-        try:
-            await self.bot.download_file(relative, dest)
-            if os.path.exists(dest) and os.path.getsize(dest) > 0:
-                logger.info(f"Local API HTTP download OK: {dest}")
-                return dest
-        except Exception as e:
-            logger.warning(f"Local API download failure: {e}")
+        
+        # Har xil URL variantlarini sinab ko'ramiz
+        url_variants = [
+            relative,
+            f"bot{token}/{relative}",
+            f"bot{bot_id}/{relative}",
+            f"{bot_id}/{relative}",
+            file_path.lstrip("/")
+        ]
+        
+        last_err = ""
+        for variant in url_variants:
+            try:
+                logger.info(f"Trying download variant: {variant}")
+                await self.bot.download_file(variant, dest)
+                logger.info(f"Download success with variant: {variant}")
+                return dest # Success!
+            except Exception as e:
+                last_err = str(e)
+                continue
+        
+        logger.warning(f"Local API download failure: {last_err}")
 
         # ── 3. Global API — faqat 20MB dan kichik fayllar uchun ──────────────
         logger.warning("Falling back to Global API (20MB limit applies)")
