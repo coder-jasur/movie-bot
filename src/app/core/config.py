@@ -25,6 +25,7 @@ class Settings:
     userbot_session: str | None = None
     telegram_api_id: int | None = None
     telegram_api_hash: str | None = None
+    telegram_local: bool = False
 
     def construct_postgresql_url(self):
         postgresql_dsn = (
@@ -57,5 +58,6 @@ def load_config() -> Settings:
         use_webhook=env.bool("USE_WEBHOOK", False),
         userbot_session=env.str("USERBOT_SESSION_STRING", None),
         telegram_api_id=env.int("TELEGRAM_API_ID", None),
-        telegram_api_hash=env.str("TELEGRAM_API_HASH", None)
+        telegram_api_hash=env.str("TELEGRAM_API_HASH", None),
+        telegram_local=env.bool("TELEGRAM_LOCAL", False)
     )
