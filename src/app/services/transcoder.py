@@ -38,7 +38,8 @@ LOCAL_API_BASE = "/var/lib/telegram-bot-api"
 
 # ✅ Local API server URL (container name orqali)
 TELEGRAM_BOT_API_URL = os.environ.get(
-    "TELEGRAM_BOT_API_URL", "http://telegram-bot-api:8081"
+    "TG_API_SERVER_URL", 
+    os.environ.get("TELEGRAM_BOT_API_URL", "http://telegram-bot-api:8081")
 )
 
 StatusCallback = Optional[Callable[[str], Awaitable[None]]]
@@ -719,12 +720,20 @@ class Transcoder:
                 # Retry logikasi davom etaveradi (balki retryda bot api local ruxsat berar?)
                 # Yo'q, yaxshisi Userbot xato qilsa shunchaki xato qaytaramiz yoki kutaveramiz.
 
-        # ✅ Bot yaratilgan server URL ni olish, container nomi bilan
+        # ✅ Hybrid Setup logic: 
+        # Yuklab olishda is_local=True ishlaydi (VPS-dan bitlarni olish uchun).
+        # Lekin yuklashda (Upload) is_local=False bo'lishi shart, 
+        # aks holda VPS API server faylni o'zidan (VPS-dan) qidiradi va topolmaydi.
+        is_remote = not ("localhost" in TELEGRAM_BOT_API_URL or "api" in TELEGRAM_BOT_API_URL or "127.0.0.1" in TELEGRAM_BOT_API_URL)
+        
         try:
-            api_server = self.bot.session.api
+            # Yuklash uchun bot API serverini "remote" rejimda yaratamiz
+            api_server = TelegramAPIServer.from_base(
+                TELEGRAM_BOT_API_URL, is_local=not is_remote
+            )
         except Exception:
             api_server = TelegramAPIServer.from_base(
-                TELEGRAM_BOT_API_URL, is_local=True
+                TELEGRAM_BOT_API_URL, is_local=False
             )
 
         max_retries = 5

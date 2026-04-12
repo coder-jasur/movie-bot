@@ -221,7 +221,7 @@ async def _run_task(data: dict):
     # BUG FIX #4: session yaratishda timeout juda kam edi
     # Katta fayllar uchun 3600s kerak
     session = AiohttpSession(
-        api=TelegramAPIServer.from_base(settings.tg_api_server_url),
+        api=TelegramAPIServer.from_base(settings.tg_api_server_url, is_local=True),
         timeout=3600,
     )
 
