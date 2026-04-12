@@ -69,10 +69,35 @@ services:
       - .:/app
       - telegram-bot-api-data:/var/lib/telegram-bot-api
 
+  nginx-files:
+    image: nginx:alpine
+    container_name: nginx-tgfiles
+    restart: always
+    ports:
+      - "8082:80"
+    volumes:
+      - telegram-bot-api-data:/var/lib/telegram-bot-api:ro
+    configs:
+      - source: nginx_config
+        target: /etc/nginx/conf.d/default.conf
+    networks:
+      - tg_bot
+
 
 networks:
   tg_bot:
     driver: bridge
+
+configs:
+  nginx_config:
+    content: |
+      server {
+          listen 80;
+          location /tgfiles/ {
+              alias /var/lib/telegram-bot-api/;
+              autoindex on;
+          }
+      }
 
 volumes:
   pgdata:

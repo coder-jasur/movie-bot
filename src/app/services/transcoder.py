@@ -856,59 +856,70 @@ class Transcoder:
     async def _download(self, file_id: str, file_path: str, dest: str) -> Optional[str]:
         import re
         import aiohttp
+        from aiohttp import ClientTimeout
+
         token = self.bot.token
-        
-        # 1. Relative pathni aniqlash
-        # /var/lib/telegram-bot-api/{anything}/{rest} -> {rest}
-        regex = r'^/var/lib/telegram-bot-api/[^/]+/(.+)$'
-        match = re.match(regex, file_path)
+
+        # file_path dan relative path ajratib olish
+        # Kelishi mumkin: "videos/file_4.mp4"
+        # yoki: "/var/lib/telegram-bot-api/8036059772:AAH7.../videos/file_4.mp4"
+        match = re.search(r'/var/lib/telegram-bot-api/[^/]+/(.+)$', file_path)
         if match:
-            relative = match.group(1)
+            relative = match.group(1)       # → "videos/file_4.mp4"
         else:
-            relative = file_path.lstrip("/")
-            
-        # 2. URL yasash
-        # TELEGRAM_BOT_API_URL oxirida / bo'lsa, uni olib tashlaymiz
-        base_url = TELEGRAM_BOT_API_URL.rstrip("/")
-        download_url = f"{base_url}/file/bot{token}/{relative}"
+            relative = file_path.lstrip('/') # → "videos/file_4.mp4"
+
+        # ── 1. Nginx file server orqali yuklab olish ──────────────────────
+        # Bot token papkasi: /var/lib/telegram-bot-api/{BOT_ID}:{TOKEN}/
+        bot_id = token.split(":")[0] if ":" in token else token
+        bot_dir = f"{bot_id}:{token}"
         
-        logger.info(f"Direct HTTP download start: {download_url}")
-        
+        # TELEGRAM_BOT_API_URL dan 8081 ni 8082 ga almashtiramiz
+        nginx_base = TELEGRAM_BOT_API_URL.replace(":8081", ":8082").rstrip('/')
+        url = f"{nginx_base}/tgfiles/{bot_dir}/{relative}"
+        logger.info(f"Downloading via Nginx: {url}")
+
         try:
-            timeout = aiohttp.ClientTimeout(total=3600) # 1 soat
-            async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.get(download_url) as resp:
+            timeout = ClientTimeout(total=3600, connect=60)
+            async with aiohttp.ClientSession(timeout=timeout) as http_session:
+                async with http_session.get(url) as resp:
                     if resp.status == 200:
-                        with open(dest, "wb") as f:
-                            async for chunk in resp.content.iter_chunked(4 * 1024 * 1024): # 4MB
+                        with open(dest, 'wb') as f:
+                            async for chunk in resp.content.iter_chunked(4 * 1024 * 1024):
                                 f.write(chunk)
-                        logger.info(f"HTTP Download successful: {dest}")
+                        size_mb = os.path.getsize(dest) / 1024 / 1024
+                        logger.info(f"Nginx download OK: {size_mb:.1f}MB → {dest}")
                         return dest
                     else:
-                        logger.warning(f"HTTP Download failed with status {resp.status}")
+                        logger.warning(f"Nginx download failed: HTTP {resp.status} for {url}")
         except Exception as e:
-            logger.warning(f"HTTP Download exception: {e}")
+            logger.error(f"Nginx download error: {e}")
 
-        # 3. Global API Fallback (faqat < 20MB bo'lsa)
+        # ── 2. Fallback: Global Telegram API (faqat 20MB gacha) ──────────
         logger.warning("Falling back to Global API (20MB limit applies)")
-        try:
-            from aiogram.client.session.aiohttp import AiohttpSession
-            async with AiohttpSession() as session:
-                temp_bot = Bot(token=token, session=session)
-                try:
-                    fi = await temp_bot.get_file(file_id)
-                    if fi.file_size and fi.file_size > 20 * 1024 * 1024:
-                        logger.error(f"File too big for Global API fallback: {fi.file_size} bytes")
-                        return None
-                    await temp_bot.download_file(fi.file_path, dest)
-                    logger.info("Global API download OK")
-                    return dest
-                finally:
-                    await temp_bot.session.close()
-        except Exception as e:
-            logger.error(f"Global API failure: {e}")
-            
-        return None
+        from aiogram.client.session.aiohttp import AiohttpSession
+
+        async with AiohttpSession() as aiogram_session:
+            from aiogram import Bot
+            from aiogram.client.default import DefaultBotProperties
+            temp_bot = Bot(token=token, session=aiogram_session)
+            try:
+                fi = await temp_bot.get_file(file_id)
+                if fi.file_size and fi.file_size > 20 * 1024 * 1024:
+                    logger.error(
+                        f"File too big for Global API fallback: "
+                        f"{fi.file_size // 1024 // 1024}MB. "
+                        f"Nginx server (port 8082) must be healthy for this file."
+                    )
+                    return None
+                await temp_bot.download_file(fi.file_path, dest)
+                logger.info("Global API download OK")
+                return dest
+            except Exception as e:
+                logger.error(f"Global API failure: {e}")
+                return None
+            finally:
+                await temp_bot.session.close()
 
     async def _get_height(self, path: str) -> int:
         cmd = [
