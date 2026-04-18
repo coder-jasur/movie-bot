@@ -239,6 +239,11 @@ class AnimeFeatureActions:
         await self.session.execute(stmt)
         await self.session.commit()
 
+    async def delete_feature_film(self, film_code: int):
+        stmt = delete(AnimeFeature).where(AnimeFeature.code == film_code)
+        await self.session.execute(stmt)
+        await self.session.commit()
+
 
 class AnimeSeriesActions:
     def __init__(self, session: AsyncSession):
@@ -497,6 +502,11 @@ class AnimeSeriesActions:
         await self.session.execute(stmt)
         await self.session.commit()
 
+    async def delete_series(self, series_code: int):
+        stmt = delete(AnimeSeries).where(AnimeSeries.code == series_code)
+        await self.session.execute(stmt)
+        await self.session.commit()
+
 
 class AnimeMiniSeriesActions:
     def __init__(self, session: AsyncSession):
@@ -735,5 +745,10 @@ class AnimeMiniSeriesActions:
             .where(AnimeMiniSeries.code == mini_series_code, AnimeMiniSeries.series == series_num)
             .values(views_count=AnimeMiniSeries.views_count + 1)
         )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def delete_mini_series(self, mini_series_code: int):
+        stmt = delete(AnimeMiniSeries).where(AnimeMiniSeries.code == mini_series_code)
         await self.session.execute(stmt)
         await self.session.commit()

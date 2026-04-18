@@ -18,7 +18,7 @@ TARGET_QUALITIES = {
     "1080p": 1080,
     "720p": 720,
     "480p": 480,
-    "360p": 360,
+    # "360p": 360,
 }
 
 MAX_PARALLEL_WORKERS = 1
@@ -38,8 +38,8 @@ LOCAL_API_BASE = "/var/lib/telegram-bot-api"
 
 # ✅ Local API server URL (container name orqali)
 TELEGRAM_BOT_API_URL = os.environ.get(
-    "TG_API_SERVER_URL", 
-    os.environ.get("TELEGRAM_BOT_API_URL", "http://telegram-bot-api:8081")
+    "TG_API_SERVER_URL",
+    os.environ.get("TELEGRAM_BOT_API_URL", "http://telegram-bot-api:8081"),
 )
 
 StatusCallback = Optional[Callable[[str], Awaitable[None]]]
@@ -123,7 +123,6 @@ def _enc(nvenc: bool, h: int) -> list:
 async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
     if not os.path.isfile(WATERMARK_PATH):
         try:
-            # ✅ Watermark yo'q — rasmni 320x320 ga crop bilan to'ldiramiz (qora chegara yo'q)
             cmd = [
                 "ffmpeg",
                 "-y",
@@ -142,7 +141,6 @@ async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
             shutil.copy2(thumb_in, thumb_out)
             return True
     try:
-        # ✅ 320x320 crop bilan to'ldirish + watermark tepada (top-right) + shafoflik YO'Q
         cmd = [
             "ffmpeg",
             "-y",
@@ -174,23 +172,18 @@ async def _make_thumb_with_watermark(thumb_in: str, thumb_out: str) -> bool:
 
 
 def _resolve_local_path(token: str, file_path: str) -> Optional[str]:
-    """
-    Telegram Local API file_path ni haqiqiy fayl yo'liga aylantiradi.
-    """
+    """Telegram Local API file_path ni haqiqiy fayl yo'liga aylantiradi."""
     bot_id = token.split(":")[0] if ":" in token else token
-
     candidates = [
         file_path,
         os.path.join(LOCAL_API_BASE, token, file_path.lstrip("/")),
         os.path.join(LOCAL_API_BASE, bot_id, file_path.lstrip("/")),
         os.path.join(LOCAL_API_BASE, file_path.lstrip("/")),
     ]
-
     for path in candidates:
         if os.path.isfile(path):
             logger.info(f"Local file found: {path}")
             return path
-
     logger.debug(
         f"Local file not found for file_path={file_path!r}, tried: {candidates}"
     )
@@ -198,16 +191,11 @@ def _resolve_local_path(token: str, file_path: str) -> Optional[str]:
 
 
 def _make_relative_path(token: str, file_path: str) -> str:
-    """
-    Local API HTTP download uchun nisbiy yo'l qaytaradi.
-    Masofaviy serverda 404 xatosini oldini olish uchun barcha ma'lum papkalarni qirqib tashlaydi.
-    """
+    """Local API HTTP download uchun nisbiy yo'l qaytaradi."""
+    import re
+
     bot_id = token.split(":")[0] if ":" in token else token
-    
-    # Mumkin bo'lgan barcha prefikslarni qirqib tashlaymiz
-    # Agar file_path ichida 'botTOKEN' yoki 'botID' bo'lsa, ularni tozalaymiz
     path = file_path
-    
     prefixes = [
         f"{LOCAL_API_BASE}/bot{token}/",
         f"{LOCAL_API_BASE}/bot{bot_id}/",
@@ -216,28 +204,19 @@ def _make_relative_path(token: str, file_path: str) -> str:
         f"{LOCAL_API_BASE}/",
         "videos/",
         "thumbnails/",
-        "documents/"
+        "documents/",
     ]
-    
-    # Dastlab to'liq Lokal API bazasini qirqamiz
     for prefix in prefixes:
         if path.startswith(prefix):
-            path = path[len(prefix):]
+            path = path[len(prefix) :]
             break
-            
-    # Agar hali ham 'bot' bilan boshlansa (masalan 'bot12345/videos/...')
-    import re
-    path = re.sub(r'^bot\d+[:a-zA-Z0-9_\-]+/', '', path)
-    path = re.sub(r'^\d+[:a-zA-Z0-9_\-]+/', '', path)
-
+    path = re.sub(r"^bot\d+[:a-zA-Z0-9_\-]+/", "", path)
+    path = re.sub(r"^\d+[:a-zA-Z0-9_\-]+/", "", path)
     return path.lstrip("/")
 
 
 async def _verify_video_file(path: str) -> None:
-    """
-    FFprobe orqali fayl yaxlitligini tekshiradi.
-    Buzilgan yoki bo'sh faylda Exception ko'taradi.
-    """
+    """FFprobe orqali fayl yaxlitligini tekshiradi."""
     if not os.path.exists(path):
         raise Exception(f"Video file does not exist: {path}")
 
@@ -325,7 +304,6 @@ class Transcoder:
             if manual_quality:
                 q_name = manual_quality
                 q_h_val = TARGET_QUALITIES.get(q_name, 720)
-                # ✅ Manual sifat bo'lganda ham o'lchamni (orig_h) manba kabi qoldiramiz (No upscale)
                 orig_h = await self._get_height(source) or q_h_val
             else:
                 orig_h = await self._get_height(source)
@@ -346,7 +324,6 @@ class Transcoder:
                 else False
             )
 
-            # 🎬 Base video tayyorlash (faqat intro yoki watermark qo'shish yoqilgan bo'lsa)
             has_intro = (
                 (os.path.isfile(INTRO_PATH) if INTRO_PATH else False)
                 if ADD_INTRO_AND_WATERMARK_TO_VIDEO
@@ -374,14 +351,11 @@ class Transcoder:
             results: Dict[str, str] = {}
             file_sizes: Dict[str, float] = {}
 
-            # (q_name avvalroq manual yoki avtomatik aniqlangan)
             await self._notify(
                 status_callback, _t("💾 Original tayyorlanmoqda...", locale)
             )
             out_orig = os.path.join(tmp, "orig.mp4")
             try:
-                # Original faylning razmerini o'zgartirmaymiz (Option A), lekin uning
-                # q_name ga mos CRF qo'llaniladi.
                 await self._scale_only(base_path, out_orig, orig_h, settings_h=q_h_val)
 
                 self._fsync_file(out_orig)
@@ -607,8 +581,6 @@ class Transcoder:
             ["-vf", f"scale={w_str}:{h},format=yuv420p", "-map", "0:v", "-map", "0:a?"]
         )
         cmd.extend(["-movflags", "+faststart"])
-
-        # ✅ settings_h berilgan bo'lsa sifat sozlamalari (CRF/Bitrate) undan olinadi
         sh = settings_h if settings_h else h
         cmd.extend(_enc(nvenc, sh))
         cmd.append(dest)
@@ -632,7 +604,7 @@ class Transcoder:
         on_quality_ready: QualityCallback,
         thumb_wm_path: Optional[str],
         locale: str,
-        file_sizes: Dict[str, float],  # ✅ Hajmlarni yig'ish uchun
+        file_sizes: Dict[str, float],
         movie_code: Optional[str] = None,
     ) -> Optional[str]:
         async with sem:
@@ -650,15 +622,13 @@ class Transcoder:
                 )
                 await self._scale_only(base, out, height)
 
-                # ✅ Havmni o'lchash
                 if os.path.exists(out):
                     file_sizes[name] = os.path.getsize(out) / (1024 * 1024)
 
-                # ✅ Fayl diskka to'liq yozilganini ta'minlash
                 self._fsync_file(out)
                 self._ensure_permissions(out)
-                # ✅ Yaxlitlikni tekshirish
                 await _verify_video_file(out)
+
                 await self._notify(
                     status_callback,
                     _t(
@@ -708,7 +678,6 @@ class Transcoder:
 
         token = self.bot.token
 
-        # ✅ Yuklashdan oldin fayl mavjudligi va yaxlitligini tekshirish
         if not os.path.exists(path):
             logger.error(f"File not found before upload: {path}")
             return None
@@ -720,33 +689,44 @@ class Transcoder:
             logger.error(f"File is empty: {path}")
             return None
 
-        # 🚀 2GB+ Check (Limit Bot API is 2GB, we use 1.9GB for safety)
+        # ─── 2 GB dan katta fayllarni Userbot orqali yuborish ───────────────
         if file_size > 1.9 * 1024 * 1024 * 1024:
             logger.warning(
-                f"File {label} is too large for Bot API ({file_size / 1024 / 1024:.1f} MB). Routing through Userbot Premium."
+                f"File {label} juda katta Bot API uchun "
+                f"({file_size / 1024 / 1024:.1f} MB). Userbot Premium orqali yuborilmoqda."
             )
-            caption = f"✅ {label} tayyor.\n\n<tg-spoiler>#MCODE_{movie_code}_{label}</tg-spoiler>"
+            caption = (
+                f"✅ {label} tayyor.\n\n"
+                f"<tg-spoiler>#MCODE_{movie_code}_{label}</tg-spoiler>"
+            )
             res_id = await userbot_service.send_video(
-                chat_id=user_id, video_path=path, caption=caption, thumb_path=thumb_path
+                chat_id=user_id,
+                video_path=path,
+                caption=caption,
+                thumb_path=thumb_path,
             )
             if res_id:
-                logger.info(f"Large file {label} uploaded successfully via Userbot.")
+                logger.info(f"Userbot orqali {label} muvaffaqiyatli yuklandi.")
                 if on_quality_ready:
                     await on_quality_ready(label, res_id)
                 return res_id
-            else:
-                logger.error(f"Userbot failed to upload large file {label}.")
-                # Retry logikasi davom etaveradi (balki retryda bot api local ruxsat berar?)
-                # Yo'q, yaxshisi Userbot xato qilsa shunchaki xato qaytaramiz yoki kutaveramiz.
 
-        # ✅ Hybrid Setup logic: 
-        # Yuklab olishda is_local=True ishlaydi (VPS-dan bitlarni olish uchun).
-        # Lekin yuklashda (Upload) is_local=False bo'lishi shart, 
-        # aks holda VPS API server faylni o'zidan (VPS-dan) qidiradi va topolmaydi.
-        is_remote = not ("localhost" in TELEGRAM_BOT_API_URL or "api" in TELEGRAM_BOT_API_URL or "127.0.0.1" in TELEGRAM_BOT_API_URL)
-        
+            # ✅ TUZATILDI: Userbot muvaffaqiyatsiz bo'lsa — None qaytaramiz,
+            # Bot API ga o'tmaymiz (2GB+ fayl Bot API ga yuklanmaydi).
+            logger.error(
+                f"Userbot {label} ni yuklay olmadi. "
+                f"Fayl hajmi Bot API limitidan oshadi — yuklanmadi."
+            )
+            return None
+
+        # ─── Bot API orqali yuborish (2 GB gacha) ───────────────────────────
+        is_remote = not (
+            "localhost" in TELEGRAM_BOT_API_URL
+            or "api" in TELEGRAM_BOT_API_URL
+            or "127.0.0.1" in TELEGRAM_BOT_API_URL
+        )
+
         try:
-            # Yuklash uchun bot API serverini "remote" rejimda yaratamiz
             api_server = TelegramAPIServer.from_base(
                 TELEGRAM_BOT_API_URL, is_local=not is_remote
             )
@@ -757,14 +737,12 @@ class Transcoder:
 
         max_retries = 5
         for attempt in range(1, max_retries + 1):
-            # ✅ Har urinishda yangi sessiya va bot yaratamiz (BaseSession xatosi tuzatildi)
             session = AiohttpSession(
                 api=api_server,
                 timeout=ClientTimeout(
                     total=86400, connect=600, sock_read=86400, sock_connect=600
                 ),
             )
-            thumb_tg_path = None
             try:
                 async with Bot(
                     token=token,
@@ -772,12 +750,9 @@ class Transcoder:
                     default=DefaultBotProperties(parse_mode="HTML"),
                 ) as upload_bot:
                     tg_thumb = None
-
-                    # ✅ Sifatni saqlash: rasm allaqachon _make_thumb_with_watermark orqali 1280x720 qilingan
                     if thumb_path and os.path.exists(thumb_path):
                         tg_thumb = FSInputFile(thumb_path)
 
-                    # ✅ Yuklashdan oldin fayl hali mavjudligini tekshirish
                     if not os.path.exists(path):
                         raise Exception(
                             f"File disappeared before upload attempt {attempt}: {path}"
@@ -786,12 +761,14 @@ class Transcoder:
                     send_kwargs = dict(
                         chat_id=user_id,
                         video=FSInputFile(path),
-                        caption=f"✅ {label} tayyor.\n\n<tg-spoiler>#MCODE_{movie_code}_{label}</tg-spoiler>",
+                        caption=(
+                            f"✅ {label} tayyor.\n\n"
+                            f"<tg-spoiler>#MCODE_{movie_code}_{label}</tg-spoiler>"
+                        ),
                         disable_notification=True,
                         supports_streaming=True,
                     )
                     if tg_thumb:
-                        # ✅ 'thumbnail' o'rniga 'cover' ishlatamiz (sifat uchun)
                         send_kwargs["cover"] = tg_thumb
 
                     msg = await upload_bot(
@@ -803,7 +780,7 @@ class Transcoder:
                         logger.info(f"Upload {label} OK: {msg.video.file_id}")
                         return msg.video.file_id
 
-                    logger.error(f"Upload {label} attempt {attempt}: msg.video is None")
+                    logger.error(f"Upload {label} attempt {attempt}: msg.video = None")
                     return None
 
             except Exception as e:
@@ -811,11 +788,10 @@ class Transcoder:
 
                 error_msg = str(e) or "Unknown error"
                 logger.warning(f"Upload {label} attempt {attempt} failed: {error_msg}")
-                # ✅ Katta xatolik bo'lsa tracebackni ham chiqaramiz (faqat birinchi urinishda)
                 if attempt == 1:
                     logger.debug(f"Full traceback: {traceback.format_exc()}")
 
-                # 🕵️‍♂️ Retry qilishdan oldin Userbot orqali chatni tekshiramiz (Idempotency)
+                # Idempotency: Userbot orqali mavjud videoni topamiz
                 if movie_code:
                     try:
                         existing_file_id = await userbot_service.find_video_in_chat(
@@ -825,98 +801,92 @@ class Transcoder:
                         )
                         if existing_file_id:
                             logger.info(
-                                f"Accepted existing video via Userbot for {label}. Skipping retry."
+                                f"Userbot orqali mavjud video topildi: {label}. Retry bekor."
                             )
                             if on_quality_ready:
                                 await on_quality_ready(label, existing_file_id)
                             return existing_file_id
                     except Exception as ub_err:
-                        logger.error(f"Userbot check failed during retry: {ub_err}")
+                        logger.error(f"Userbot tekshiruv xato: {ub_err}")
 
                 if attempt == max_retries:
                     logger.error(
-                        f"Upload {label} finally failed after {max_retries} attempts. Last error: {error_msg}"
+                        f"Upload {label} {max_retries} urinishdan so'ng muvaffaqiyatsiz. "
+                        f"So'nggi xato: {error_msg}"
                     )
                     return None
 
-                # ✅ Retry vaqtini kamaytiramiz (15s, 30s...):
                 retry_delay = 15 * attempt
                 logger.info(
-                    f"Retrying in {retry_delay} seconds (Attempt {attempt}/{max_retries})..."
+                    f"Qayta urinish {retry_delay} sekunddan so'ng "
+                    f"(Urinish {attempt}/{max_retries})..."
                 )
                 await asyncio.sleep(retry_delay)
-            finally:
-                if thumb_tg_path and os.path.exists(thumb_tg_path):
-                    try:
-                        os.remove(thumb_tg_path)
-                    except Exception:
-                        pass
+
         return None
 
     async def _download(self, file_id: str, file_path: str, dest: str) -> Optional[str]:
         import re
+
         import aiohttp
         from aiohttp import ClientTimeout
 
         token = self.bot.token
 
-        # file_path dan relative path ajratib olish
-        # Kelishi mumkin: "videos/file_4.mp4"
-        # yoki: "/var/lib/telegram-bot-api/8036059772:AAH7.../videos/file_4.mp4"
-        match = re.search(r'/var/lib/telegram-bot-api/[^/]+/(.+)$', file_path)
+        match = re.search(r"/var/lib/telegram-bot-api/[^/]+/(.+)$", file_path)
         if match:
-            relative = match.group(1)       # → "videos/file_4.mp4"
+            relative = match.group(1)
         else:
-            relative = file_path.lstrip('/') # → "videos/file_4.mp4"
+            relative = file_path.lstrip("/")
 
-        # ── 1. Nginx file server orqali yuklab olish ──────────────────────
-        # Bot token papkasi: /var/lib/telegram-bot-api/{BOT_ID}:{TOKEN}/
-        bot_id = token.split(":")[0] if ":" in token else token
-        bot_dir = f"{bot_id}:{token}"
-        
-        # TELEGRAM_BOT_API_URL dan 8081 ni 8082 ga almashtiramiz
-        nginx_base = TELEGRAM_BOT_API_URL.replace(":8081", ":8082").rstrip('/')
+        bot_dir = token
+        nginx_base = TELEGRAM_BOT_API_URL.replace(":8081", ":8082").rstrip("/")
         url = f"{nginx_base}/tgfiles/{bot_dir}/{relative}"
-        logger.info(f"Downloading via Nginx: {url}")
+        logger.info(f"Nginx orqali yuklanmoqda: {url}")
 
         try:
             timeout = ClientTimeout(total=3600, connect=60)
             async with aiohttp.ClientSession(timeout=timeout) as http_session:
                 async with http_session.get(url) as resp:
                     if resp.status == 200:
-                        with open(dest, 'wb') as f:
-                            async for chunk in resp.content.iter_chunked(4 * 1024 * 1024):
+                        with open(dest, "wb") as f:
+                            async for chunk in resp.content.iter_chunked(
+                                4 * 1024 * 1024
+                            ):
                                 f.write(chunk)
                         size_mb = os.path.getsize(dest) / 1024 / 1024
-                        logger.info(f"Nginx download OK: {size_mb:.1f}MB → {dest}")
+                        logger.info(f"Nginx yuklab olish OK: {size_mb:.1f}MB → {dest}")
                         return dest
                     else:
-                        logger.warning(f"Nginx download failed: HTTP {resp.status} for {url}")
+                        logger.warning(
+                            f"Nginx yuklab olish xato: HTTP {resp.status} — {url}"
+                        )
         except Exception as e:
-            logger.error(f"Nginx download error: {e}")
+            logger.error(f"Nginx yuklab olish xatosi: {e}")
 
-        # ── 2. Fallback: Global Telegram API (faqat 20MB gacha) ──────────
-        logger.warning("Falling back to Global API (20MB limit applies)")
+        # ── Fallback: Global Telegram API (faqat 20MB gacha) ────────────────
+        logger.warning("Global API (20MB limit) ga o'tilmoqda...")
         from aiogram.client.session.aiohttp import AiohttpSession
 
         async with AiohttpSession() as aiogram_session:
             from aiogram import Bot
             from aiogram.client.default import DefaultBotProperties
+
             temp_bot = Bot(token=token, session=aiogram_session)
             try:
                 fi = await temp_bot.get_file(file_id)
                 if fi.file_size and fi.file_size > 20 * 1024 * 1024:
                     logger.error(
-                        f"File too big for Global API fallback: "
+                        f"Global API uchun fayl juda katta: "
                         f"{fi.file_size // 1024 // 1024}MB. "
-                        f"Nginx server (port 8082) must be healthy for this file."
+                        f"Nginx server (port 8082) ishlashi shart."
                     )
                     return None
                 await temp_bot.download_file(fi.file_path, dest)
-                logger.info("Global API download OK")
+                logger.info("Global API yuklab olish OK")
                 return dest
             except Exception as e:
-                logger.error(f"Global API failure: {e}")
+                logger.error(f"Global API xato: {e}")
                 return None
             finally:
                 await temp_bot.session.close()
@@ -986,10 +956,7 @@ class Transcoder:
 
     @staticmethod
     def _fsync_file(path: str):
-        """
-        Faylni OS buffer'dan diskka to'liq yozilishini ta'minlaydi.
-        FILE_PARTS_INVALID xatosining asosiy sababini bartaraf etadi.
-        """
+        """Faylni OS buffer'dan diskka to'liq yozilishini ta'minlaydi."""
         try:
             with open(path, "rb") as f:
                 os.fsync(f.fileno())
@@ -999,7 +966,7 @@ class Transcoder:
 
     @staticmethod
     def _ensure_permissions(path: str):
-        """Sets 777 permissions for the file and its parent folder for Local API access."""
+        """Local API kirishi uchun fayl va papkaga 777 ruxsat beradi."""
         try:
             if os.path.exists(path):
                 os.chmod(path, 0o777)

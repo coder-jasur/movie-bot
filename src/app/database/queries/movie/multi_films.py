@@ -239,6 +239,11 @@ class MultiFilmFeatureActions:
         await self.session.execute(stmt)
         await self.session.commit()
 
+    async def delete_feature_film(self, film_code: int):
+        stmt = delete(MultiFilmFeature).where(MultiFilmFeature.code == film_code)
+        await self.session.execute(stmt)
+        await self.session.commit()
+
 
 class MultiFilmSeriesActions:
     def __init__(self, session: AsyncSession):
@@ -497,6 +502,11 @@ class MultiFilmSeriesActions:
         await self.session.execute(stmt)
         await self.session.commit()
 
+    async def delete_series(self, series_code: int):
+        stmt = delete(MultiFilmSeries).where(MultiFilmSeries.code == series_code)
+        await self.session.execute(stmt)
+        await self.session.commit()
+
 
 class MultiFilmMiniSeriesActions:
     def __init__(self, session: AsyncSession):
@@ -744,5 +754,10 @@ class MultiFilmMiniSeriesActions:
             .where(MultiFilmMiniSeries.code == mini_series_code, MultiFilmMiniSeries.series == series_num)
             .values(views_count=MultiFilmMiniSeries.views_count + 1)
         )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def delete_mini_series(self, mini_series_code: int):
+        stmt = delete(MultiFilmMiniSeries).where(MultiFilmMiniSeries.code == mini_series_code)
         await self.session.execute(stmt)
         await self.session.commit()
