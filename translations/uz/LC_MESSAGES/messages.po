@@ -201,7 +201,7 @@ msgstr "🎌 Anime"
 
 #: src/app/bot/common/genres.py:38
 msgid "🎞️ Короткометражка"
-msgstr "🎞️ Qisqa metrali"
+msgstr "🎞️ Qisqa metrajli"
 
 #: src/app/bot/common/genres.py:65
 msgid "Janr tanlanmagan"
