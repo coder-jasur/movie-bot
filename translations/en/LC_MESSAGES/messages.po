@@ -203,10 +203,6 @@ msgstr "🎌 Anime"
 msgid "🎞️ Короткометражка"
 msgstr "🎞️ Short Film"
 
-#: src/app/bot/common/genres.py:39
-msgid "🔞 Эротика"
-msgstr "🔞 Erotic"
-
 #: src/app/bot/common/genres.py:65
 msgid "Janr tanlanmagan"
 msgstr "Genre not selected"
