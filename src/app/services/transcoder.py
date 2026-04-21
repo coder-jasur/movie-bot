@@ -845,7 +845,7 @@ class Transcoder:
         logger.info(f"Nginx orqali yuklanmoqda: {url}")
 
         try:
-            timeout = ClientTimeout(total=3600, connect=60)
+            timeout = ClientTimeout(total=21600, connect=60)
             async with aiohttp.ClientSession(timeout=timeout) as http_session:
                 async with http_session.get(url) as resp:
                     if resp.status == 200:

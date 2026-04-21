@@ -167,6 +167,46 @@ msgstr "📚 Hujjatli"
 msgid "⚔️ Военный"
 msgstr "⚔️ Harbiy"
 
+#: src/app/bot/common/genres.py:30
+msgid "💕 Романтика"
+msgstr "💕 Romantika"
+
+#: src/app/bot/common/genres.py:31
+msgid "🔫 Криминал"
+msgstr "🔫 Kriminal"
+
+#: src/app/bot/common/genres.py:32
+msgid "⚽ Спорт"
+msgstr "⚽ Sport"
+
+#: src/app/bot/common/genres.py:33
+msgid "📖 Биография"
+msgstr "📖 Biografiya"
+
+#: src/app/bot/common/genres.py:34
+msgid "🤠 Вестерн"
+msgstr "🤠 Vestern"
+
+#: src/app/bot/common/genres.py:35
+msgid "🎵 Мюзикл"
+msgstr "🎵 Muzikal"
+
+#: src/app/bot/common/genres.py:36
+msgid "🧠 Психологический"
+msgstr "🧠 Psixologik"
+
+#: src/app/bot/common/genres.py:37
+msgid "🎌 Аниме"
+msgstr "🎌 Anime"
+
+#: src/app/bot/common/genres.py:38
+msgid "🎞️ Короткометражка"
+msgstr "🎞️ Qisqa metrali"
+
+#: src/app/bot/common/genres.py:39
+msgid "🔞 Эротика"
+msgstr "🔞 Erotika"
+
 #: src/app/bot/common/genres.py:65
 msgid "Janr tanlanmagan"
 msgstr "Janr tanlanmagan"

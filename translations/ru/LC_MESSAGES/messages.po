@@ -167,6 +167,46 @@ msgstr "📚 Документальный"
 msgid "⚔️ Военный"
 msgstr "⚔️ Военный"
 
+#: src/app/bot/common/genres.py:30
+msgid "💕 Романтика"
+msgstr "💕 Романтика"
+
+#: src/app/bot/common/genres.py:31
+msgid "🔫 Криминал"
+msgstr "🔫 Криминал"
+
+#: src/app/bot/common/genres.py:32
+msgid "⚽ Спорт"
+msgstr "⚽ Спорт"
+
+#: src/app/bot/common/genres.py:33
+msgid "📖 Биография"
+msgstr "📖 Биография"
+
+#: src/app/bot/common/genres.py:34
+msgid "🤠 Вестерн"
+msgstr "🤠 Вестерн"
+
+#: src/app/bot/common/genres.py:35
+msgid "🎵 Мюзикл"
+msgstr "🎵 Мюзикл"
+
+#: src/app/bot/common/genres.py:36
+msgid "🧠 Психологический"
+msgstr "🧠 Психологический"
+
+#: src/app/bot/common/genres.py:37
+msgid "🎌 Аниме"
+msgstr "🎌 Аниме"
+
+#: src/app/bot/common/genres.py:38
+msgid "🎞️ Короткометражка"
+msgstr "🎞️ Короткометражка"
+
+#: src/app/bot/common/genres.py:39
+msgid "🔞 Эротика"
+msgstr "🔞 Эротика"
+
 #: src/app/bot/common/genres.py:65
 msgid "Janr tanlanmagan"
 msgstr "Жанр не выбран"
