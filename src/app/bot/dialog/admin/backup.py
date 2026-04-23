@@ -27,6 +27,10 @@ from src.app.database.models import (
     MultiFilmSeries,
     Series,
     User,
+    Channel,
+    Bot,
+    SubUrl,
+    Referral,
 )
 from src.app.database.queries.backup import BackupQueries
 
@@ -108,6 +112,68 @@ async def on_backup_favorites(c: CallbackQuery, button: Button, manager: DialogM
                 path, filename=f"favorites_backup_{datetime.date.today()}.json"
             ),
             caption=str(_("📂 Полный бэкап списка Избранного")),
+        )
+    finally:
+        await _cleanup(path)
+
+
+async def on_backup_systems(c: CallbackQuery, button: Button, manager: DialogManager):
+    session: AsyncSession = manager.middleware_data["session"]
+    queries = BackupQueries(session)
+    
+    channels = await queries.get_all_channels()
+    bots = await queries.get_all_bots()
+    urls = await queries.get_all_sub_urls()
+    referrals = await queries.get_all_referrals()
+
+    data = {
+        "channels": [
+            {
+                "channel_id": x.channel_id,
+                "channel_name": x.channel_name,
+                "channel_username": x.channel_username,
+                "channel_status": x.channel_status,
+                "message": x.message,
+                "channel_url": x.channel_url,
+                "created_at": x.created_at.isoformat() if x.created_at else None,
+            } for x in channels
+        ],
+        "bots": [
+            {
+                "bot_username": x.bot_username,
+                "bot_name": x.bot_name,
+                "bot_status": x.bot_status,
+                "bot_url": x.bot_url,
+                "created_at": x.created_at.isoformat() if x.created_at else None,
+            } for x in bots
+        ],
+        "urls": [
+            {
+                "url_id": x.url_id,
+                "url_name": x.url_name,
+                "url_link": x.url_link,
+                "url_status": x.url_status,
+                "created_at": x.created_at.isoformat() if x.created_at else None,
+            } for x in urls
+        ],
+        "referrals": [
+            {
+                "referral_id": x.referral_id,
+                "name": x.name,
+                "joined_count": x.joined_count,
+                "created_at": x.created_at.isoformat() if x.created_at else None,
+            } for x in referrals
+        ]
+    }
+
+    path = _tmp("systems_backup_")
+    try:
+        await _write_json(path, data)
+        await c.message.answer_document(
+            FSInputFile(
+                path, filename=f"systems_backup_{datetime.date.today()}.json"
+            ),
+            caption=str(_("⚙️ Полный бэкап настроек (Каналы, Боты, URL, Рефералы)")),
         )
     finally:
         await _cleanup(path)
@@ -236,6 +302,7 @@ async def _backup_menu_getter(**kwargs):
         "btn_users": str(_("👥 Бэкап пользователей")),
         "btn_favs": str(_("⭐ Бэкап избранного")),
         "btn_movies": str(_("🎬 Бэкап всех фильмов")),
+        "btn_systems": str(_("⚙️ Бэкап OP и Рефералов")),
         "btn_restore": str(_("📥 Tiklash (Restore)")),
         "btn_back": str(_("⬅️ Назад")),
     }
@@ -246,6 +313,7 @@ async def _restore_type_getter(**kwargs):
         "title": str(_("📥 Qaysi turdagi ma'lumotlarni tiklamoqchisiz?")),
         "users": str(_("👥 Foydalanuvchilar")),
         "favs": str(_("⭐ Tanlanganlar")),
+        "systems": str(_("⚙️ OP va Referallar")),
         "films": str(_("🎬 Filmlar")),
         "series": str(_("📺 Seriallar")),
         "mini": str(_("📽 Epizodli filmlar")),
@@ -309,8 +377,8 @@ async def on_restore_file(m: Message, input: MessageInput, manager: DialogManage
                 return
         os.remove(tmp.name)
 
-    if not isinstance(data_list, list):
-        await m.answer(str(_("❌ Noto'g'ri format. JSON ro'yxat bo'lishi kerak.")))
+    if not isinstance(data_list, list) and not isinstance(data_list, dict):
+        await m.answer(str(_("❌ Noto'g'ri format.")))
         return
 
     try:
@@ -318,6 +386,18 @@ async def on_restore_file(m: Message, input: MessageInput, manager: DialogManage
             await queries.restore_users(data_list)
         elif r_type == "r_favs":
             await queries.restore_favorites(data_list)
+        elif r_type == "r_systems":
+            # For systems, data_list is a dict with keys
+            if "channels" in data_list:
+                await queries.restore_records(Channel, data_list["channels"], ["channel_id"])
+            if "bots" in data_list:
+                await queries.restore_records(Bot, data_list["bots"], ["bot_username"])
+            if "urls" in data_list:
+                # url_id is autoincrement but maybe missing in conflicts if we match by url_id or link
+                # let's map url_id
+                await queries.restore_records(SubUrl, data_list["urls"], ["url_id"])
+            if "referrals" in data_list:
+                await queries.restore_records(Referral, data_list["referrals"], ["referral_id"])
         else:
             model_map = {
                 "r_films": (FeatureFilm, ["code"]),
@@ -351,9 +431,14 @@ async def on_restore_file(m: Message, input: MessageInput, manager: DialogManage
 backup_dialog = Dialog(
     Window(
         Format("{menu_title}"),
-        Button(Format("{btn_users}"), id="bk_users", on_click=on_backup_users),
-        Button(Format("{btn_favs}"), id="bk_favs", on_click=on_backup_favorites),
-        Button(Format("{btn_movies}"), id="bk_movies", on_click=on_backup_movies),
+        Row(
+            Button(Format("{btn_users}"), id="bk_users", on_click=on_backup_users),
+            Button(Format("{btn_favs}"), id="bk_favs", on_click=on_backup_favorites),
+        ),
+        Row(
+            Button(Format("{btn_movies}"), id="bk_movies", on_click=on_backup_movies),
+            Button(Format("{btn_systems}"), id="bk_sys", on_click=on_backup_systems),
+        ),
         Button(Format("{btn_restore}"), id="bk_rest", on_click=go_restore_type),
         Row(Cancel(Format("{btn_back}"), id="back")),
         state=BackupSG.menu,
@@ -364,6 +449,7 @@ backup_dialog = Dialog(
         Row(
             Button(Format("{users}"), id="r_users", on_click=on_type_selected),
             Button(Format("{favs}"), id="r_favs", on_click=on_type_selected),
+            Button(Format("{systems}"), id="r_systems", on_click=on_type_selected),
         ),
         Row(
             Button(Format("{films}"), id="r_films", on_click=on_type_selected),

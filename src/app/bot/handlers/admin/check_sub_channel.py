@@ -8,6 +8,8 @@ from src.app.bot.filters.check_channel_sub import CheckSubscription
 from src.app.bot.keyboards.inline import not_channels_button
 from src.app.bot.keyboards.replay import get_main_menu
 from src.app.database.queries.channels import ChannelActions
+from src.app.database.queries.bots import BotActions
+from src.app.database.queries.urls import UrlActions
 
 _ = i18n.gettext
 
@@ -36,6 +38,15 @@ async def check_channel_sub_message(message: Message, session: AsyncSession, bot
     channel_actions = ChannelActions(session)
     channel_data = await channel_actions.get_all_channels()
 
+    bot_actions = BotActions(session)
+    bots_data = await bot_actions.get_all_bots()
+
+    url_actions = UrlActions(session)
+    url_data = await url_actions.get_all_urls()
+
+    active_bots = [b for b in bots_data if b.bot_status == "True"]
+    active_urls = [u for u in url_data if u.url_status == "True"]
+
     not_sub_channels = []
     # Filter only mandatory channels
     for channel in channel_data:
@@ -56,7 +67,7 @@ async def check_channel_sub_message(message: Message, session: AsyncSession, bot
     await message.answer_photo(
         photo=banner_id,
         caption=_("Botdan foydalanish uchun ushbu kanallarga obuna bo'ling 👇"),
-        reply_markup=not_channels_button(not_sub_channels, []),
+        reply_markup=not_channels_button(not_sub_channels, active_bots, active_urls),
         parse_mode="HTML",
     )
 
@@ -74,6 +85,15 @@ async def check_channel_sub_barrier_callback(
 
     channel_actions = ChannelActions(session)
     channel_data = await channel_actions.get_all_channels()
+
+    bot_actions = BotActions(session)
+    bots_data = await bot_actions.get_all_bots()
+
+    url_actions = UrlActions(session)
+    url_data = await url_actions.get_all_urls()
+
+    active_bots = [b for b in bots_data if b.bot_status == "True"]
+    active_urls = [u for u in url_data if u.url_status == "True"]
 
     not_sub_channels = []
     for channel in channel_data:
@@ -94,7 +114,7 @@ async def check_channel_sub_barrier_callback(
     await call.message.answer_photo(
         photo=banner_id,
         caption=_("Botdan foydalanish uchun ushbu kanallarga obuna bo'ling 👇"),
-        reply_markup=not_channels_button(not_sub_channels, []),
+        reply_markup=not_channels_button(not_sub_channels, active_bots, active_urls),
         parse_mode="HTML",
     )
     await call.answer()

@@ -798,6 +798,59 @@ msgid ""
 "🖼 <b>Muqova rasmini yuboring:</b>\n"
 "<i>(Ixtiyoriy)</i>"
 msgstr ""
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "🌐 Ссылки (URL)"
+msgstr "🌐 URLlar"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "➕ Добавить URL"
+msgstr "➕ URL qo'shish"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "🔗 Отправьте URL (Например: https://t.me/... / instagram.com/...)"
+msgstr "🔗 URL manzilini yuboring (Masalan: https://t.me/... / instagram.com/...)"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "❌ Неправильный формат URL!"
+msgstr "❌ Noto'g'ri URL formati!"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "📝 Отправьте желаемое имя для URL (Отображается на кнопке)"
+msgstr "📝 URL uchun mo'ljallangan nomni yuboring (Tugmada chiqadi)"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "❌ Пожалуйста, отправьте только текст!"
+msgstr "❌ Iltimos, faqat matn yuboring!"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "🗑 Удалить URL"
+msgstr "🗑 URLni o'chirish"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "⚠️ Вы уверены, что хотите удалить этот URL?"
+msgstr "⚠️ Siz rostdan ham ushbu URLni o'chirmoqchimisiz?"
+
+#: src/app/bot/dialog/getters.py:999
+msgid "❌ URL не найден"
+msgstr "❌ URL topilmadi"
+
+#: src/app/bot/dialog/getters.py:999
+msgid "Полная информация об URL"
+msgstr "URL bo'yicha to'liq ma'lumot"
+
+#: src/app/bot/dialog/admin/backup.py:999
+msgid "⚙️ Бэкап OP и Рефералов"
+msgstr "⚙️ OP va Referallar zaxirasi"
+
+#: src/app/bot/dialog/admin/backup.py:999
+msgid "⚙️ Полный бэкап настроек (Каналы, Боты, URL, Рефералы)"
+msgstr "⚙️ Sozlamalarning to'liq zaxirasi (Kanallar, Botlar, URLlar, Referallar)"
+
+#: src/app/bot/dialog/admin/backup.py:999
+msgid "⚙️ OP va Referallar"
+msgstr "⚙️ OP va Referallar"
+
 "🖼 <b>Muqova rasmini yuboring:</b>\n"
 "<i>(Ixtiyoriy)</i>"
 

@@ -6,6 +6,7 @@ from aiogram_dialog import DialogManager
 from src.app.bot.common.i18n import lazy_gettext as gettext_
 from src.app.database.queries.bots import BotActions
 from src.app.database.queries.channels import ChannelActions
+from src.app.database.queries.urls import UrlActions
 
 
 # ==================== OP MENU GETTERS ====================
@@ -27,15 +28,21 @@ async def get_op_menu_data(dialog_manager: DialogManager, **kwargs) -> Dict[str,
     bot_actions = BotActions(session)
     bots = await bot_actions.get_all_bots()
 
+    # Получаем все URL
+    url_actions = UrlActions(session)
+    urls = await url_actions.get_all_urls()
+
     # Определяем тип сообщения
-    msg_type = "not_found" if not channels and not bots else "start_msg"
+    msg_type = "not_found" if not channels and not bots and not urls else "start_msg"
 
     return {
         "channel_data": channels or [],
         "bot_data": bots or [],
+        "url_data": urls or [],
         "msg_type": msg_type,
         "has_channels": bool(channels),
-        "has_bots": bool(bots)
+        "has_bots": bool(bots),
+        "has_urls": bool(urls)
     }
 
 
@@ -148,5 +155,44 @@ async def get_bot_info_data(dialog_manager: DialogManager, **kwargs) -> Dict[str
 
     return {
         "bot_data": bot_info,
+        "op_button": op_button
+    }
+
+
+# ==================== URL GETTERS ====================
+
+async def get_add_url_data(dialog_manager: DialogManager, **kwargs) -> Dict[str, str]:
+    return {
+        "msg_type": dialog_manager.dialog_data.get("msg_type", "start_msg")
+    }
+
+
+async def get_url_info_data(dialog_manager: DialogManager, **kwargs) -> Dict[str, str]:
+    url_id = dialog_manager.start_data.get("url_id")
+    dialog_manager.dialog_data["url_id"] = url_id
+
+    session: AsyncSession = dialog_manager.middleware_data["session"]
+    url_actions = UrlActions(session)
+
+    url_data = await url_actions.get_url(int(url_id))
+
+    if not url_data:
+        return {
+            "url_data": gettext_("❌ URL не найден"),
+            "op_button": "—"
+        }
+
+    is_in_op = url_data.url_status == "True"
+    op_button = gettext_("🚫 Убрать из ОП") if is_in_op else gettext_("➕ Добавить в ОП")
+
+    url_info = (
+        f"🌐 <b>{gettext_('Полная информация об URL')}</b>\n\n"
+        f"📛 <b>{gettext_('Название:')}</b> {url_data.url_name}\n"
+        f"📶 <b>{gettext_('Статус в ОП:')}</b> {'✅ ' + gettext_('Активен') if is_in_op else '❌ ' + gettext_('Неактивен')}\n"
+        f"🔗 <b>{gettext_('Ссылка:')}</b> {url_data.url_link}\n"
+    )
+
+    return {
+        "url_data": url_info,
         "op_button": op_button
     }

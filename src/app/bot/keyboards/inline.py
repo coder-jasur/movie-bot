@@ -770,13 +770,23 @@ def get_start_menu() -> InlineKeyboardMarkup:
     )
 
 
-def not_channels_button(channel_data, bots_data):
+def not_channels_button(channel_data, bots_data, url_data=None):
+    if url_data is None:
+        url_data = []
+    
     builder_button = InlineKeyboardBuilder()
+    
     for bot in bots_data:
         builder_button.row(InlineKeyboardButton(text=bot.bot_name, url=bot.bot_url))
+        
     for channel in channel_data:
         builder_button.row(
             InlineKeyboardButton(text=channel.channel_name, url=channel.channel_url)
+        )
+        
+    for url_obj in url_data:
+        builder_button.row(
+            InlineKeyboardButton(text=url_obj.url_name, url=url_obj.url_link)
         )
 
     builder_button.row(

@@ -4,7 +4,8 @@ from sqlalchemy.dialects.postgresql import insert
 from src.app.database.models import (
     User, FeatureFilm, Series, MiniSeries, Favorite,
     MultiFilmFeature, MultiFilmSeries, MultiFilmMiniSeries,
-    AnimeFeature, AnimeSeries, AnimeMiniSeries
+    AnimeFeature, AnimeSeries, AnimeMiniSeries,
+    Channel, Bot, SubUrl, Referral
 )
 
 class BackupQueries:
@@ -53,6 +54,22 @@ class BackupQueries:
 
     async def get_all_favorites(self) -> list[Favorite]:
         result = await self.session.execute(select(Favorite))
+        return list(result.scalars().all())
+
+    async def get_all_channels(self) -> list[Channel]:
+        result = await self.session.execute(select(Channel))
+        return list(result.scalars().all())
+
+    async def get_all_bots(self) -> list[Bot]:
+        result = await self.session.execute(select(Bot))
+        return list(result.scalars().all())
+
+    async def get_all_sub_urls(self) -> list[SubUrl]:
+        result = await self.session.execute(select(SubUrl))
+        return list(result.scalars().all())
+
+    async def get_all_referrals(self) -> list[Referral]:
+        result = await self.session.execute(select(Referral))
         return list(result.scalars().all())
 
     # ─────────────────────────────────────────────

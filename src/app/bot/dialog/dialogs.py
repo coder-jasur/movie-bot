@@ -9,7 +9,9 @@ from src.app.bot.dialog.getters import (
     get_channel_info_data,
     get_add_channel_data,
     get_add_bot_data,
-    get_bot_info_data
+    get_bot_info_data,
+    get_add_url_data,
+    get_url_info_data
 )
 from src.app.bot.dialog.handlers import (
     handle_channel_forward,
@@ -23,9 +25,14 @@ from src.app.bot.dialog.handlers import (
     handle_bot_name_input,
     handle_toggle_bot_op_status,
     handle_get_bot_info,
-    handle_delete_bot
+    handle_delete_bot,
+    handle_url_link_input,
+    handle_url_name_input,
+    handle_get_url_info,
+    handle_delete_url,
+    handle_toggle_url_op_status
 )
-from src.app.bot.states.admin.channel import OPMenu, ChannelMenu, AddChannelState, AddBotState, BotMenu
+from src.app.bot.states.admin.channel import OPMenu, ChannelMenu, AddChannelState, AddBotState, BotMenu, AddUrlState, UrlMenu
 from src.app.bot.common.i18n import lazy_gettext as _
 
 # Главное меню управления ОП (каналы и боты)
@@ -62,9 +69,22 @@ op_management_dialog = Dialog(
             ),
             width=1
         ),
+        Group(
+            Button(Format(_("🌐 Ссылки (URL)")), id="urls_header", when="has_urls"),
+            Select(
+                Format("{item.url_name}"),
+                id="urls_list",
+                item_id_getter=lambda item: str(item.url_id),
+                items="url_data",
+                on_click=handle_get_url_info,
+                when="has_urls"
+            ),
+            width=1
+        ),
         Row(
             Start(Format(_("➕ Добавить канал")), id="add_channel_btn", state=AddChannelState.get_channel_data),
             Start(Format(_("➕ Добавить бота")), id="add_bot_btn", state=AddBotState.get_bot_username),
+            Start(Format(_("➕ Добавить URL")), id="add_url_btn", state=AddUrlState.get_url_link),
         ),
         Cancel(Format(_("◄ Назад")), id="back_to_admin_menu"),
         state=OPMenu.menu,
@@ -203,5 +223,63 @@ bot_management_dialog = Dialog(
             Button(Format(_("✅ Да")), id="confirm_delete", on_click=handle_delete_bot)
         ),
         state=BotMenu.delete_bot
+    )
+)
+
+
+# Диалог добавления URL
+add_url_dialog = Dialog(
+    Window(
+        Case(
+            {
+                "start_msg": Format(_("🔗 Отправьте URL (Например: https://t.me/... / instagram.com/...)")),
+                "error_format": Format(_("❌ Неправильный формат URL!")),
+            },
+            selector="msg_type",
+        ),
+        MessageInput(func=handle_url_link_input, content_types=ContentType.ANY),
+        Cancel(Format(_("◄ Назад")), id="back_to_op_menu"),
+        state=AddUrlState.get_url_link,
+        getter=get_add_url_data,
+    ),
+    Window(
+        Case(
+            {
+                "start_msg": Format(_("📝 Отправьте желаемое имя для URL (Отображается на кнопке)")),
+                "error_format": Format(_("❌ Пожалуйста, отправьте только текст!")),
+            },
+            selector="msg_type",
+        ),
+        MessageInput(func=handle_url_name_input, content_types=ContentType.ANY),
+        Cancel(Format(_("◄ Назад")), id="back_to_op_menu"),
+        state=AddUrlState.get_url_name,
+        getter=get_add_url_data,
+    )
+)
+
+
+# Диалог управления URL
+url_management_dialog = Dialog(
+    Window(
+        Format("{url_data}"),
+        Group(
+            Row(
+                SwitchTo(Format(_("🗑 Удалить URL")), id="delete_url_btn", state=UrlMenu.delete_url),
+                Button(Format("{op_button}"), id="toggle_op_status_btn", on_click=handle_toggle_url_op_status),
+            ),
+            Row(
+                Cancel(Format(_("◄ Назад")), id="back_to_op_menu"),
+            ),
+        ),
+        state=UrlMenu.menu,
+        getter=get_url_info_data
+    ),
+    Window(
+        Format(_("⚠️ Вы уверены, что хотите удалить этот URL?")),
+        Row(
+            SwitchTo(Format(_("❌ Yo'q")), id="cancel_delete", state=UrlMenu.menu),
+            Button(Format(_("✅ Ha")), id="confirm_delete", on_click=handle_delete_url)
+        ),
+        state=UrlMenu.delete_url
     )
 )

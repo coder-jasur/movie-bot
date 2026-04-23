@@ -20,3 +20,13 @@ class BotMenu(StatesGroup):
 class ChannelMenu(StatesGroup):
     menu = State()
     delete_channel = State()
+
+
+class AddUrlState(StatesGroup):
+    get_url_link = State()
+    get_url_name = State()
+
+
+class UrlMenu(StatesGroup):
+    menu = State()
+    delete_url = State()

@@ -179,6 +179,8 @@ async def on_broadcast_message(m: Message, widget, manager: DialogManager):
     manager.dialog_data["broadcast_message_id"] = m.message_id
     manager.dialog_data["broadcast_chat_id"] = m.chat.id
     manager.dialog_data["broadcast_content_type"] = m.content_type.value
+    if m.reply_markup:
+        manager.dialog_data["broadcast_reply_markup"] = m.reply_markup.model_dump_json()
     await manager.switch_to(AdminMenuSG.broadcast_confirm)
 
 
@@ -188,9 +190,18 @@ async def run_broadcast_task(
     admin_id: int,
     from_chat_id: int,
     message_id: int,
+    reply_markup_json: str = None,
     exclude_vip: bool = False,
 ):
     try:
+        from aiogram.types import InlineKeyboardMarkup
+        reply_markup = None
+        if reply_markup_json:
+            try:
+                reply_markup = InlineKeyboardMarkup.model_validate_json(reply_markup_json)
+            except Exception as e:
+                logger.error(f"Failed to parse reply markup: {e}")
+
         async with session_pool() as session:
             broadcaster = Broadcaster(
                 bot=bot,
@@ -198,6 +209,7 @@ async def run_broadcast_task(
                 admin_id=admin_id,
                 from_chat_id=from_chat_id,
                 message_id=message_id,
+                reply_markup=reply_markup,
                 exclude_vip=exclude_vip,
             )
             await broadcaster.broadcast()
@@ -215,6 +227,7 @@ async def on_broadcast_confirm(c: CallbackQuery, widget, manager: DialogManager)
 
     message_id = manager.dialog_data.get("broadcast_message_id")
     chat_id = manager.dialog_data.get("broadcast_chat_id")
+    reply_markup_json = manager.dialog_data.get("broadcast_reply_markup")
 
     if not message_id or not chat_id:
         await c.answer(str(gettext_("❌ Xabar topilmadi")), show_alert=True)
@@ -233,6 +246,7 @@ async def on_broadcast_confirm(c: CallbackQuery, widget, manager: DialogManager)
             admin_id=c.from_user.id,
             from_chat_id=chat_id,
             message_id=message_id,
+            reply_markup_json=reply_markup_json,
         )
     )
 

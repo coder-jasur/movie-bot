@@ -68,6 +68,18 @@ class Bot(Base):
     )
 
 
+class SubUrl(Base):
+    __tablename__ = "sub_urls"
+
+    url_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    url_name: Mapped[str] = mapped_column(Text, nullable=False)
+    url_link: Mapped[str] = mapped_column(Text, nullable=False)
+    url_status: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), server_default=func.now(), nullable=False
+    )
+
+
 class Referral(Base):
     __tablename__ = "referrals"
 

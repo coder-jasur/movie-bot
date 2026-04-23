@@ -2790,3 +2790,55 @@ msgstr "⬅️ Отмена"
 
 msgid "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi"
 msgstr "💎 Для просмотра этого фильма требуется VIP-подписка"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "🌐 Ссылки (URL)"
+msgstr "🌐 Ссылки (URL)"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "➕ Добавить URL"
+msgstr "➕ Добавить URL"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "🔗 Отправьте URL (Например: https://t.me/... / instagram.com/...)"
+msgstr "🔗 Отправьте URL (Например: https://t.me/... / instagram.com/...)"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "❌ Неправильный формат URL!"
+msgstr "❌ Неправильный формат URL!"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "📝 Отправьте желаемое имя для URL (Отображается на кнопке)"
+msgstr "📝 Отправьте желаемое имя для URL (Отображается на кнопке)"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "❌ Пожалуйста, отправьте только текст!"
+msgstr "❌ Пожалуйста, отправьте только текст!"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "🗑 Удалить URL"
+msgstr "🗑 Удалить URL"
+
+#: src/app/bot/dialog/dialogs.py:999
+msgid "⚠️ Вы уверены, что хотите удалить этот URL?"
+msgstr "⚠️ Вы уверены, что хотите удалить этот URL?"
+
+#: src/app/bot/dialog/getters.py:999
+msgid "❌ URL не найден"
+msgstr "❌ URL не найден"
+
+#: src/app/bot/dialog/getters.py:999
+msgid "Полная информация об URL"
+msgstr "Полная информация об URL"
+
+#: src/app/bot/dialog/admin/backup.py:999
+msgid "⚙️ Бэкап OP и Рефералов"
+msgstr "⚙️ Бэкап OP и Рефералов"
+
+#: src/app/bot/dialog/admin/backup.py:999
+msgid "⚙️ Полный бэкап настроек (Каналы, Боты, URL, Рефералы)"
+msgstr "⚙️ Полный бэкап настроек (Каналы, Боты, URL, Рефералы)"
+
+#: src/app/bot/dialog/admin/backup.py:999
+msgid "⚙️ OP va Referallar"
+msgstr "⚙️ Настройки и Рефералы"

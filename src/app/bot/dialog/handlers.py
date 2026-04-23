@@ -17,7 +17,8 @@ from aiogram_dialog import DialogManager
 
 from src.app.database.queries.bots import BotActions
 from src.app.database.queries.channels import ChannelActions
-from src.app.bot.states.admin.channel import OPMenu, ChannelMenu, AddChannelState, AddBotState, BotMenu
+from src.app.database.queries.urls import UrlActions
+from src.app.bot.states.admin.channel import OPMenu, ChannelMenu, AddChannelState, AddBotState, BotMenu, AddUrlState, UrlMenu
 
 logger = logging.getLogger(__name__)
 
@@ -479,4 +480,117 @@ async def handle_toggle_bot_op_status(
         logger.error(f"❌ Error toggling bot @{bot_username} status: {e}", exc_info=True)
 
     await manager.switch_to(BotMenu.menu)
+
+
+# ==================== URL HANDLERS ====================
+
+async def handle_url_link_input(
+        message: Message,
+        _,
+        dialog_manager: DialogManager
+) -> None:
+    if not message.text:
+        dialog_manager.dialog_data["msg_type"] = "error_format"
+        return
+
+    url_link = message.text.strip()
+    dialog_manager.dialog_data["url_link"] = url_link
+
+    await dialog_manager.switch_to(AddUrlState.get_url_name)
+
+
+async def handle_url_name_input(
+        message: Message,
+        _,
+        dialog_manager: DialogManager
+) -> None:
+    if not message.text:
+        dialog_manager.dialog_data["msg_type"] = "error_format"
+        return
+
+    session: AsyncSession = dialog_manager.middleware_data["session"]
+    url_actions = UrlActions(session)
+
+    url_name = message.text.strip()
+    url_link = dialog_manager.dialog_data.get("url_link")
+
+    if not url_link:
+        dialog_manager.dialog_data["msg_type"] = "error"
+        await dialog_manager.done()
+        await dialog_manager.start(OPMenu.menu)
+        return
+
+    try:
+        await url_actions.add_url(
+            url_name=url_name,
+            url_link=url_link
+        )
+    except Exception as e:
+        logger.error(f"❌ Error adding url: {e}", exc_info=True)
+        dialog_manager.dialog_data["msg_type"] = "error"
+        return
+    finally:
+        await dialog_manager.done()
+
+
+async def handle_get_url_info(
+        _,
+        __,
+        dialog_manager: DialogManager,
+        item_id: str
+) -> None:
+    await dialog_manager.start(
+        UrlMenu.menu,
+        data={"url_id": item_id}
+    )
+
+
+async def handle_delete_url(
+        _,
+        __,
+        manager: DialogManager
+) -> None:
+    session: AsyncSession = manager.middleware_data["session"]
+    url_id = manager.dialog_data.get("url_id")
+
+    if not url_id:
+        await manager.done()
+        return
+
+    url_actions = UrlActions(session)
+
+    try:
+        await url_actions.delete_url(int(url_id))
+    except Exception as e:
+        logger.error(f"❌ Error deleting url ID {url_id}: {e}", exc_info=True)
+
+    await manager.done()
+
+
+async def handle_toggle_url_op_status(
+        _,
+        __,
+        manager: DialogManager
+) -> None:
+    session: AsyncSession = manager.middleware_data["session"]
+    url_id = manager.dialog_data.get("url_id")
+
+    if not url_id:
+        return
+
+    url_actions = UrlActions(session)
+
+    try:
+        url_data = await url_actions.get_url(int(url_id))
+        if not url_data:
+            return
+
+        current_status = url_data.url_status
+        new_status = "False" if current_status == "True" else "True"
+
+        await url_actions.update_url_status(new_status, int(url_id))
+    except Exception as e:
+        logger.error(f"❌ Error toggling url ID {url_id} status: {e}", exc_info=True)
+
+    await manager.switch_to(UrlMenu.menu)
 
