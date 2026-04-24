@@ -27,6 +27,7 @@ from src.app.database.queries.movie.multi_films import (
 from src.app.database.queries.movie.series import SeriesActions
 from src.app.services.cache_service import CacheService
 from src.app.services.transcoder import Transcoder
+from src.app.database.queries.post_channels import PostChannelActions
 
 logger = logging.getLogger(__name__)
 
@@ -410,6 +411,29 @@ async def _run_task(data: dict):
                     else:
                         await _save_to_db(data, partial, is_incremental=not is_first)
                     logger.info(f"Incremental save done: {quality}")
+                    
+                    # Auto Posting
+                    if is_first and data.get("post_caption"):
+                        try:
+                            # Re-run shared database logic for channels
+                            db = Database(settings.construct_postgresql_url())
+                            async with db.session_factory() as db_session:
+                                post_actions = PostChannelActions(db_session)
+                                channels = await post_actions.get_active_post_channels()
+                                
+                                caption = data.get("post_caption")
+                                image = data.get("post_image")
+                                
+                                for ch in channels:
+                                    try:
+                                        if image:
+                                            await bot.send_photo(ch.channel_id, photo=image, caption=caption, parse_mode="HTML")
+                                        else:
+                                            await bot.send_message(ch.channel_id, text=caption, parse_mode="HTML")
+                                    except Exception as post_err:
+                                        logger.error(f"Auto post error for channel {ch.channel_id}: {post_err}")
+                        except Exception as e:
+                            logger.error(f"Auto posting failed: {e}")
                 except Exception as e:
                     logger.error(f"Incremental save failed for {quality}: {e}")
 

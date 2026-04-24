@@ -2785,11 +2785,65 @@ msgstr "🔙 Назад"
 msgid "📥 <b>[{restore_type}]</b> ni tiklash.\n\nIltimos, zaxira (.json) faylini yuboring:"
 msgstr "📥 Восстановление <b>[{restore_type}]</b>.\n\nПожалуйста, отправьте (.json) файл бэкапа:"
 
-msgid "⬅️ Bekor qilish"
-msgstr "⬅️ Отмена"
-
 msgid "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi"
-msgstr "💎 Для просмотра этого фильма требуется VIP-подписка"
+msgstr "💎 Для просмотра этого фильма требуется VIP подписка"
+
+msgid "📢 Auto Posting"
+msgstr "📢 Автопостинг"
+
+msgid "📢 Auto Posting Kanallari"
+msgstr "📢 Каналы автопостинга"
+
+msgid "➕ Kanal qo'shish"
+msgstr "➕ Добавить канал"
+
+msgid "🆔 Kanal ID raqamini yuboring yoki kanaldan xabarni forward qiling:"
+msgstr "🆔 Отправьте ID канала или перешлите сообщение из канала:"
+
+msgid "✅ Kanal muvaffaqiyatli qo'shildi."
+msgstr "✅ Канал успешно добавлен."
+
+msgid "⚠️ Bu kanal allaqachon qo'shilgan."
+msgstr "⚠️ Этот канал уже добавлен."
+
+msgid "📊 Kanal ma'lumotlari:"
+msgstr "📊 Данные канала:"
+
+msgid "🔴 Faolsiz qilish"
+msgstr "🔴 Деактивировать"
+
+msgid "🟢 Faollashtirish"
+msgstr "🟢 Активировать"
+
+msgid "📢 Avtoposting: ✅"
+msgstr "📢 Автопостинг: ✅"
+
+msgid "📢 Avtoposting: ❌"
+msgstr "📢 Автопостинг: ❌"
+
+msgid "📱 Postni ko'rish"
+msgstr "📱 Предпросмотр поста"
+
+msgid "🚀 Postni chiqarish"
+msgstr "🚀 Опубликовать пост"
+
+msgid "🔄 Yangilash"
+msgstr "🔄 Обновить"
+
+msgid "🖼 Rasmni o'zgartirish"
+msgstr "🖼 Изменить фото"
+
+msgid "📝 Matnni o'zgartirish"
+msgstr "📝 Изменить текст"
+
+msgid "🖼 Yangi rasm yuboring yoki rasm linkini yuboring:"
+msgstr "🖼 Отправьте новое фото или ссылку на фото:"
+
+msgid "📝 Yangi post matnini yuboring:"
+msgstr "📝 Отправьте новый текст поста:"
+
+msgid "✅ Post {count} ta kanalga yuborildi."
+msgstr "✅ Пост отправлен в {count} каналов."
 
 #: src/app/bot/dialog/dialogs.py:999
 msgid "🌐 Ссылки (URL)"

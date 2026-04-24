@@ -23,6 +23,11 @@ from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
+from src.app.core.config import load_config
+from src.app.services.tmdb import TMDBService
+from src.app.database.queries.post_channels import PostChannelActions
+
 from src.app.bot.common.genres import (
     deserialize_genres,
     get_genre_display_text,
@@ -509,6 +514,133 @@ async def on_genre_toggle(
 
 
 # ─────────────────────────────────────────────
+#  Auto Posting Preview Handlers
+# ─────────────────────────────────────────────
+
+async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogManager):
+    config = load_config()
+    tmdb = TMDBService(config.tmdb_api_key)
+    
+    movie_name = manager.dialog_data.get("name")
+    if isinstance(movie_name, dict):
+        # Prefer UZ name, then RU, then first available
+        movie_name = movie_name.get("uz") or movie_name.get("ru") or next(iter(movie_name.values()))
+    
+    # Try to find on TMDB if not already fetched
+    if not manager.dialog_data.get("post_caption"):
+        tmdb_result = await tmdb.parse_movie(movie_name)
+        if tmdb_result:
+            manager.dialog_data["post_image"] = tmdb_result["preview"]
+            manager.dialog_data["tmdb_data"] = tmdb_result["data"]
+            manager.dialog_data["post_caption"] = tmdb.format_caption(
+                tmdb_result["data"],
+                code=manager.dialog_data.get("code"),
+                genres_str=get_post_hashtags(manager.dialog_data.get("genres", [])),
+                lang_str=get_language_display_text(manager.dialog_data.get("language")),
+                quality=manager.dialog_data.get("input_quality")
+            )
+        else:
+            # Fallback if not found
+            manager.dialog_data["post_image"] = manager.dialog_data.get("thumbnail_file_id")
+            manager.dialog_data["post_caption"] = f"🎬 <b>Nomi:</b> {movie_name}\n\n💾 <b>KODI:</b> {manager.dialog_data.get('code')}"
+
+    await manager.switch_to(AddMovieWizardSG.post_preview)
+
+def get_post_hashtags(genres):
+    if not genres: return ""
+    hashtag_map = {
+        "Драма": "Drama", "Комедия": "Komediya", "Боевик": "Jangari",
+        "Триллер": "Triller", "Ужасы": "Qorqinchli", "Фантастика": "Fantastika",
+        "Фэнтези": "Fentezi", "Мелодрама": "Melodrama", "Детектив": "Detektiv",
+        "Приключения": "Sarguzasht", "Семейный": "Oilaviy", "Мультфильм": "Multfilm",
+        "Исторический": "Tarixiy", "Документальный": "Hujjatli", "Военный": "Harbiy",
+        "Романтика": "Romantika", "Криминал": "Kriminal", "Спорт": "Sport",
+        "Биография": "Biografiya", "Вестерн": "Vestern", "Мюзикл": "Myuzikl",
+        "Психологический": "Psixologik", "Аниме": "Anime", "Короткометражка": "Kaltametrajli",
+    }
+    return " ".join([f"#{hashtag_map.get(g, g)}" for g in genres])
+
+def get_language_display_text(lang_id):
+    if not lang_id: return "N/A"
+    for l in LANGUAGES:
+        if l["id"] == lang_id:
+            return f"{l['label']} {l['flag']}"
+    return lang_id
+
+async def on_refresh_post(c: CallbackQuery, widget: Any, manager: DialogManager):
+    config = load_config()
+    tmdb = TMDBService(config.tmdb_api_key)
+    tmdb_data = manager.dialog_data.get("tmdb_data", {})
+    
+    movie_name = manager.dialog_data.get("name")
+    if isinstance(movie_name, dict):
+        movie_name = movie_name.get("uz") or movie_name.get("ru") or next(iter(movie_name.values()))
+
+    manager.dialog_data["post_caption"] = tmdb.format_caption(
+        tmdb_data or {"title": movie_name},
+        code=manager.dialog_data.get("code"),
+        genres_str=get_post_hashtags(manager.dialog_data.get("genres", [])),
+        lang_str=get_language_display_text(manager.dialog_data.get("language")),
+        quality=manager.dialog_data.get("input_quality")
+    )
+    await c.answer(_("✅ Post yangilandi"))
+
+async def on_post_publish(c: CallbackQuery, widget: Any, manager: DialogManager):
+    session: AsyncSession = manager.middleware_data["session"]
+    post_actions = PostChannelActions(session)
+    channels = await post_actions.get_active_post_channels()
+    
+    image = manager.dialog_data.get("post_image")
+    caption = manager.dialog_data.get("post_caption")
+    
+    sent_count = 0
+    for channel in channels:
+        try:
+            if image:
+                if isinstance(image, str) and image.startswith("http"):
+                    await c.bot.send_photo(channel.channel_id, photo=image, caption=caption, parse_mode="HTML")
+                else:
+                    await c.bot.send_photo(channel.channel_id, photo=image, caption=caption, parse_mode="HTML")
+            else:
+                await c.bot.send_message(channel.channel_id, text=caption, parse_mode="HTML")
+            sent_count += 1
+        except Exception as e:
+            logger.error(f"Post publishing error for channel {channel.channel_id}: {e}")
+            
+    await c.answer(_("✅ Post {count} ta kanalga yuborildi.").format(count=sent_count), show_alert=True)
+
+async def on_edit_post_image_input(m: Message, widget: Any, manager: DialogManager):
+    if m.photo:
+        manager.dialog_data["post_image"] = m.photo[-1].file_id
+    elif m.text and m.text.startswith("http"):
+        manager.dialog_data["post_image"] = m.text
+    else:
+        await m.answer(_("❌ Rasm yuboring yoki rasm linkini yuboring."))
+        return
+    await manager.switch_to(AddMovieWizardSG.post_preview)
+
+async def on_edit_post_caption_input(m: Message, widget: Any, manager: DialogManager):
+    manager.dialog_data["post_caption"] = m.html_text or m.text
+    await manager.switch_to(AddMovieWizardSG.post_preview)
+
+async def get_post_preview_data(dialog_manager: DialogManager, **kwargs):
+    image = dialog_manager.dialog_data.get("post_image")
+    caption = dialog_manager.dialog_data.get("post_caption")
+    
+    media = None
+    if image:
+        if isinstance(image, str) and image.startswith("http"):
+            media = MediaAttachment(ContentType.PHOTO, url=image)
+        else:
+            media = MediaAttachment(ContentType.PHOTO, file_id=MediaId(image))
+        
+    return {
+        "media": media,
+        "caption": caption or "No caption"
+    }
+
+
+# ─────────────────────────────────────────────
 #  ASOSIY: on_confirm
 # ─────────────────────────────────────────────
 
@@ -537,6 +669,29 @@ async def on_confirm(c: CallbackQuery, widget: Any, manager: DialogManager):
         )
 
         admin_locale = manager.middleware_data.get("i18n").current_locale
+        
+        # Auto-generate post data if missing (for auto-posting feature)
+        if not data.get("post_caption"):
+            config = load_config()
+            tmdb = TMDBService(config.tmdb_api_key)
+            movie_name = data.get("name")
+            if isinstance(movie_name, dict):
+                movie_name = movie_name.get("uz") or movie_name.get("ru") or next(iter(movie_name.values()))
+            
+            tmdb_result = await tmdb.parse_movie(movie_name)
+            if tmdb_result:
+                data["post_image"] = tmdb_result["preview"]
+                data["post_caption"] = tmdb.format_caption(
+                    tmdb_result["data"],
+                    code=data.get("code"),
+                    genres_str=get_post_hashtags(data.get("genres", [])),
+                    lang_str=get_language_display_text(data.get("language")),
+                    quality=data.get("input_quality")
+                )
+            else:
+                data["post_image"] = data.get("thumbnail_file_id")
+                data["post_caption"] = f"🎬 <b>Nomi:</b> {movie_name}\n\n💾 <b>KODI:</b> {data.get('code')}"
+
         task_data = {
             "admin_id": c.from_user.id,
             "status_msg_id": status_msg.message_id,
@@ -1666,6 +1821,9 @@ add_movie_dialog = Dialog(
         Format("{summary}"),
         Row(
             Button(Format(_("💾 Saqlash")), id="save", on_click=on_confirm),
+            Button(Format(_("📱 Postni ko'rish")), id="btn_post_preview", on_click=on_post_preview_click),
+        ),
+        Row(
             Button(
                 Format("{toggle_text}"), id="toggle_preview", on_click=on_toggle_preview
             ),
@@ -1767,5 +1925,32 @@ add_movie_dialog = Dialog(
         ),
         state=AddMovieWizardSG.success,
         getter=get_success_data,
+    ),
+    Window(
+        DynamicMedia("media"),
+        Format("{caption}"),
+        Row(
+            Button(Format(_("🚀 Postni chiqarish")), id="publish", on_click=on_post_publish),
+            Button(Format(_("🔄 Yangilash")), id="refresh", on_click=on_refresh_post),
+        ),
+        Row(
+            SwitchTo(Format(_("🖼 Rasmni o'zgartirish")), id="edit_img", state=AddMovieWizardSG.edit_post_image),
+            SwitchTo(Format(_("📝 Matnni o'zgartirish")), id="edit_cap", state=AddMovieWizardSG.edit_post_caption),
+        ),
+        SwitchTo(Format(_("🔙 Ortga")), id="back_to_confirm_post", state=AddMovieWizardSG.confirm),
+        state=AddMovieWizardSG.post_preview,
+        getter=get_post_preview_data,
+    ),
+    Window(
+        Const(_("🖼 Yangi rasm yuboring yoki rasm linkini yuboring:")),
+        MessageInput(on_edit_post_image_input),
+        SwitchTo(Format(_("🔙 Bekor qilish")), id="cancel_img", state=AddMovieWizardSG.post_preview),
+        state=AddMovieWizardSG.edit_post_image,
+    ),
+    Window(
+        Const(_("📝 Yangi post matnini yuboring:")),
+        MessageInput(on_edit_post_caption_input),
+        SwitchTo(Format(_("🔙 Bekor qilish")), id="cancel_cap", state=AddMovieWizardSG.post_preview),
+        state=AddMovieWizardSG.edit_post_caption,
     ),
 )

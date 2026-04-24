@@ -68,6 +68,18 @@ class Bot(Base):
     )
 
 
+class PostChannel(Base):
+    __tablename__ = "post_channels"
+
+    channel_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    channel_name: Mapped[str] = mapped_column(Text, nullable=False)
+    channel_username: Mapped[str | None] = mapped_column(Text, nullable=True)
+    channel_status: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), server_default=func.now(), nullable=False
+    )
+
+
 class SubUrl(Base):
     __tablename__ = "sub_urls"
 

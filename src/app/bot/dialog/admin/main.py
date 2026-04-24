@@ -133,6 +133,7 @@ async def get_labels(dialog_manager: DialogManager, **kwargs):
         "vip_manage": gettext_("BTN_VIP_MANAGEMENT"),
         "admin_manage": gettext_("ADMIN_MANAGMENT"),
         "backup": gettext_("BTN_BACKUP"),
+        "auto_posting": gettext_("📢 Auto Posting"),
         "close": gettext_("BTN_CLOSE"),
         "cancel": gettext_("BTN_CANCEL"),
         "confirm": gettext_("BTN_CONFIRM_SEND"),
@@ -289,6 +290,7 @@ admin_main_dialog = Dialog(
         ),
         Row(
             Start(Format("{backup}"), id="backup", state=BackupSG.menu),
+            Start(Format("{auto_posting}"), id="auto_posting", state=PostAutoPostingSG.menu),
         ),
         Row(
             Cancel(Format("{close}"), id="close_admin"),

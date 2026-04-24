@@ -8,6 +8,12 @@ class AdminMenuSG(StatesGroup):
     broadcast_confirm = State()
 
 
+class PostAutoPostingSG(StatesGroup):
+    menu = State()
+    add_channel = State()
+    channel_info = State()
+
+
 class BackupSG(StatesGroup):
     menu = State()
     restore_type = State()
@@ -32,6 +38,11 @@ class AddMovieWizardSG(StatesGroup):
     edit_menu = State()   # Choose which field to edit
     edit_field = State()  # Actually input the new value for a specific field
     success = State()     # Loop/Finish
+
+    # Auto posting preview
+    post_preview = State()
+    edit_post_image = State()
+    edit_post_caption = State()
 
 
 class EditMovieSG(StatesGroup):

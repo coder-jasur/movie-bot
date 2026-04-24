@@ -2839,3 +2839,54 @@ msgstr "⬅️ Bekor qilish"
 
 msgid "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi"
 msgstr "💎 Bu filmni ko'rish uchun VIP obuna talab qilinadi"
+
+msgid "📢 Auto Posting"
+msgstr "📢 Auto Posting"
+
+msgid "📢 Auto Posting Kanallari"
+msgstr "📢 Auto Posting Kanallari"
+
+msgid "➕ Kanal qo'shish"
+msgstr "➕ Kanal qo'shish"
+
+msgid "🆔 Kanal ID raqamini yuboring yoki kanaldan xabarni forward qiling:"
+msgstr "🆔 Kanal ID raqamini yuboring yoki kanaldan xabarni forward qiling:"
+
+msgid "✅ Kanal muvaffaqiyatli qo'shildi."
+msgstr "✅ Kanal muvaffaqiyatli qo'shildi."
+
+msgid "⚠️ Bu kanal allaqachon qo'shilgan."
+msgstr "⚠️ Bu kanal allaqachon qo'shilgan."
+
+msgid "📊 Kanal ma'lumotlari:"
+msgstr "📊 Kanal ma'lumotlari:"
+
+msgid "🔴 Faolsiz qilish"
+msgstr "🔴 Faolsiz qilish"
+
+msgid "🟢 Faollashtirish"
+msgstr "🟢 Faollashtirish"
+
+msgid "📱 Postni ko'rish"
+msgstr "📱 Postni ko'rish"
+
+msgid "🚀 Postni chiqarish"
+msgstr "🚀 Postni chiqarish"
+
+msgid "🔄 Yangilash"
+msgstr "🔄 Yangilash"
+
+msgid "🖼 Rasmni o'zgartirish"
+msgstr "🖼 Rasmni o'zgartirish"
+
+msgid "📝 Matnni o'zgartirish"
+msgstr "📝 Matnni o'zgartirish"
+
+msgid "🖼 Yangi rasm yuboring yoki rasm linkini yuboring:"
+msgstr "🖼 Yangi rasm yuboring yoki rasm linkini yuboring:"
+
+msgid "📝 Yangi post matnini yuboring:"
+msgstr "📝 Yangi post matnini yuboring:"
+
+msgid "✅ Post {count} ta kanalga yuborildi."
+msgstr "✅ Post {count} ta kanalga yuborildi."

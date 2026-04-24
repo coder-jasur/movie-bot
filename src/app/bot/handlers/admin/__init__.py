@@ -3,6 +3,7 @@ from aiogram import Router, F
 from src.app.core.config import Settings
 from src.app.bot.dialog.admin import admin_main_dialog, add_movie_dialog, edit_movie_dialog, backup_dialog
 from src.app.bot.dialog.admin.referral import referral_dialog
+from src.app.bot.dialog.admin.auto_posting import auto_posting_dialog
 from src.app.bot.dialog.dialogs import op_management_dialog, channel_management_dialog, bot_management_dialog, add_channel_dialog, add_bot_dialog, add_url_dialog, url_management_dialog
 from src.app.bot.handlers.admin.commands import admin_commands_router
 from src.app.bot.handlers.admin.mandatory_subs import mandatory_subs_router
@@ -27,6 +28,7 @@ def register_admin_routers(router: Router, settings: Settings):
     admin_register_router.include_router(edit_movie_dialog)
     admin_register_router.include_router(referral_dialog)
     admin_register_router.include_router(backup_dialog)
+    admin_register_router.include_router(auto_posting_dialog)
     from src.app.bot.dialog.admin.vip_management import vip_management_dialog
     from src.app.bot.dialog.admin.admin_management import admin_management_dialog
     admin_register_router.include_router(vip_management_dialog)
