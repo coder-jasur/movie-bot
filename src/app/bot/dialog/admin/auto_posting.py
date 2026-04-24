@@ -108,14 +108,14 @@ auto_posting_dialog = Dialog(
     Window(
         Format(_("🆔 Kanal ID raqamini yuboring yoki kanaldan xabarni forward qiling:")),
         MessageInput(on_channel_id_input),
-        Back(Format(_("⬅️ Bekor qilish")), id="back"),
+        SwitchTo(Format(_("⬅️ Bekor qilish")), id="cancel_add", state=PostAutoPostingSG.menu),
         state=PostAutoPostingSG.add_channel,
     ),
     Window(
         Format(_("📊 <b>Kanal ma'lumotlari:</b>\n\n nomi: {channel.channel_name}\nID: <code>{channel.channel_id}</code>\nUsername: @{channel.channel_username}\nHolati: {channel.channel_status}")),
         Button(Format("{autopost_toggle_text}"), id="toggle_status", on_click=on_toggle_status),
         Button(Format("{delete_label}"), id="delete_channel", on_click=onDeleteChannel),
-        Back(Format("{back_label}"), id="back"),
+        SwitchTo(Format("{back_label}"), id="back_to_menu", state=PostAutoPostingSG.menu),
         state=PostAutoPostingSG.channel_info,
         getter=get_channel_info,
     ),
