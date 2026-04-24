@@ -53,6 +53,21 @@ from src.app.database.queries.movie.multi_films import (
 from src.app.database.queries.movie.series import SeriesActions
 from src.app.services.transcoder import Transcoder
 
+
+async def get_all_languages_for_code(session: AsyncSession, code: int):
+    from sqlalchemy import text
+    tables = ["feature_films", "series", "mini_series", "multi_film_features", "multi_film_series", "multi_film_mini_series"]
+    langs = set()
+    for table in tables:
+        try:
+            stmt = text(f"SELECT language FROM {table} WHERE code = :code")
+            result = await session.execute(stmt, {"code": code})
+            for row in result.all():
+                if row[0]: langs.add(row[0])
+        except:
+            pass
+    return list(langs)
+
 # ─────────────────────────────────────────────
 #  HELPERS
 # ─────────────────────────────────────────────
@@ -526,39 +541,115 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
         # Prefer UZ name, then RU, then first available
         movie_name = movie_name.get("uz") or movie_name.get("ru") or next(iter(movie_name.values()))
     
+    session = manager.middleware_data["session"]
+    all_langs = await get_all_languages_for_code(session, manager.dialog_data.get("code"))
+    # Add current language if not in list
+    curr_lang = manager.dialog_data.get("language")
+    if curr_lang and curr_lang not in all_langs:
+        all_langs.append(curr_lang)
+    manager.dialog_data["all_movie_langs"] = all_langs
+
     # Try to find on TMDB if not already fetched
     if not manager.dialog_data.get("post_caption"):
         tmdb_result = await tmdb.parse_movie(movie_name)
         if tmdb_result:
             manager.dialog_data["post_image"] = tmdb_result["preview"]
             manager.dialog_data["tmdb_data"] = tmdb_result["data"]
+            
+            # Use current language title if available
+            movie_name_dict = manager.dialog_data.get("name", {})
+            title_to_use = movie_name_dict.get("uz") or movie_name_dict.get("ru") or movie_name
+            
+            data_for_caption = tmdb_result["data"].copy()
+            data_for_caption['title'] = title_to_use
+
             manager.dialog_data["post_caption"] = tmdb.format_caption(
-                tmdb_result["data"],
+                data_for_caption,
                 code=manager.dialog_data.get("code"),
-                genres_str=get_post_hashtags(manager.dialog_data.get("genres", [])),
-                lang_str=get_language_display_text(manager.dialog_data.get("language")),
-                quality=manager.dialog_data.get("input_quality")
+                genres_str=get_post_hashtags(manager.dialog_data.get("genres", []), target_lang='uz'),
+                quality=manager.dialog_data.get("input_quality"),
+                all_langs=all_langs,
+                target_lang='uz'
             )
         else:
             # Fallback if not found
             manager.dialog_data["post_image"] = manager.dialog_data.get("thumbnail_file_id")
-            manager.dialog_data["post_caption"] = f"🎬 <b>Nomi:</b> {movie_name}\n\n💾 <b>KODI:</b> {manager.dialog_data.get('code')}"
+            manager.dialog_data["post_caption"] = f"🎬 <b>NOMI:</b> {movie_name}\n\n💾 <b>KODI:</b> {manager.dialog_data.get('code')}"
 
     await manager.switch_to(AddMovieWizardSG.post_preview)
 
-def get_post_hashtags(genres):
+async def on_post_lang_change(c: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
+    manager.dialog_data["post_target_lang"] = item_id
+    await on_refresh_post(c, widget, manager)
+
+def get_post_hashtags(genres, target_lang='uz'):
     if not genres: return ""
-    hashtag_map = {
-        "Драма": "Drama", "Комедия": "Komediya", "Боевик": "Jangari",
-        "Триллер": "Triller", "Ужасы": "Qorqinchli", "Фантастика": "Fantastika",
-        "Фэнтези": "Fentezi", "Мелодрама": "Melodrama", "Детектив": "Detektiv",
-        "Приключения": "Sarguzasht", "Семейный": "Oilaviy", "Мультфильм": "Multfilm",
-        "Исторический": "Tarixiy", "Документальный": "Hujjatli", "Военный": "Harbiy",
-        "Романтика": "Romantika", "Криминал": "Kriminal", "Спорт": "Sport",
-        "Биография": "Biografiya", "Вестерн": "Vestern", "Мюзикл": "Myuzikl",
-        "Психологический": "Psixologik", "Аниме": "Anime", "Короткометражка": "Kaltametrajli",
+    # Map from any source genre name to the target language name
+    translations = {
+        "uz": {
+            "Боевик": "Jangari", "Action": "Jangari", "Jangari": "Jangari",
+            "Драма": "Drama", "Drama": "Drama",
+            "Комедия": "Komediya", "Comedy": "Komediya", "Komediya": "Komediya",
+            "Триллер": "Triller", "Thriller": "Triller", "Triller": "Triller",
+            "Ужасы": "Qorqinchli", "Horror": "Qorqinchli", "Qorqinchli": "Qorqinchli",
+            "Фантастика": "Fantastika", "Science Fiction": "Fantastika", "Fantastika": "Fantastika",
+            "Фэнтези": "Fentezi", "Fantasy": "Fentezi", "Fentezi": "Fentezi",
+            "Мелодрама": "Melodrama", "Romance": "Romantika", "Melodrama": "Melodrama",
+            "Детектив": "Detektiv", "Mystery": "Detektiv", "Detektiv": "Detektiv",
+            "Приключения": "Sarguzasht", "Adventure": "Sarguzasht", "Sarguzasht": "Sarguzasht",
+            "Семейный": "Oilaviy", "Family": "Oilaviy", "Oilaviy": "Oilaviy",
+            "Мультфильм": "Multfilm", "Animation": "Multfilm", "Multfilm": "Multfilm",
+            "Исторический": "Tarixiy", "History": "Tarixiy", "Tarixiy": "Tarixiy",
+            "Документальный": "Hujjatli", "Documentary": "Hujjatli", "Hujjatli": "Hujjatli",
+            "Военный": "Harbiy", "War": "Harbiy", "Harbiy": "Harbiy",
+            "Криминал": "Kriminal", "Crime": "Kriminal", "Kriminal": "Kriminal",
+            "Биография": "Biografiya", "Biography": "Biografiya", "Biografiya": "Biografiya",
+            "Anime": "Anime", "Аниме": "Anime"
+        },
+        "ru": {
+            "Action": "Боевик", "Jangari": "Боевик", "Боевик": "Боевик",
+            "Drama": "Драма", "Драма": "Драма",
+            "Comedy": "Комедия", "Komediya": "Комедия", "Комедия": "Комедия",
+            "Thriller": "Триллер", "Triller": "Триллер", "Триллер": "Триллер",
+            "Horror": "Ужасы", "Qorqinchli": "Ужасы", "Ужасы": "Ужасы",
+            "Science Fiction": "Фантастика", "Fantastika": "Фантастика", "Фантастика": "Фантастика",
+            "Fantasy": "Фэнтези", "Fentezi": "Фэнтези", "Фэнтези": "Фэнтези",
+            "Romance": "Мелодрама", "Melodrama": "Мелодрама", "Мелодрама": "Мелодрама",
+            "Mystery": "Детектив", "Detektiv": "Детектив", "Детектив": "Детектив",
+            "Adventure": "Приключения", "Sarguzasht": "Приключения", "Приключения": "Приключения",
+            "Family": "Семейный", "Oilaviy": "Семейный", "Семейный": "Семейный",
+            "Animation": "Мультфильм", "Multfilm": "Мультфильм", "Мультфильм": "Мультфильм",
+            "History": "Исторический", "Tarixiy": "Исторический", "Исторический": "Исторический",
+            "Documentary": "Документальный", "Hujjatli": "Документальный", "Документальный": "Документальный",
+            "War": "Военный", "Harbiy": "Военный", "Военный": "Военный",
+            "Crime": "Криминал", "Kriminal": "Криминал", "Криминал": "Криминал",
+            "Biography": "Биография", "Biografiya": "Биография", "Биография": "Биография",
+            "Anime": "Аниме", "Аниме": "Аниме"
+        },
+        "en": {
+            "Боевик": "Action", "Jangari": "Action", "Action": "Action",
+            "Драма": "Drama", "Drama": "Drama",
+            "Комедия": "Comedy", "Komediya": "Comedy", "Comedy": "Comedy",
+            "Триллер": "Thriller", "Triller": "Thriller", "Thriller": "Thriller",
+            "Ужасы": "Horror", "Qorqinchli": "Horror", "Horror": "Horror",
+            "Фантастика": "Sci-Fi", "Fantastika": "Sci-Fi", "Sci-Fi": "Sci-Fi",
+            "Фэнтези": "Fantasy", "Fentezi": "Fantasy", "Fantasy": "Fantasy",
+            "Мелодрама": "Romance", "Melodrama": "Romance", "Romance": "Romance",
+            "Детектив": "Mystery", "Detektiv": "Mystery", "Mystery": "Mystery",
+            "Приключения": "Adventure", "Sarguzasht": "Adventure", "Adventure": "Adventure",
+            "Семейный": "Family", "Oilaviy": "Family", "Family": "Family",
+            "Мультфильм": "Animation", "Multfilm": "Animation", "Animation": "Animation",
+            "Исторический": "History", "Tarixiy": "History", "History": "History",
+            "Документальный": "Documentary", "Hujjatli": "Documentary", "Documentary": "Documentary",
+            "Военный": "War", "Harbiy": "War", "War": "War",
+            "Криминал": "Crime", "Kriminal": "Crime", "Crime": "Crime",
+            "Биография": "Biography", "Biografiya": "Biography", "Biography": "Biography",
+            "Аниме": "Anime", "Anime": "Anime"
+        }
     }
-    return " ".join([f"#{hashtag_map.get(g, g)}" for g in genres])
+    
+    lang_map = translations.get(target_lang, translations['uz'])
+    return " ".join([f"#{lang_map.get(g, g.replace(' ', ''))}" for g in genres])
 
 def get_language_display_text(lang_id):
     if not lang_id: return "N/A"
@@ -572,16 +663,26 @@ async def on_refresh_post(c: CallbackQuery, widget: Any, manager: DialogManager)
     tmdb = TMDBService(config.tmdb_api_key)
     tmdb_data = manager.dialog_data.get("tmdb_data", {})
     
-    movie_name = manager.dialog_data.get("name")
-    if isinstance(movie_name, dict):
-        movie_name = movie_name.get("uz") or movie_name.get("ru") or next(iter(movie_name.values()))
+    movie_name_dict = manager.dialog_data.get("name", {})
+    target_lang = manager.dialog_data.get("post_target_lang", "uz")
+    
+    # Get localized title from the name dictionary if possible
+    title_to_use = movie_name_dict.get(target_lang)
+    if not title_to_use:
+        # Fallback sequence
+        title_to_use = movie_name_dict.get("uz") or movie_name_dict.get("ru") or next(iter(movie_name_dict.values()), "N/A")
+
+    # Copy tmdb_data and override title with our localized version
+    data_for_caption = (tmdb_data or {}).copy()
+    data_for_caption['title'] = title_to_use
 
     manager.dialog_data["post_caption"] = tmdb.format_caption(
-        tmdb_data or {"title": movie_name},
+        data_for_caption,
         code=manager.dialog_data.get("code"),
-        genres_str=get_post_hashtags(manager.dialog_data.get("genres", [])),
-        lang_str=get_language_display_text(manager.dialog_data.get("language")),
-        quality=manager.dialog_data.get("input_quality")
+        genres_str=get_post_hashtags(manager.dialog_data.get("genres", []), target_lang=target_lang),
+        quality=manager.dialog_data.get("input_quality"),
+        all_langs=manager.dialog_data.get("all_movie_langs"),
+        target_lang=target_lang
     )
     await c.answer(str(_("✅ Post yangilandi")))
 
@@ -1937,7 +2038,16 @@ add_movie_dialog = Dialog(
             SwitchTo(Format(_("🖼 Rasmni o'zgartirish")), id="edit_img", state=AddMovieWizardSG.edit_post_image),
             SwitchTo(Format(_("📝 Matnni o'zgartirish")), id="edit_cap", state=AddMovieWizardSG.edit_post_caption),
         ),
-        SwitchTo(Format(_("🔙 Ortga")), id="back_to_confirm_post", state=AddMovieWizardSG.confirm),
+        Row(
+            Select(
+                Format("{item[1]}"),
+                id="post_lang",
+                items=[('uz', '🇺🇿 UZ'), ('ru', '🇷🇺 RU'), ('en', '🇺🇸 EN')],
+                item_id_getter=lambda x: x[0],
+                on_click=on_post_lang_change,
+            ),
+        ),
+        SwitchTo(Format(str(_("🔙 Ortga"))), id="back_to_confirm_post", state=AddMovieWizardSG.confirm),
         state=AddMovieWizardSG.post_preview,
         getter=get_post_preview_data,
     ),
