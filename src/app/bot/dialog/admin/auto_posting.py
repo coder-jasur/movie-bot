@@ -1,7 +1,7 @@
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Button, Cancel, Row, ScrollingGroup, Select, SwitchTo, Back
+from aiogram_dialog.widgets.kbd import Button, Cancel, Row, Group, Select, SwitchTo, Back
 from aiogram_dialog.widgets.text import Const, Format
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -89,7 +89,7 @@ async def onDeleteChannel(c: CallbackQuery, widget, manager: DialogManager):
 auto_posting_dialog = Dialog(
     Window(
         Format(_("📢 <b>Auto Posting Kanallari</b>\n\nJami: {count} ta")),
-        ScrollingGroup(
+        Group(
             Select(
                 Format("{item.channel_name}"),
                 id="s_channels",
@@ -99,7 +99,6 @@ auto_posting_dialog = Dialog(
             ),
             id="channels_group",
             width=1,
-            height=5,
         ),
         SwitchTo(Format("{add_channel_label}"), id="add_channel", state=PostAutoPostingSG.add_channel),
         Cancel(Format("{back_label}"), id="back"),
