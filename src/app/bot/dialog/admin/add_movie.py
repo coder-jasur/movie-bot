@@ -557,8 +557,11 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
             manager.dialog_data["tmdb_data"] = tmdb_result["data"]
             
             # Use current language title if available
-            movie_name_dict = manager.dialog_data.get("name", {})
-            title_to_use = movie_name_dict.get("uz") or movie_name_dict.get("ru") or movie_name
+            movie_name_data = manager.dialog_data.get("name", {})
+            if isinstance(movie_name_data, dict):
+                title_to_use = movie_name_data.get("uz") or movie_name_data.get("ru") or movie_name
+            else:
+                title_to_use = movie_name_data or movie_name
             
             data_for_caption = tmdb_result["data"].copy()
             data_for_caption['title'] = title_to_use
@@ -663,14 +666,17 @@ async def on_refresh_post(c: CallbackQuery, widget: Any, manager: DialogManager)
     tmdb = TMDBService(config.tmdb_api_key)
     tmdb_data = manager.dialog_data.get("tmdb_data", {})
     
-    movie_name_dict = manager.dialog_data.get("name", {})
+    movie_name_data = manager.dialog_data.get("name", {})
     target_lang = manager.dialog_data.get("post_target_lang", "uz")
     
-    # Get localized title from the name dictionary if possible
-    title_to_use = movie_name_dict.get(target_lang)
-    if not title_to_use:
-        # Fallback sequence
-        title_to_use = movie_name_dict.get("uz") or movie_name_dict.get("ru") or next(iter(movie_name_dict.values()), "N/A")
+    # Get localized title from the name dictionary if it is a dict
+    if isinstance(movie_name_data, dict):
+        title_to_use = movie_name_data.get(target_lang)
+        if not title_to_use:
+            # Fallback sequence
+            title_to_use = movie_name_data.get("uz") or movie_name_data.get("ru") or next(iter(movie_name_data.values()), "N/A")
+    else:
+        title_to_use = movie_name_data or "N/A"
 
     # Copy tmdb_data and override title with our localized version
     data_for_caption = (tmdb_data or {}).copy()
