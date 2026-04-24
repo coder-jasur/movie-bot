@@ -96,7 +96,7 @@ class TMDBService:
                 "code_label": f"{E['code']} <b>KINO KODI:</b>",
                 "watch": f"{E['imdb']} <b>KINO KO'RISH UCHUN:</b>",
                 "send_code": f"👉 <b>KODNI YUBORING:</b>",
-                "attention": f"{E['attention']} <b>DIQQAT! Kinoni ko'rish uchun @MovieNetBot ga kiring va «<b>{code}</b>» kodini yuboring!</b>",
+                "attention": f"{E['attention']} <b>DIQQAT! Kinoni ko'rish uchun @MovieNetBot ga kiring va «<code>{code}</code>» kodini yuboring!</b>",
             },
             "ru": {
                 "name": f"{E['name']} <b>НАЗВАНИЕ:</b>",
@@ -109,7 +109,7 @@ class TMDBService:
                 "code_label": f"{E['code']} <b>КОД КИНО:</b>",
                 "watch": f"{E['imdb']} <b>СМОТРЕТЬ КИНО:</b>",
                 "send_code": f"👉 <b>ОТПРАВЬТЕ КОД:</b>",
-                "attention": f"{E['attention']} <b>ВНИМАНИЕ! Чтобы посмотреть фильм, зайдите в @MovieNetBot и отправьте код «<b>{code}</b>»!</b>",
+                "attention": f"{E['attention']} <b>ВНИМАНИЕ! Чтобы посмотреть фильм, зайдите в @MovieNetBot и отправьте код «<code>{code}</code>»!</b>",
             },
             "en": {
                 "name": f"{E['name']} <b>NAME:</b>",
@@ -122,7 +122,7 @@ class TMDBService:
                 "code_label": f"{E['code']} <b>MOVIE CODE:</b>",
                 "watch": f"{E['imdb']} <b>TO WATCH MOVIE:</b>",
                 "send_code": f"👉 <b>SEND CODE:</b>",
-                "attention": f"{E['attention']} <b>ATTENTION! To watch the movie, go to @MovieNetBot and send the code «<b>{code}</b>»!</b>",
+                "attention": f"{E['attention']} <b>ATTENTION! To watch the movie, go to @MovieNetBot and send the code «<code>{code}</code>»!</b>",
             },
         }
 
@@ -191,8 +191,6 @@ class TMDBService:
                 "India": f'Индия {F["in"]}',
                 "China": f'Китай {F["cn"]}',
                 "Japan": f"Япония 🇯🇵",
-                "South Korea": f'Южная Корея {F["kr"]}',
-                "Italy": f"Италия 🇮🇹",
                 "Spain": f"Испания 🇪🇸",
                 "Canada": f'Канада {F["ca"]}',
                 "Australia": f"Австралия 🇦🇺",
@@ -242,7 +240,7 @@ class TMDBService:
 {L['lang']} <b>{langs}</b>
 {L['genre']} <b>{genres}</b>
 
-{L['code_label']} <b>{code or '????'}</b>
+{L['code_label']} <code>{code or '????'}</code>
 
 {L['attention'].format(code=code or '????')}
 """.strip()

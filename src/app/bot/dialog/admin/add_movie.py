@@ -607,7 +607,8 @@ def get_post_hashtags(genres, target_lang='uz'):
             "Военный": "Harbiy", "War": "Harbiy", "Harbiy": "Harbiy",
             "Криминал": "Kriminal", "Crime": "Kriminal", "Kriminal": "Kriminal",
             "Биография": "Biografiya", "Biography": "Biografiya", "Biografiya": "Biografiya",
-            "Anime": "Anime", "Аниме": "Anime"
+            "Anime": "Anime", "Аниме": "Anime",
+            "Psychological": "Psixologik", "Психологический": "Psixologik", "Psixologik": "Psixologik"
         },
         "ru": {
             "Action": "Боевик", "Jangari": "Боевик", "Боевик": "Боевик",
@@ -627,7 +628,8 @@ def get_post_hashtags(genres, target_lang='uz'):
             "War": "Военный", "Harbiy": "Военный", "Военный": "Военный",
             "Crime": "Криминал", "Kriminal": "Криминал", "Криминал": "Криминал",
             "Biography": "Биография", "Biografiya": "Биография", "Биография": "Биография",
-            "Anime": "Аниме", "Аниме": "Аниме"
+            "Anime": "Аниме", "Аниме": "Аниме",
+            "Psychological": "Психологический", "Psixologik": "Психологический", "Психологический": "Психологический"
         },
         "en": {
             "Боевик": "Action", "Jangari": "Action", "Action": "Action",
@@ -647,7 +649,8 @@ def get_post_hashtags(genres, target_lang='uz'):
             "Военный": "War", "Harbiy": "War", "War": "War",
             "Криминал": "Crime", "Kriminal": "Crime", "Crime": "Crime",
             "Биография": "Biography", "Biografiya": "Biography", "Biography": "Biography",
-            "Аниме": "Anime", "Anime": "Anime"
+            "Аниме": "Anime", "Anime": "Anime",
+            "Психологический": "Psychological", "Psixologik": "Psychological", "Psychological": "Psychological"
         }
     }
     
