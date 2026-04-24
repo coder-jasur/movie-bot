@@ -74,11 +74,11 @@ class TMDBService:
             "name": '<tg-emoji emoji-id="5375464961822695044">🎬</tg-emoji>',
             "year": '<tg-emoji emoji-id="5431897022456145283">📆</tg-emoji>',
             "quality": '<tg-emoji emoji-id="5375309569905938163">📹</tg-emoji>',
-            "imdb": '<tg-emoji emoji-id="5472238215748397135">🌟</tg-emoji>',
+            "imdb": '<tg-emoji emoji-id="5346242859039209592">🌟</tg-emoji>',
             "country": '<tg-emoji emoji-id="5314361729117855941">🌍</tg-emoji>',
             "lang": '<tg-emoji emoji-id="5447410659077661506">🌐</tg-emoji>',
             "genre": '<tg-emoji emoji-id="5359441070201513074">🎭</tg-emoji>',
-            "code": '<tg-emoji emoji-id="5375464961822695044">🔢</tg-emoji>',
+            "code": '<tg-emoji emoji-id="5472238215748397135">🔢</tg-emoji>',
             "watch": '<tg-emoji emoji-id="5346242859039209592">📱</tg-emoji>',
             "attention": '<tg-emoji emoji-id="5440660757194744323">‼️</tg-emoji>',
         }
