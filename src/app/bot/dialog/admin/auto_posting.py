@@ -15,7 +15,9 @@ async def get_post_channels(dialog_manager: DialogManager, **kwargs):
     channels = await actions.get_all_post_channels()
     return {
         "channels": channels,
-        "count": len(channels)
+        "count": len(channels),
+        "add_channel_label": _("➕ Kanal qo'shish"),
+        "back_label": _("⬅️ Orqaga")
     }
 
 async def on_channel_id_input(m: Message, widget, manager: DialogManager):
@@ -66,7 +68,9 @@ async def get_channel_info(dialog_manager: DialogManager, **kwargs):
     is_active = channel.channel_status == "active"
     return {
         "channel": channel,
-        "autopost_toggle_text": _("📢 Avtoposting: ✅") if is_active else _("📢 Avtoposting: ❌")
+        "autopost_toggle_text": _("📢 Avtoposting: ✅") if is_active else _("📢 Avtoposting: ❌"),
+        "delete_label": _("🗑 O'chirish"),
+        "back_label": _("⬅️ Orqaga")
     }
 
 async def on_toggle_status(c: CallbackQuery, widget, manager: DialogManager):
@@ -97,22 +101,22 @@ auto_posting_dialog = Dialog(
             width=1,
             height=5,
         ),
-        SwitchTo(Const(_("➕ Kanal qo'shish")), id="add_channel", state=PostAutoPostingSG.add_channel),
-        Cancel(Const(_("⬅️ Orqaga")), id="back"),
+        SwitchTo(Format("{add_channel_label}"), id="add_channel", state=PostAutoPostingSG.add_channel),
+        Cancel(Format("{back_label}"), id="back"),
         state=PostAutoPostingSG.menu,
         getter=get_post_channels,
     ),
     Window(
-        Const(_("🆔 Kanal ID raqamini yuboring yoki kanaldan xabarni forward qiling:")),
+        Format(_("🆔 Kanal ID raqamini yuboring yoki kanaldan xabarni forward qiling:")),
         MessageInput(on_channel_id_input),
-        Back(Const(_("⬅️ Bekor qilish")), id="back"),
+        Back(Format(_("⬅️ Bekor qilish")), id="back"),
         state=PostAutoPostingSG.add_channel,
     ),
     Window(
         Format(_("📊 <b>Kanal ma'lumotlari:</b>\n\n nomi: {channel.channel_name}\nID: <code>{channel.channel_id}</code>\nUsername: @{channel.channel_username}\nHolati: {channel.channel_status}")),
         Button(Format("{autopost_toggle_text}"), id="toggle_status", on_click=on_toggle_status),
-        Button(Const(_("🗑 O'chirish")), id="delete_channel", on_click=onDeleteChannel),
-        Back(Const(_("⬅️ Orqaga")), id="back"),
+        Button(Format("{delete_label}"), id="delete_channel", on_click=onDeleteChannel),
+        Back(Format("{back_label}"), id="back"),
         state=PostAutoPostingSG.channel_info,
         getter=get_channel_info,
     ),
