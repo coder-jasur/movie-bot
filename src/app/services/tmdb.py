@@ -81,9 +81,9 @@ class TMDBService:
                 'lang': f"{E['lang']} <b>TILI:</b>",
                 'genre': f"{E['genre']} <b>JANRI:</b>",
                 'code_label': f"{E['code']} <b>KINO KODI:</b>",
-                'watch': f"{E['watch']} <b>KINO KO'RISH UCHUN:</b>",
+                'watch': f"{E['imdb']} <b>KINO KO'RISH UCHUN:</b>",
                 'send_code': f"👉 <b>KODNI YUBORING:</b>",
-                'attention': f"{E['attention']} <b>DIQQAT! Kinoni ko'rish uchun @MovieNetBot ga kiring va «<code>{code}</code>» kodini yuboring!</b>"
+                'attention': f"{E['attention']} <b>DIQQAT! Kinoni ko'rish uchun @MovieNetBot ga kiring va «<b>{code}</b>» kodini yuboring!</b>"
             },
             'ru': {
                 'name': f"{E['name']} <b>НАЗВАНИЕ:</b>",
@@ -94,9 +94,9 @@ class TMDBService:
                 'lang': f"{E['lang']} <b>ЯЗЫК:</b>",
                 'genre': f"{E['genre']} <b>ЖАНР:</b>",
                 'code_label': f"{E['code']} <b>КОД КИНО:</b>",
-                'watch': f"{E['watch']} <b>СМОТРЕТЬ КИНО:</b>",
+                'watch': f"{E['imdb']} <b>СМОТРЕТЬ КИНО:</b>",
                 'send_code': f"👉 <b>ОТПРАВЬТЕ КОД:</b>",
-                'attention': f"{E['attention']} <b>ВНИМАНИЕ! Чтобы посмотреть фильм, зайдите в @MovieNetBot и отправьте код «<code>{code}</code>»!</b>"
+                'attention': f"{E['attention']} <b>ВНИМАНИЕ! Чтобы посмотреть фильм, зайдите в @MovieNetBot и отправьте код «<b>{code}</b>»!</b>"
             },
             'en': {
                 'name': f"{E['name']} <b>NAME:</b>",
@@ -107,9 +107,9 @@ class TMDBService:
                 'lang': f"{E['lang']} <b>LANGUAGE:</b>",
                 'genre': f"{E['genre']} <b>GENRE:</b>",
                 'code_label': f"{E['code']} <b>MOVIE CODE:</b>",
-                'watch': f"{E['watch']} <b>TO WATCH MOVIE:</b>",
+                'watch': f"{E['imdb']} <b>TO WATCH MOVIE:</b>",
                 'send_code': f"👉 <b>SEND CODE:</b>",
-                'attention': f"{E['attention']} <b>ATTENTION! To watch the movie, go to @MovieNetBot and send the code «<code>{code}</code>»!</b>"
+                'attention': f"{E['attention']} <b>ATTENTION! To watch the movie, go to @MovieNetBot and send the code «<b>{code}</b>»!</b>"
             }
         }
 
@@ -192,7 +192,7 @@ class TMDBService:
         caption = f"""
 {L['name']} <b>{title.upper()} ({year})</b>
 
-{L['code_label']} <code>{code or '????'}</code>
+{L['code_label']} <b>{code or '????'}</b>
 {L['quality']} <b>{quality or '720p'}</b>
 {L['imdb']} <b>{imdb}/10</b>
 {L['country']} <b>{countries}</b>
@@ -200,7 +200,7 @@ class TMDBService:
 {L['genre']} <b>{genres}</b>
 
 {L['watch']} @MovieNetBot
-{L['send_code']} <code>{code or '????'}</code>
+{L['send_code']} <b>{code or '????'}</b>
 
 {L['attention'].format(code=code or '????')}
 """.strip()
