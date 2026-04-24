@@ -47,18 +47,23 @@ class TMDBService:
 
     def get_best_preview(self, data):
         images = data.get("images", {})
-        # Prefer posters (vertical) as requested
+        # Prefer backdrops (horizontal) as requested now
+        backdrops = images.get("backdrops", [])
+        if backdrops:
+            best = max(backdrops, key=lambda x: x["width"])
+            return f"https://image.tmdb.org/t/p/original{best['file_path']}"
+
         posters = images.get("posters", [])
         if posters:
             # Sort by width to get highest quality
             best = max(posters, key=lambda x: x["width"])
             return f"https://image.tmdb.org/t/p/original{best['file_path']}"
-        
-        backdrops = images.get("backdrops", [])
-        if backdrops:
-            best = max(backdrops, key=lambda x: x["width"])
-            return f"https://image.tmdb.org/t/p/original{best['file_path']}"
         return None
+
+    def get_all_backdrops(self, data):
+        images = data.get("images", {})
+        backdrops = images.get("backdrops", [])
+        return [f"https://image.tmdb.org/t/p/original{p['file_path']}" for p in backdrops]
 
     def get_all_posters(self, data):
         images = data.get("images", {})

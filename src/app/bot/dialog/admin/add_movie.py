@@ -549,60 +549,77 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
         all_langs.append(curr_lang)
     manager.dialog_data["all_movie_langs"] = all_langs
 
-    # Try to find on TMDB if not already fetched
-    if not manager.dialog_data.get("post_caption"):
-        tmdb_result = await tmdb.parse_movie(movie_name)
-        if tmdb_result:
-            manager.dialog_data["tmdb_data"] = tmdb_result["data"]
-            manager.dialog_data["tmdb_id"] = tmdb_result["tmdb_id"]
-            
-            # Fetch all posters
-            posters = tmdb.get_all_posters(tmdb_result["data"])
-            manager.dialog_data["all_posters"] = posters
+    # Always Refresh caption and images to sync with possible wizard edits
+    tmdb_result = await tmdb.parse_movie(movie_name)
+    if tmdb_result:
+        manager.dialog_data["tmdb_data"] = tmdb_result["data"]
+        manager.dialog_data["tmdb_id"] = tmdb_result["tmdb_id"]
+        
+        # Fetch all backdrops (horizontal)
+        images = tmdb.get_all_backdrops(tmdb_result["data"])
+        manager.dialog_data["all_posters"] = images
+        # Only reset index if images changed or not set
+        if manager.dialog_data.get("post_image") not in images:
             manager.dialog_data["poster_index"] = 0
-            if posters:
-                manager.dialog_data["post_image"] = posters[0]
+            if images:
+                manager.dialog_data["post_image"] = images[0]
             else:
                 manager.dialog_data["post_image"] = tmdb_result["preview"]
 
-            # Use current language title if available
-            movie_name_data = manager.dialog_data.get("name", {})
-            if isinstance(movie_name_data, dict):
-                title_to_use = movie_name_data.get("uz") or movie_name_data.get("ru") or movie_name
-            else:
-                title_to_use = movie_name_data or movie_name
-            
-            data_for_caption = tmdb_result["data"].copy()
-            data_for_caption['title'] = title_to_use
-
-            manager.dialog_data["post_caption"] = tmdb.format_caption(
-                data_for_caption,
-                code=manager.dialog_data.get("code"),
-                genres_str=get_post_hashtags(manager.dialog_data.get("genres", []), target_lang='uz'),
-                quality=manager.dialog_data.get("input_quality"),
-                all_langs=all_langs,
-                target_lang='uz'
-            )
+        # Use current target language for initial caption
+        target_lang = manager.dialog_data.get("post_target_lang", "uz")
+        
+        # Get localized title
+        movie_name_data = manager.dialog_data.get("name", {})
+        if isinstance(movie_name_data, dict):
+            title_to_use = movie_name_data.get(target_lang)
+            if not title_to_use:
+                tmdb_title = await tmdb.get_localized_title(tmdb_result["tmdb_id"], target_lang)
+                title_to_use = tmdb_title or movie_name_data.get("uz") or movie_name
         else:
-            # Fallback if not found
-            manager.dialog_data["all_posters"] = []
-            manager.dialog_data["poster_index"] = 0
-            manager.dialog_data["post_image"] = manager.dialog_data.get("thumbnail_file_id")
-            manager.dialog_data["post_caption"] = f"🎬 <b>NOMI:</b> {movie_name}\n\n💾 <b>KODI:</b> {manager.dialog_data.get('code')}"
+            title_to_use = movie_name_data or movie_name
+        
+        data_for_caption = tmdb_result["data"].copy()
+        data_for_caption['title'] = title_to_use
+
+        manager.dialog_data["post_caption"] = tmdb.format_caption(
+            data_for_caption,
+            code=manager.dialog_data.get("code"),
+            genres_str=get_post_hashtags(manager.dialog_data.get("genres", []), target_lang=target_lang),
+            quality=manager.dialog_data.get("input_quality"),
+            all_langs=all_langs,
+            target_lang=target_lang
+        )
+    else:
+        # Fallback if not found
+        manager.dialog_data["all_posters"] = []
+        manager.dialog_data["poster_index"] = 0
+        manager.dialog_data["post_image"] = manager.dialog_data.get("thumbnail_file_id")
+        manager.dialog_data["post_caption"] = f"🎬 <b>NOMI:</b> {movie_name}\n\n💾 <b>KODI:</b> {manager.dialog_data.get('code')}"
 
     await manager.switch_to(AddMovieWizardSG.post_preview)
 
+async def on_prev_poster(c: CallbackQuery, widget: Any, manager: DialogManager):
+    images = manager.dialog_data.get("all_posters", [])
+    if not images: return
+    
+    current_idx = manager.dialog_data.get("poster_index", 0)
+    new_idx = (current_idx - 1) % len(images)
+    manager.dialog_data["poster_index"] = new_idx
+    manager.dialog_data["post_image"] = images[new_idx]
+    await c.answer(str(_("🖼 Oldingi rasm ({idx}/{total})")).format(idx=new_idx+1, total=len(images)))
+
 async def on_next_poster(c: CallbackQuery, widget: Any, manager: DialogManager):
-    posters = manager.dialog_data.get("all_posters", [])
-    if not posters:
-        await c.answer(str(_("❌ Posterlar topilmadi")))
+    images = manager.dialog_data.get("all_posters", [])
+    if not images:
+        await c.answer(str(_("❌ Rasmlar topilmadi")))
         return
     
     current_idx = manager.dialog_data.get("poster_index", 0)
-    new_idx = (current_idx + 1) % len(posters)
+    new_idx = (current_idx + 1) % len(images)
     manager.dialog_data["poster_index"] = new_idx
-    manager.dialog_data["post_image"] = posters[new_idx]
-    await c.answer(str(_("🖼 Keyingi poster ({idx}/{total})")).format(idx=new_idx+1, total=len(posters)))
+    manager.dialog_data["post_image"] = images[new_idx]
+    await c.answer(str(_("🖼 Keyingi rasm ({idx}/{total})")).format(idx=new_idx+1, total=len(images)))
 
 async def on_post_lang_change(c: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
     manager.dialog_data["post_target_lang"] = item_id
@@ -631,7 +648,11 @@ def get_post_hashtags(genres, target_lang='uz'):
             "Криминал": "Kriminal", "Crime": "Kriminal", "Kriminal": "Kriminal",
             "Биография": "Biografiya", "Biography": "Biografiya", "Biografiya": "Biografiya",
             "Anime": "Anime", "Аниме": "Anime",
-            "Psychological": "Psixologik", "Психологический": "Psixologik", "Psixologik": "Psixologik"
+            "Psychological": "Psixologik", "Психологический": "Psixologik", "Psixologik": "Psixologik",
+            "Short": "Qisqa metrajli", "Короткометражка": "Qisqa metrajli",
+            "Musical": "Myuzikl", "Мюзикл": "Myuzikl",
+            "Western": "Vestern", "Вестерн": "Vestern",
+            "TV Movie": "Televizion film", "Телевизионный фильм": "Televizion film"
         },
         "ru": {
             "Action": "Боевик", "Jangari": "Боевик", "Боевик": "Боевик",
@@ -652,7 +673,11 @@ def get_post_hashtags(genres, target_lang='uz'):
             "Crime": "Криминал", "Kriminal": "Криминал", "Криминал": "Криминал",
             "Biography": "Биография", "Biografiya": "Биография", "Биография": "Биография",
             "Anime": "Аниме", "Аниме": "Аниме",
-            "Psychological": "Психологический", "Psixologik": "Психологический", "Психологический": "Психологический"
+            "Psychological": "Психологический", "Psixologik": "Психологический", "Психологический": "Психологический",
+            "Short": "Короткометражка", "Qisqa metrajli": "Короткометражка",
+            "Musical": "Мюзикл", "Myuzikl": "Мюзикл",
+            "Western": "Вестерн", "Vestern": "Вестерн",
+            "TV Movie": "Телевизионный фильм", "Televizion film": "Телевизионный фильм"
         },
         "en": {
             "Боевик": "Action", "Jangari": "Action", "Action": "Action",
@@ -673,7 +698,11 @@ def get_post_hashtags(genres, target_lang='uz'):
             "Криминал": "Crime", "Kriminal": "Crime", "Crime": "Crime",
             "Биография": "Biography", "Biografiya": "Biography", "Biography": "Biography",
             "Аниме": "Anime", "Anime": "Anime",
-            "Психологический": "Psychological", "Psixologik": "Psychological", "Psychological": "Psychological"
+            "Психологический": "Psychological", "Psixologik": "Psychological", "Psychological": "Psychological",
+            "Короткометражка": "Short", "Qisqa metrajli": "Short",
+            "Мюзикл": "Musical", "Myuzikl": "Musical",
+            "Вестерн": "Western", "Vestern": "Western",
+            "Телевизионный фильм": "TV Movie", "Televizion film": "TV Movie"
         }
     }
     
@@ -780,6 +809,10 @@ async def get_post_preview_data(dialog_manager: DialogManager, **kwargs):
             media = MediaAttachment(ContentType.PHOTO, file_id=MediaId(image))
         
     target_lang = dialog_manager.dialog_data.get("post_target_lang", "uz")
+    images = dialog_manager.dialog_data.get("all_posters", [])
+    current_idx = dialog_manager.dialog_data.get("poster_index", 0)
+    total = len(images)
+    
     return {
         "media": media,
         "caption": caption or "No caption",
@@ -789,7 +822,11 @@ async def get_post_preview_data(dialog_manager: DialogManager, **kwargs):
         "cap_edit_label": "📝 Matnni o'zgartirish" if target_lang == "uz" else "📝 Изменить текст" if target_lang == "ru" else "📝 Change text",
         "publish_label": "🚀 Postni chiqarish" if target_lang == "uz" else "🚀 Опубликовать пост" if target_lang == "ru" else "🚀 Publish post",
         "refresh_label": "🔄 Yangilash" if target_lang == "uz" else "🔄 Обновить" if target_lang == "ru" else "🔄 Refresh",
-        "next_img_label": "🖼 Boshqa poster" if target_lang == "uz" else "🖼 Другой постер" if target_lang == "ru" else "🖼 Other poster",
+        "next_label": "▶️",
+        "prev_label": "◀️",
+        "counter": f"{current_idx + 1}/{total}" if total > 0 else "0/0",
+        "has_next": total > 1 and current_idx < total - 1,
+        "has_prev": total > 1 and current_idx > 0,
         "img_prompt": "🖼 Yangi rasm yuboring yoki rasm linkini yuboring:" if target_lang == "uz" else "🖼 Отправьте новое фото или ссылку на него:" if target_lang == "ru" else "🖼 Send new image or image URL:",
         "cap_prompt": "📝 Yangi post matnini yuboring:" if target_lang == "uz" else "📝 Отправьте новый текст поста:" if target_lang == "ru" else "📝 Send new post text:"
     }
@@ -2089,14 +2126,18 @@ add_movie_dialog = Dialog(
             Button(Format("{refresh_label}"), id="refresh", on_click=on_refresh_post),
         ),
         Row(
-            Button(Format("{next_img_label}"), id="next_img", on_click=on_next_poster),
-            SwitchTo(Format("{img_edit_label}"), id="edit_img", state=AddMovieWizardSG.edit_post_image),
+            Button(Format("{prev_label}"), id="prev_img", on_click=on_prev_poster, when="has_prev"),
+            Button(Format("{counter}"), id="counter_img"),
+            Button(Format("{next_label}"), id="next_img", on_click=on_next_poster, when="has_next"),
         ),
         Row(
+            SwitchTo(Format("{img_edit_label}"), id="edit_img", state=AddMovieWizardSG.edit_post_image),
             SwitchTo(Format("{cap_edit_label}"), id="edit_cap", state=AddMovieWizardSG.edit_post_caption),
-            SwitchTo(Format("{lang_select_label}"), id="go_to_lang", state=AddMovieWizardSG.post_lang_menu),
         ),
-        SwitchTo(Format("{back_label}"), id="back_to_confirm_post", state=AddMovieWizardSG.confirm),
+        Row(
+            SwitchTo(Format("{lang_select_label}"), id="go_to_lang", state=AddMovieWizardSG.post_lang_menu),
+            SwitchTo(Format("{back_label}"), id="back_to_confirm_post", state=AddMovieWizardSG.confirm),
+        ),
         state=AddMovieWizardSG.post_preview,
         getter=get_post_preview_data,
     ),
