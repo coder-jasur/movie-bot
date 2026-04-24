@@ -553,9 +553,18 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
     if not manager.dialog_data.get("post_caption"):
         tmdb_result = await tmdb.parse_movie(movie_name)
         if tmdb_result:
-            manager.dialog_data["post_image"] = tmdb_result["preview"]
             manager.dialog_data["tmdb_data"] = tmdb_result["data"]
+            manager.dialog_data["tmdb_id"] = tmdb_result["tmdb_id"]
             
+            # Fetch all posters
+            posters = tmdb.get_all_posters(tmdb_result["data"])
+            manager.dialog_data["all_posters"] = posters
+            manager.dialog_data["poster_index"] = 0
+            if posters:
+                manager.dialog_data["post_image"] = posters[0]
+            else:
+                manager.dialog_data["post_image"] = tmdb_result["preview"]
+
             # Use current language title if available
             movie_name_data = manager.dialog_data.get("name", {})
             if isinstance(movie_name_data, dict):
@@ -576,10 +585,24 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
             )
         else:
             # Fallback if not found
+            manager.dialog_data["all_posters"] = []
+            manager.dialog_data["poster_index"] = 0
             manager.dialog_data["post_image"] = manager.dialog_data.get("thumbnail_file_id")
             manager.dialog_data["post_caption"] = f"🎬 <b>NOMI:</b> {movie_name}\n\n💾 <b>KODI:</b> {manager.dialog_data.get('code')}"
 
     await manager.switch_to(AddMovieWizardSG.post_preview)
+
+async def on_next_poster(c: CallbackQuery, widget: Any, manager: DialogManager):
+    posters = manager.dialog_data.get("all_posters", [])
+    if not posters:
+        await c.answer(str(_("❌ Posterlar topilmadi")))
+        return
+    
+    current_idx = manager.dialog_data.get("poster_index", 0)
+    new_idx = (current_idx + 1) % len(posters)
+    manager.dialog_data["poster_index"] = new_idx
+    manager.dialog_data["post_image"] = posters[new_idx]
+    await c.answer(str(_("🖼 Keyingi poster ({idx}/{total})")).format(idx=new_idx+1, total=len(posters)))
 
 async def on_post_lang_change(c: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
     manager.dialog_data["post_target_lang"] = item_id
@@ -766,6 +789,7 @@ async def get_post_preview_data(dialog_manager: DialogManager, **kwargs):
         "cap_edit_label": "📝 Matnni o'zgartirish" if target_lang == "uz" else "📝 Изменить текст" if target_lang == "ru" else "📝 Change text",
         "publish_label": "🚀 Postni chiqarish" if target_lang == "uz" else "🚀 Опубликовать пост" if target_lang == "ru" else "🚀 Publish post",
         "refresh_label": "🔄 Yangilash" if target_lang == "uz" else "🔄 Обновить" if target_lang == "ru" else "🔄 Refresh",
+        "next_img_label": "🖼 Boshqa poster" if target_lang == "uz" else "🖼 Другой постер" if target_lang == "ru" else "🖼 Other poster",
         "img_prompt": "🖼 Yangi rasm yuboring yoki rasm linkini yuboring:" if target_lang == "uz" else "🖼 Отправьте новое фото или ссылку на него:" if target_lang == "ru" else "🖼 Send new image or image URL:",
         "cap_prompt": "📝 Yangi post matnini yuboring:" if target_lang == "uz" else "📝 Отправьте новый текст поста:" if target_lang == "ru" else "📝 Send new post text:"
     }
@@ -2065,10 +2089,11 @@ add_movie_dialog = Dialog(
             Button(Format("{refresh_label}"), id="refresh", on_click=on_refresh_post),
         ),
         Row(
+            Button(Format("{next_img_label}"), id="next_img", on_click=on_next_poster),
             SwitchTo(Format("{img_edit_label}"), id="edit_img", state=AddMovieWizardSG.edit_post_image),
-            SwitchTo(Format("{cap_edit_label}"), id="edit_cap", state=AddMovieWizardSG.edit_post_caption),
         ),
         Row(
+            SwitchTo(Format("{cap_edit_label}"), id="edit_cap", state=AddMovieWizardSG.edit_post_caption),
             SwitchTo(Format("{lang_select_label}"), id="go_to_lang", state=AddMovieWizardSG.post_lang_menu),
         ),
         SwitchTo(Format("{back_label}"), id="back_to_confirm_post", state=AddMovieWizardSG.confirm),
