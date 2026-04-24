@@ -652,7 +652,7 @@ def get_post_hashtags(genres, target_lang='uz'):
     }
     
     lang_map = translations.get(target_lang, translations['uz'])
-    return " ".join([f"#{lang_map.get(g, g.replace(' ', ''))}" for g in genres])
+    return " ".join([f"{lang_map.get(g, g.replace(' ', ''))}" for g in genres])
 
 def get_language_display_text(lang_id):
     if not lang_id: return "N/A"
@@ -673,8 +673,20 @@ async def on_refresh_post(c: CallbackQuery, widget: Any, manager: DialogManager)
     if isinstance(movie_name_data, dict):
         title_to_use = movie_name_data.get(target_lang)
         if not title_to_use:
-            # Fallback sequence
-            title_to_use = movie_name_data.get("uz") or movie_name_data.get("ru") or next(iter(movie_name_data.values()), "N/A")
+            # Try to fetch from TMDB if tmdb_id is available and target_lang is not UZ
+            tmdb_id = manager.dialog_data.get("tmdb_id")
+            if tmdb_id:
+                # Map internal lang codes to TMDB lang codes
+                tmdb_lang_map = {"uz": "uz-UZ", "ru": "ru-RU", "en": "en-US"}
+                tmdb_title = await tmdb.get_localized_title(tmdb_id, tmdb_lang_map.get(target_lang, "en-US"))
+                if tmdb_title:
+                    title_to_use = tmdb_title
+                    # Save it to name_data for future use
+                    movie_name_data[target_lang] = tmdb_title
+            
+            if not title_to_use:
+                # Final fallback sequence
+                title_to_use = movie_name_data.get("uz") or movie_name_data.get("ru") or next(iter(movie_name_data.values()), "N/A")
     else:
         title_to_use = movie_name_data or "N/A"
 
@@ -741,9 +753,18 @@ async def get_post_preview_data(dialog_manager: DialogManager, **kwargs):
         else:
             media = MediaAttachment(ContentType.PHOTO, file_id=MediaId(image))
         
+    target_lang = dialog_manager.dialog_data.get("post_target_lang", "uz")
     return {
         "media": media,
-        "caption": caption or "No caption"
+        "caption": caption or "No caption",
+        "lang_select_label": "🌍 Tilni almashtirish" if target_lang == "uz" else "🌍 Сменить язык" if target_lang == "ru" else "🌍 Change language",
+        "back_label": "🔙 Ortga" if target_lang == "uz" else "🔙 Назад" if target_lang == "ru" else "🔙 Back",
+        "img_edit_label": "🖼 Rasmni o'zgartirish" if target_lang == "uz" else "🖼 Изменить фото" if target_lang == "ru" else "🖼 Change photo",
+        "cap_edit_label": "📝 Matnni o'zgartirish" if target_lang == "uz" else "📝 Изменить текст" if target_lang == "ru" else "📝 Change text",
+        "publish_label": "🚀 Postni chiqarish" if target_lang == "uz" else "🚀 Опубликовать пост" if target_lang == "ru" else "🚀 Publish post",
+        "refresh_label": "🔄 Yangilash" if target_lang == "uz" else "🔄 Обновить" if target_lang == "ru" else "🔄 Refresh",
+        "img_prompt": "🖼 Yangi rasm yuboring yoki rasm linkini yuboring:" if target_lang == "uz" else "🖼 Отправьте новое фото или ссылку на него:" if target_lang == "ru" else "🖼 Send new image or image URL:",
+        "cap_prompt": "📝 Yangi post matnini yuboring:" if target_lang == "uz" else "📝 Отправьте новый текст поста:" if target_lang == "ru" else "📝 Send new post text:"
     }
 
 
@@ -2037,13 +2058,22 @@ add_movie_dialog = Dialog(
         DynamicMedia("media"),
         Format("{caption}"),
         Row(
-            Button(Format(_("🚀 Postni chiqarish")), id="publish", on_click=on_post_publish),
-            Button(Format(_("🔄 Yangilash")), id="refresh", on_click=on_refresh_post),
+            Button(Format("{publish_label}"), id="publish", on_click=on_post_publish),
+            Button(Format("{refresh_label}"), id="refresh", on_click=on_refresh_post),
         ),
         Row(
-            SwitchTo(Format(_("🖼 Rasmni o'zgartirish")), id="edit_img", state=AddMovieWizardSG.edit_post_image),
-            SwitchTo(Format(_("📝 Matnni o'zgartirish")), id="edit_cap", state=AddMovieWizardSG.edit_post_caption),
+            SwitchTo(Format("{img_edit_label}"), id="edit_img", state=AddMovieWizardSG.edit_post_image),
+            SwitchTo(Format("{cap_edit_label}"), id="edit_cap", state=AddMovieWizardSG.edit_post_caption),
         ),
+        Row(
+            SwitchTo(Format("{lang_select_label}"), id="go_to_lang", state=AddMovieWizardSG.post_lang_menu),
+        ),
+        SwitchTo(Format("{back_label}"), id="back_to_confirm_post", state=AddMovieWizardSG.confirm),
+        state=AddMovieWizardSG.post_preview,
+        getter=get_post_preview_data,
+    ),
+    Window(
+        Format("{lang_select_label}"),
         Row(
             Select(
                 Format("{item[1]}"),
@@ -2053,20 +2083,22 @@ add_movie_dialog = Dialog(
                 on_click=on_post_lang_change,
             ),
         ),
-        SwitchTo(Format(str(_("🔙 Ortga"))), id="back_to_confirm_post", state=AddMovieWizardSG.confirm),
-        state=AddMovieWizardSG.post_preview,
+        SwitchTo(Format("{back_label}"), id="back_to_preview", state=AddMovieWizardSG.post_preview),
+        state=AddMovieWizardSG.post_lang_menu,
         getter=get_post_preview_data,
     ),
     Window(
-        Const(_("🖼 Yangi rasm yuboring yoki rasm linkini yuboring:")),
+        Format("{img_prompt}"),
         MessageInput(on_edit_post_image_input),
-        SwitchTo(Format(_("🔙 Bekor qilish")), id="cancel_img", state=AddMovieWizardSG.post_preview),
+        SwitchTo(Format("{back_label}"), id="cancel_img", state=AddMovieWizardSG.post_preview),
         state=AddMovieWizardSG.edit_post_image,
+        getter=get_post_preview_data,
     ),
     Window(
-        Const(_("📝 Yangi post matnini yuboring:")),
+        Format("{cap_prompt}"),
         MessageInput(on_edit_post_caption_input),
-        SwitchTo(Format(_("🔙 Bekor qilish")), id="cancel_cap", state=AddMovieWizardSG.post_preview),
+        SwitchTo(Format("{back_label}"), id="cancel_cap", state=AddMovieWizardSG.post_preview),
         state=AddMovieWizardSG.edit_post_caption,
+        getter=get_post_preview_data,
     ),
 )
