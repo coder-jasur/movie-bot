@@ -28,6 +28,9 @@ class TMDBService:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as response:
                     return await response.json()
+        except Exception as e:
+            logger.error(f"TMDB details error: {e}")
+            return {}
     async def get_localized_title(self, movie_id: int, language: str):
         url = f"{self.base_url}/movie/{movie_id}?api_key={self.api_key}&language={language}"
         try:
