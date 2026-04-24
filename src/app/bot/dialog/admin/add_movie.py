@@ -816,19 +816,19 @@ async def get_post_preview_data(dialog_manager: DialogManager, **kwargs):
     return {
         "media": media,
         "caption": caption or "No caption",
-        "lang_select_label": "🌍 Tilni almashtirish" if target_lang == "uz" else "🌍 Сменить язык" if target_lang == "ru" else "🌍 Change language",
-        "back_label": "🔙 Ortga" if target_lang == "uz" else "🔙 Назад" if target_lang == "ru" else "🔙 Back",
-        "img_edit_label": "🖼 Rasmni o'zgartirish" if target_lang == "uz" else "🖼 Изменить фото" if target_lang == "ru" else "🖼 Change photo",
-        "cap_edit_label": "📝 Matnni o'zgartirish" if target_lang == "uz" else "📝 Изменить текст" if target_lang == "ru" else "📝 Change text",
-        "publish_label": "🚀 Postni chiqarish" if target_lang == "uz" else "🚀 Опубликовать пост" if target_lang == "ru" else "🚀 Publish post",
-        "refresh_label": "🔄 Yangilash" if target_lang == "uz" else "🔄 Обновить" if target_lang == "ru" else "🔄 Refresh",
+        "lang_select_label": str(_("🌍 Tilni almashtirish")),
+        "back_label": str(_("🔙 Ortga")),
+        "img_edit_label": str(_("🖼 Rasmni o'zgartirish")),
+        "cap_edit_label": str(_("📝 Matnni o'zgartirish")),
+        "publish_label": str(_("🚀 Postni chiqarish")),
+        "refresh_label": str(_("🔄 Yangilash")),
         "next_label": "▶️",
         "prev_label": "◀️",
         "counter": f"{current_idx + 1}/{total}" if total > 0 else "0/0",
         "has_next": total > 1 and current_idx < total - 1,
         "has_prev": total > 1 and current_idx > 0,
-        "img_prompt": "🖼 Yangi rasm yuboring yoki rasm linkini yuboring:" if target_lang == "uz" else "🖼 Отправьте новое фото или ссылку на него:" if target_lang == "ru" else "🖼 Send new image or image URL:",
-        "cap_prompt": "📝 Yangi post matnini yuboring:" if target_lang == "uz" else "📝 Отправьте новый текст поста:" if target_lang == "ru" else "📝 Send new post text:"
+        "img_prompt": str(_("🖼 Yangi rasm yuboring yoki rasm linkini yuboring:")),
+        "cap_prompt": str(_("📝 Yangi post matnini yuboring:"))
     }
 
 
