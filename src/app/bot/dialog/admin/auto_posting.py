@@ -34,10 +34,10 @@ async def on_channel_id_input(m: Message, widget, manager: DialogManager):
         try:
             channel_id = int(m.text)
         except ValueError:
-            await m.answer(_("❌ Iltimos, kanal ID raqamini yoki xabarni forward qilib yuboring."))
+            await m.answer(str(_("❌ Iltimos, kanal ID raqamini yoki xabarni forward qilib yuboring.")))
             return
     else:
-        await m.answer(_("❌ Iltimos, kanal ID raqamini yoki xabarni forward qilib yuboring."))
+        await m.answer(str(_("❌ Iltimos, kanal ID raqamini yoki xabarni forward qilib yuboring.")))
         return
 
     session: AsyncSession = manager.middleware_data["session"]
@@ -46,11 +46,11 @@ async def on_channel_id_input(m: Message, widget, manager: DialogManager):
     # Check if already exists
     existing = await actions.get_post_channel(channel_id)
     if existing:
-        await m.answer(_("⚠️ Bu kanal allaqachon qo'shilgan."))
+        await m.answer(str(_("⚠️ Bu kanal allaqachon qo'shilgan.")))
         return
 
     await actions.add_post_channel(channel_id, channel_name, channel_username)
-    await m.answer(_("✅ Kanal muvaffaqiyatli qo'shildi."))
+    await m.answer(str(_("✅ Kanal muvaffaqiyatli qo'shildi.")))
     await manager.switch_to(PostAutoPostingSG.menu)
 
 async def on_channel_click(c: CallbackQuery, widget, manager: DialogManager, item_id: str):

@@ -2845,6 +2845,21 @@ msgstr "📝 Отправьте новый текст поста:"
 msgid "✅ Post {count} ta kanalga yuborildi."
 msgstr "✅ Пост отправлен в {count} каналов."
 
+msgid "📢 <b>Auto Posting Kanallari</b>\n\nJami: {count} ta"
+msgstr "📢 <b>Каналы автопостинга</b>\n\nВсего: {count} шт"
+
+msgid "🆔 Kanal ID raqamini yuboring yoki kanaldan xabarni forward qiling:"
+msgstr "🆔 Отправьте ID канала или перешлите сообщение из канала:"
+
+msgid "📊 <b>Kanal ma'lumotlari:</b>\n\n nomi: {channel.channel_name}\nID: <code>{channel.channel_id}</code>\nUsername: @{channel.channel_username}\nHolati: {channel.channel_status}"
+msgstr "📊 <b>Данные канала:</b>\n\n название: {channel.channel_name}\nID: <code>{channel.channel_id}</code>\nUsername: @{channel.channel_username}\nСтатус: {channel.channel_status}"
+
+msgid "⬅️ Bekor qilish"
+msgstr "⬅️ Отмена"
+
+msgid "❌ Iltimos, kanal ID raqamini yoki xabarni forward qilib yuboring."
+msgstr "❌ Пожалуйста, отправьте ID канала или перешлите сообщение из него."
+
 #: src/app/bot/dialog/dialogs.py:999
 msgid "🌐 Ссылки (URL)"
 msgstr "🌐 Ссылки (URL)"
@@ -2896,3 +2911,18 @@ msgstr "⚙️ Полный бэкап настроек (Каналы, Боты,
 #: src/app/bot/dialog/admin/backup.py:999
 msgid "⚙️ OP va Referallar"
 msgstr "⚙️ Настройки и Рефералы"
+
+msgid "📢 <b>Auto Posting Kanallari</b>\n\nJami: {count} ta"
+msgstr "📢 <b>Каналы автопостинга</b>\n\nВсего: {count} шт"
+
+msgid "🆔 Kanal ID raqamini yuboring yoki kanaldan xabarni forward qiling:"
+msgstr "🆔 Отправьте ID канала или перешлите сообщение из канала:"
+
+msgid "📊 <b>Kanal ma'lumotlari:</b>\n\n nomi: {channel.channel_name}\nID: <code>{channel.channel_id}</code>\nUsername: @{channel.channel_username}\nHolati: {channel.channel_status}"
+msgstr "📊 <b>Данные канала:</b>\n\n название: {channel.channel_name}\nID: <code>{channel.channel_id}</code>\nUsername: @{channel.channel_username}\nСтатус: {channel.channel_status}"
+
+msgid "⬅️ Bekor qilish"
+msgstr "⬅️ Отмена"
+
+msgid "❌ Iltimos, kanal ID raqamini yoki xabarni forward qilib yuboring."
+msgstr "❌ Пожалуйста, отправьте ID канала или перешлите сообщение из него."

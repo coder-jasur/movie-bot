@@ -2890,3 +2890,18 @@ msgstr "📝 Yangi post matnini yuboring:"
 
 msgid "✅ Post {count} ta kanalga yuborildi."
 msgstr "✅ Post {count} ta kanalga yuborildi."
+
+msgid "📢 <b>Auto Posting Kanallari</b>\n\nJami: {count} ta"
+msgstr "📢 <b>Auto Posting Kanallari</b>\n\nJami: {count} ta"
+
+msgid "🆔 Kanal ID raqamini yuboring yoki kanaldan xabarni forward qiling:"
+msgstr "🆔 Kanal ID raqamini yuboring yoki kanaldan xabarni forward qiling:"
+
+msgid "📊 <b>Kanal ma'lumotlari:</b>\n\n nomi: {channel.channel_name}\nID: <code>{channel.channel_id}</code>\nUsername: @{channel.channel_username}\nHolati: {channel.channel_status}"
+msgstr "📊 <b>Kanal ma'lumotlari:</b>\n\n nomi: {channel.channel_name}\nID: <code>{channel.channel_id}</code>\nUsername: @{channel.channel_username}\nHolati: {channel.channel_status}"
+
+msgid "⬅️ Bekor qilish"
+msgstr "⬅️ Bekor qilish"
+
+msgid "❌ Iltimos, kanal ID raqamini yoki xabarni forward qilib yuboring."
+msgstr "❌ Iltimos, kanal ID raqamini yoki xabarni forward qilib yuboring."
