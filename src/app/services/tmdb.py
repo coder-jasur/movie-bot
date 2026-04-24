@@ -1,8 +1,10 @@
-import aiohttp
-from urllib.parse import quote
 import logging
+from urllib.parse import quote
+
+import aiohttp
 
 logger = logging.getLogger(__name__)
+
 
 class TMDBService:
     def __init__(self, api_key: str):
@@ -31,6 +33,7 @@ class TMDBService:
         except Exception as e:
             logger.error(f"TMDB details error: {e}")
             return {}
+
     async def get_localized_title(self, movie_id: int, language: str):
         url = f"{self.base_url}/movie/{movie_id}?api_key={self.api_key}&language={language}"
         try:
@@ -55,129 +58,167 @@ class TMDBService:
             return f"https://image.tmdb.org/t/p/original{best['file_path']}"
         return None
 
-    def format_caption(self, data, country_str=None, lang_str=None, genres_str=None, code=None, quality=None, all_langs=None, target_lang='uz'):
+    def format_caption(
+        self,
+        data,
+        country_str=None,
+        lang_str=None,
+        genres_str=None,
+        code=None,
+        quality=None,
+        all_langs=None,
+        target_lang="uz",
+    ):
         # Custom Emojis Mapping
         E = {
-            'name': '<tg-emoji emoji-id="5375464961822695044">🎬</tg-emoji>',
-            'year': '<tg-emoji emoji-id="5431897022456145283">📆</tg-emoji>',
-            'quality': '<tg-emoji emoji-id="5375309569905938163">📹</tg-emoji>',
-            'imdb': '<tg-emoji emoji-id="5472238215748397135">🌟</tg-emoji>',
-            'country': '<tg-emoji emoji-id="5314361729117855941">🌍</tg-emoji>',
-            'lang': '<tg-emoji emoji-id="5447410659077661506">🌐</tg-emoji>',
-            'genre': '<tg-emoji emoji-id="5359441070201513074">🎭</tg-emoji>',
-            'code': '<tg-emoji emoji-id="5375464961822695044">🔢</tg-emoji>',
-            'watch': '<tg-emoji emoji-id="5346242859039209592">📱</tg-emoji>',
-            'attention': '<tg-emoji emoji-id="5440660757194744323">‼️</tg-emoji>'
+            "name": '<tg-emoji emoji-id="5375464961822695044">🎬</tg-emoji>',
+            "year": '<tg-emoji emoji-id="5431897022456145283">📆</tg-emoji>',
+            "quality": '<tg-emoji emoji-id="5375309569905938163">📹</tg-emoji>',
+            "imdb": '<tg-emoji emoji-id="5472238215748397135">🌟</tg-emoji>',
+            "country": '<tg-emoji emoji-id="5314361729117855941">🌍</tg-emoji>',
+            "lang": '<tg-emoji emoji-id="5447410659077661506">🌐</tg-emoji>',
+            "genre": '<tg-emoji emoji-id="5359441070201513074">🎭</tg-emoji>',
+            "code": '<tg-emoji emoji-id="5375464961822695044">🔢</tg-emoji>',
+            "watch": '<tg-emoji emoji-id="5346242859039209592">📱</tg-emoji>',
+            "attention": '<tg-emoji emoji-id="5440660757194744323">‼️</tg-emoji>',
         }
 
         # Labels mapping with custom emojis
         labels = {
-            'uz': {
-                'name': f"{E['name']} <b>NOMI:</b>",
-                'year': f"{E['year']} <b>YILI:</b>",
-                'quality': f"{E['quality']} <b>SIFATI:</b>",
-                'imdb': f"{E['imdb']} <b>IMDb:</b>",
-                'country': f"{E['country']} <b>DAVLATI:</b>",
-                'lang': f"{E['lang']} <b>TILI:</b>",
-                'genre': f"{E['genre']} <b>JANRI:</b>",
-                'code_label': f"{E['code']} <b>KINO KODI:</b>",
-                'watch': f"{E['imdb']} <b>KINO KO'RISH UCHUN:</b>",
-                'send_code': f"👉 <b>KODNI YUBORING:</b>",
-                'attention': f"{E['attention']} <b>DIQQAT! Kinoni ko'rish uchun @MovieNetBot ga kiring va «<b>{code}</b>» kodini yuboring!</b>"
+            "uz": {
+                "name": f"{E['name']} <b>NOMI:</b>",
+                "year": f"{E['year']} <b>YILI:</b>",
+                "quality": f"{E['quality']} <b>SIFATI:</b>",
+                "imdb": f"{E['imdb']} <b>IMDb:</b>",
+                "country": f"{E['country']} <b>DAVLATI:</b>",
+                "lang": f"{E['lang']} <b>TILI:</b>",
+                "genre": f"{E['genre']} <b>JANRI:</b>",
+                "code_label": f"{E['code']} <b>KINO KODI:</b>",
+                "watch": f"{E['imdb']} <b>KINO KO'RISH UCHUN:</b>",
+                "send_code": f"👉 <b>KODNI YUBORING:</b>",
+                "attention": f"{E['attention']} <b>DIQQAT! Kinoni ko'rish uchun @MovieNetBot ga kiring va «<b>{code}</b>» kodini yuboring!</b>",
             },
-            'ru': {
-                'name': f"{E['name']} <b>НАЗВАНИЕ:</b>",
-                'year': f"{E['year']} <b>ГОД:</b>",
-                'quality': f"{E['quality']} <b>КАЧЕСТВО:</b>",
-                'imdb': f"{E['imdb']} <b>IMDb:</b>",
-                'country': f"{E['country']} <b>СТРАНА:</b>",
-                'lang': f"{E['lang']} <b>ЯЗЫК:</b>",
-                'genre': f"{E['genre']} <b>ЖАНР:</b>",
-                'code_label': f"{E['code']} <b>КОД КИНО:</b>",
-                'watch': f"{E['imdb']} <b>СМОТРЕТЬ КИНО:</b>",
-                'send_code': f"👉 <b>ОТПРАВЬТЕ КОД:</b>",
-                'attention': f"{E['attention']} <b>ВНИМАНИЕ! Чтобы посмотреть фильм, зайдите в @MovieNetBot и отправьте код «<b>{code}</b>»!</b>"
+            "ru": {
+                "name": f"{E['name']} <b>НАЗВАНИЕ:</b>",
+                "year": f"{E['year']} <b>ГОД:</b>",
+                "quality": f"{E['quality']} <b>КАЧЕСТВО:</b>",
+                "imdb": f"{E['imdb']} <b>IMDb:</b>",
+                "country": f"{E['country']} <b>СТРАНА:</b>",
+                "lang": f"{E['lang']} <b>ЯЗЫК:</b>",
+                "genre": f"{E['genre']} <b>ЖАНР:</b>",
+                "code_label": f"{E['code']} <b>КОД КИНО:</b>",
+                "watch": f"{E['imdb']} <b>СМОТРЕТЬ КИНО:</b>",
+                "send_code": f"👉 <b>ОТПРАВЬТЕ КОД:</b>",
+                "attention": f"{E['attention']} <b>ВНИМАНИЕ! Чтобы посмотреть фильм, зайдите в @MovieNetBot и отправьте код «<b>{code}</b>»!</b>",
             },
-            'en': {
-                'name': f"{E['name']} <b>NAME:</b>",
-                'year': f"{E['year']} <b>YEAR:</b>",
-                'quality': f"{E['quality']} <b>QUALITY:</b>",
-                'imdb': f"{E['imdb']} <b>IMDb:</b>",
-                'country': f"{E['country']} <b>COUNTRY:</b>",
-                'lang': f"{E['lang']} <b>LANGUAGE:</b>",
-                'genre': f"{E['genre']} <b>GENRE:</b>",
-                'code_label': f"{E['code']} <b>MOVIE CODE:</b>",
-                'watch': f"{E['imdb']} <b>TO WATCH MOVIE:</b>",
-                'send_code': f"👉 <b>SEND CODE:</b>",
-                'attention': f"{E['attention']} <b>ATTENTION! To watch the movie, go to @MovieNetBot and send the code «<b>{code}</b>»!</b>"
-            }
+            "en": {
+                "name": f"{E['name']} <b>NAME:</b>",
+                "year": f"{E['year']} <b>YEAR:</b>",
+                "quality": f"{E['quality']} <b>QUALITY:</b>",
+                "imdb": f"{E['imdb']} <b>IMDb:</b>",
+                "country": f"{E['country']} <b>COUNTRY:</b>",
+                "lang": f"{E['lang']} <b>LANGUAGE:</b>",
+                "genre": f"{E['genre']} <b>GENRE:</b>",
+                "code_label": f"{E['code']} <b>MOVIE CODE:</b>",
+                "watch": f"{E['imdb']} <b>TO WATCH MOVIE:</b>",
+                "send_code": f"👉 <b>SEND CODE:</b>",
+                "attention": f"{E['attention']} <b>ATTENTION! To watch the movie, go to @MovieNetBot and send the code «<b>{code}</b>»!</b>",
+            },
         }
 
-        lang = target_lang if target_lang in labels else 'uz'
+        lang = target_lang if target_lang in labels else "uz"
         L = labels[lang]
 
         # Prefer passed title override if present
-        title = data.get('title') or 'N/A'
+        title = data.get("title") or "N/A"
         # Round IMDb score to 1 decimal place
-        imdb_val = data.get('vote_average', 0.0)
+        imdb_val = data.get("vote_average", 0.0)
         imdb = f"{float(imdb_val):.1f}"
-        
+
         # Release year
-        year = data.get('release_date', 'N/A')[:4]
-        
+        year = data.get("release_date", "N/A")[:4]
+
         # Flags mapping
         F = {
-            'uz': '<tg-emoji emoji-id="5456133703296097741">🇺🇿</tg-emoji>',
-            'ru': '<tg-emoji emoji-id="5449408995691341691">🇷🇺</tg-emoji>',
-            'en': '<tg-emoji emoji-id="5202021044105257611">🇺🇸</tg-emoji>',
-            'uk': '<tg-emoji emoji-id="5202196682497859879">🇬🇧</tg-emoji>',
-            'kz': '<tg-emoji emoji-id="5228885231318088701">🇰🇿</tg-emoji>',
-            'ca': '<tg-emoji emoji-id="5404421811720958731">🇨🇦</tg-emoji>',
-            'kr': '<tg-emoji emoji-id="5467928327736010821">🇰🇷</tg-emoji>',
-            'tr': '<tg-emoji emoji-id="5226948110873278599">🇹🇷</tg-emoji>',
-            'cn': '<tg-emoji emoji-id="5431782733376399004">🇨🇳</tg-emoji>',
-            'za': '<tg-emoji emoji-id="5323804090164066657">🇿🇦</tg-emoji>',
-            'br': '<tg-emoji emoji-id="6118655940829907978">🇧🇷</tg-emoji>',
-            'in': '<tg-emoji emoji-id="6136551252781172945">🇮🇳</tg-emoji>'
+            "uz": '<tg-emoji emoji-id="5456133703296097741">🇺🇿</tg-emoji>',
+            "ru": '<tg-emoji emoji-id="5449408995691341691">🇷🇺</tg-emoji>',
+            "en": '<tg-emoji emoji-id="5202021044105257611">🇺🇸</tg-emoji>',
+            "uk": '<tg-emoji emoji-id="5202196682497859879">🇬🇧</tg-emoji>',
+            "kz": '<tg-emoji emoji-id="5228885231318088701">🇰🇿</tg-emoji>',
+            "ca": '<tg-emoji emoji-id="5404421811720958731">🇨🇦</tg-emoji>',
+            "kr": '<tg-emoji emoji-id="5467928327736010821">🇰🇷</tg-emoji>',
+            "tr": '<tg-emoji emoji-id="5226948110873278599">🇹🇷</tg-emoji>',
+            "cn": '<tg-emoji emoji-id="5431782733376399004">🇨🇳</tg-emoji>',
+            "za": '<tg-emoji emoji-id="5323804090164066657">🇿🇦</tg-emoji>',
+            "br": '<tg-emoji emoji-id="6118655940829907978">🇧🇷</tg-emoji>',
+            "in": '<tg-emoji emoji-id="6136551252781172945">🇮🇳</tg-emoji>',
         }
 
         # Country mapping for Uz and Ru
         country_maps = {
-            'uz': {
-                'USA': f'AQSH {F["en"]}', 'United States of America': f'AQSH {F["en"]}',
-                'UK': f'Buyuk Britaniya {F["uk"]}', 'United Kingdom': f'Buyuk Britaniya {F["uk"]}',
-                'Russia': f'Rossiya {F["ru"]}', 'Russian Federation': f'Rossiya {F["ru"]}',
-                'Turkey': f'Turkiya {F["tr"]}', 'France': f'Fransiya 🇫🇷', 'Germany': f'Germaniya 🇩🇪',
-                'India': f'Hindiston {F["in"]}', 'China': f'Xitoy {F["cn"]}', 'Japan': f'Yaponiya 🇯🇵',
-                'South Korea': f'Janubiy Koreya {F["kr"]}', 'Italy': f'Italiya 🇮🇹',
-                'Spain': f'Ispaniya 🇪🇸', 'Canada': f'Kanada {F["ca"]}', 'Australia': f'Avstraliya 🇦🇺',
-                'Brazil': f'Braziliya {F["br"]}', 'Mexico': f'Meksika 🇲🇽', 'Uzbekistan': f'O\'zbekiston {F["uz"]}'
+            "uz": {
+                "USA": f'AQSH {F["en"]}',
+                "United States of America": f'AQSH {F["en"]}',
+                "UK": f'Buyuk Britaniya {F["uk"]}',
+                "United Kingdom": f'Buyuk Britaniya {F["uk"]}',
+                "Russia": f'Rossiya {F["ru"]}',
+                "Russian Federation": f'Rossiya {F["ru"]}',
+                "Turkey": f'Turkiya {F["tr"]}',
+                "France": f"Fransiya 🇫🇷",
+                "Germany": f"Germaniya 🇩🇪",
+                "India": f'Hindiston {F["in"]}',
+                "China": f'Xitoy {F["cn"]}',
+                "Japan": f"Yaponiya 🇯🇵",
+                "South Korea": f'Janubiy Koreya {F["kr"]}',
+                "Italy": f"Italiya 🇮🇹",
+                "Spain": f"Ispaniya 🇪🇸",
+                "Canada": f'Kanada {F["ca"]}',
+                "Australia": f"Avstraliya 🇦🇺",
+                "Brazil": f'Braziliya {F["br"]}',
+                "Mexico": f"Meksika 🇲🇽",
+                "Uzbekistan": f'O\'zbekiston {F["uz"]}',
             },
-            'ru': {
-                'USA': f'США {F["en"]}', 'United States of America': f'США {F["en"]}',
-                'UK': f'Великобритания {F["uk"]}', 'United Kingdom': f'Великобритания {F["uk"]}',
-                'Russia': f'Россия {F["ru"]}', 'Russian Federation': f'Россия {F["ru"]}',
-                'Turkey': f'Турция {F["tr"]}', 'France': f'Франция 🇫🇷', 'Germany': f'Германия 🇩🇪',
-                'India': f'Индия {F["in"]}', 'China': f'Китай {F["cn"]}', 'Japan': f'Япония 🇯🇵',
-                'South Korea': f'Южная Корея {F["kr"]}', 'Italy': f'Италия 🇮🇹',
-                'Spain': f'Испания 🇪🇸', 'Canada': f'Канада {F["ca"]}', 'Australia': f'Австралия 🇦🇺',
-                'Brazil': f'Бразилия {F["br"]}', 'Mexico': f'Мексика 🇲🇽', 'Uzbekistan': f'Узбекистан {F["uz"]}'
-            }
+            "ru": {
+                "USA": f'США {F["en"]}',
+                "United States of America": f'США {F["en"]}',
+                "UK": f'Великобритания {F["uk"]}',
+                "United Kingdom": f'Великобритания {F["uk"]}',
+                "Russia": f'Россия {F["ru"]}',
+                "Russian Federation": f'Россия {F["ru"]}',
+                "Turkey": f'Турция {F["tr"]}',
+                "France": f"Франция 🇫🇷",
+                "Germany": f"Германия 🇩🇪",
+                "India": f'Индия {F["in"]}',
+                "China": f'Китай {F["cn"]}',
+                "Japan": f"Япония 🇯🇵",
+                "South Korea": f'Южная Корея {F["kr"]}',
+                "Italy": f"Италия 🇮🇹",
+                "Spain": f"Испания 🇪🇸",
+                "Canada": f'Канада {F["ca"]}',
+                "Australia": f"Австралия 🇦🇺",
+                "Brazil": f'Бразилия {F["br"]}',
+                "Mexico": f"Мексика 🇲🇽",
+                "Uzbekistan": f'Узбекистан {F["uz"]}',
+            },
         }
-        
-        c_map = country_maps.get(lang, country_maps['uz'])
+
+        c_map = country_maps.get(lang, country_maps["uz"])
         raw_countries = [c["name"] for c in data.get("production_countries", [])]
         translated_countries = [c_map.get(c, c) for c in raw_countries]
         countries = country_str or ", ".join(translated_countries)
-        
+
         # Languages handling
         if all_langs:
             lang_displays = []
             for l_code in all_langs:
-                if l_code == 'uz': lang_displays.append(f"O'zbekcha {F['uz']}")
-                elif l_code == 'ru': lang_displays.append(f"Ruscha {F['ru']}")
-                elif l_code == 'en': lang_displays.append(f"Inglizcha {F['en']}")
-                else: lang_displays.append(f"{l_code.upper()}")
+                if l_code == "uz":
+                    lang_displays.append(f"O'zbekcha {F['uz']}")
+                elif l_code == "ru":
+                    lang_displays.append(f"Ruscha {F['ru']}")
+                elif l_code == "en":
+                    lang_displays.append(f"Inglizcha {F['en']}")
+                else:
+                    lang_displays.append(f"{l_code.upper()}")
             langs = ", ".join(lang_displays)
         else:
             langs = lang_str or "N/A"
@@ -185,22 +226,23 @@ class TMDBService:
         # Genres processing
         if genres_str:
             genres_list = genres_str.replace(",", " ").split()
-            genres = " ".join([f"#{g.strip().lstrip('#')}" for g in genres_list if g.strip()])
+            genres = " ".join(
+                [f"#{g.strip().lstrip('#')}" for g in genres_list if g.strip()]
+            )
         else:
             genres = " ".join([f"#{g['name']}" for g in data.get("genres", [])])
-        
-        caption = f"""
-{L['name']} <b>{title.upper()} ({year})</b>
 
-{L['code_label']} <b>{code or '????'}</b>
+        caption = f"""
+{L['name']} <b>{title.upper()}</b>
+
+{L['year']} <b>{year}</b>
 {L['quality']} <b>{quality or '720p'}</b>
 {L['imdb']} <b>{imdb}/10</b>
 {L['country']} <b>{countries}</b>
 {L['lang']} <b>{langs}</b>
 {L['genre']} <b>{genres}</b>
 
-{L['watch']} @MovieNetBot
-{L['send_code']} <b>{code or '????'}</b>
+{L['code_label']} <b>{code or '????'}</b>
 
 {L['attention'].format(code=code or '????')}
 """.strip()
@@ -212,8 +254,4 @@ class TMDBService:
             return None
         data = await self.get_details(movie["id"])
         preview = self.get_best_preview(data)
-        return {
-            "data": data,
-            "preview": preview,
-            "tmdb_id": movie["id"]
-        }
+        return {"data": data, "preview": preview, "tmdb_id": movie["id"]}
