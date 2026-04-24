@@ -583,7 +583,7 @@ async def on_refresh_post(c: CallbackQuery, widget: Any, manager: DialogManager)
         lang_str=get_language_display_text(manager.dialog_data.get("language")),
         quality=manager.dialog_data.get("input_quality")
     )
-    await c.answer(_("✅ Post yangilandi"))
+    await c.answer(str(_("✅ Post yangilandi")))
 
 async def on_post_publish(c: CallbackQuery, widget: Any, manager: DialogManager):
     session: AsyncSession = manager.middleware_data["session"]
@@ -607,7 +607,7 @@ async def on_post_publish(c: CallbackQuery, widget: Any, manager: DialogManager)
         except Exception as e:
             logger.error(f"Post publishing error for channel {channel.channel_id}: {e}")
             
-    await c.answer(_("✅ Post {count} ta kanalga yuborildi.").format(count=sent_count), show_alert=True)
+    await c.answer(str(_("✅ Post {count} ta kanalga yuborildi.")).format(count=sent_count), show_alert=True)
 
 async def on_edit_post_image_input(m: Message, widget: Any, manager: DialogManager):
     if m.photo:
@@ -615,7 +615,7 @@ async def on_edit_post_image_input(m: Message, widget: Any, manager: DialogManag
     elif m.text and m.text.startswith("http"):
         manager.dialog_data["post_image"] = m.text
     else:
-        await m.answer(_("❌ Rasm yuboring yoki rasm linkini yuboring."))
+        await m.answer(str(_("❌ Rasm yuboring yoki rasm linkini yuboring.")))
         return
     await manager.switch_to(AddMovieWizardSG.post_preview)
 
