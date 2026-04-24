@@ -18,6 +18,7 @@ from src.app.bot.states.admin.dialogs import (
     AdminMenuSG,
     AdminVIPManagerSG,
     BackupSG,
+    PostAutoPostingSG,
     EditMovieSG,
 )
 from src.app.bot.states.admin.referral import ReferralSG
