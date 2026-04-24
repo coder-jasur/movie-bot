@@ -2926,3 +2926,77 @@ msgstr "⬅️ Отмена"
 
 msgid "❌ Iltimos, kanal ID raqamini yoki xabarni forward qilib yuboring."
 msgstr "❌ Пожалуйста, отправьте ID канала или перешлите сообщение из него."
+
+msgid 🌍 Tilni almashtirish
+msgstr 🌍 Сменить язык
+
+
+msgid 🌍 Tilni almashtirish
+msgstr 🌍 Сменить язык
+
+msgid 🔙 Ortga
+msgstr 🔙 Назад
+
+msgid 🖼 Rasmni o'zgartirish
+msgstr 🖼 Изменить фото
+
+msgid 📝 Matnni o'zgartirish
+msgstr 📝 Изменить текст
+
+msgid 🚀 Postni chiqarish
+msgstr 🚀 Опубликовать пост
+
+msgid 🔄 Yangilash
+msgstr 🔄 Обновить
+
+msgid 🖼 Yangi rasm yuboring yoki rasm linkini yuboring:
+msgstr 🖼 Отправьте новое фото или ссылку на него:
+
+msgid 📝 Yangi post matnini yuboring:
+msgstr 📝 Отправьте новый текст поста:
+
+msgid 🖼 Keyingi rasm ({idx}/{total})
+msgstr 🖼 Следующее изображение ({idx}/{total})
+
+msgid 🖼 Oldingi rasm ({idx}/{total})
+msgstr 🖼 Предыдущее изображение ({idx}/{total})
+
+msgid ❌ Rasmlar topilmadi
+msgstr ❌ Изображения не найдены
+
+
+
+# Dynamic UI Translations
+msgid "🌍 Tilni almashtirish"
+msgstr "🌍 Сменить язык"
+
+msgid "🔙 Ortga"
+msgstr "🔙 Назад"
+
+msgid "🖼 Rasmni o'zgartirish"
+msgstr "🖼 Изменить фото"
+
+msgid "📝 Matnni o'zgartirish"
+msgstr "📝 Изменить текст"
+
+msgid "🚀 Postni chiqarish"
+msgstr "🚀 Опубликовать пост"
+
+msgid "🔄 Yangilash"
+msgstr "🔄 Обновить"
+
+msgid "🖼 Yangi rasm yuboring yoki rasm linkini yuboring:"
+msgstr "🖼 Отправьте новое фото или ссылку на него:"
+
+msgid "📝 Yangi post matnini yuboring:"
+msgstr "📝 Отправьте новый текст поста:"
+
+msgid "🖼 Keyingi rasm ({idx}/{total})"
+msgstr "🖼 Следующее изображение ({idx}/{total})"
+
+msgid "🖼 Oldingi rasm ({idx}/{total})"
+msgstr "🖼 Предыдущее изображение ({idx}/{total})"
+
+msgid "❌ Rasmlar topilmadi"
+msgstr "❌ Изображения не найдены"
+

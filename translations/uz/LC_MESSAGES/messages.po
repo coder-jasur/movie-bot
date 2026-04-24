@@ -2905,3 +2905,39 @@ msgstr "⬅️ Bekor qilish"
 
 msgid "❌ Iltimos, kanal ID raqamini yoki xabarni forward qilib yuboring."
 msgstr "❌ Iltimos, kanal ID raqamini yoki xabarni forward qilib yuboring."
+
+
+# Dynamic UI Translations
+msgid "🌍 Tilni almashtirish"
+msgstr "🌍 Tilni almashtirish"
+
+msgid "🔙 Ortga"
+msgstr "🔙 Ortga"
+
+msgid "🖼 Rasmni o'zgartirish"
+msgstr "🖼 Rasmni o'zgartirish"
+
+msgid "📝 Matnni o'zgartirish"
+msgstr "📝 Matnni o'zgartirish"
+
+msgid "🚀 Postni chiqarish"
+msgstr "🚀 Postni chiqarish"
+
+msgid "🔄 Yangilash"
+msgstr "🔄 Yangilash"
+
+msgid "🖼 Yangi rasm yuboring yoki rasm linkini yuboring:"
+msgstr "🖼 Yangi rasm yuboring yoki rasm linkini yuboring:"
+
+msgid "📝 Yangi post matnini yuboring:"
+msgstr "📝 Yangi post matnini yuboring:"
+
+msgid "🖼 Keyingi rasm ({idx}/{total})"
+msgstr "🖼 Keyingi rasm ({idx}/{total})"
+
+msgid "🖼 Oldingi rasm ({idx}/{total})"
+msgstr "🖼 Oldingi rasm ({idx}/{total})"
+
+msgid "❌ Rasmlar topilmadi"
+msgstr "❌ Rasmlar topilmadi"
+

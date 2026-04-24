@@ -23,11 +23,6 @@ from aiogram_dialog.widgets.media import DynamicMedia
 from aiogram_dialog.widgets.text import Const, Format
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
-from src.app.core.config import load_config
-from src.app.services.tmdb import TMDBService
-from src.app.database.queries.post_channels import PostChannelActions
-
 from src.app.bot.common.genres import (
     deserialize_genres,
     get_genre_display_text,
@@ -38,6 +33,7 @@ from src.app.bot.common.i18n import lazy_gettext as _
 from src.app.bot.common.languages import LANGUAGES
 from src.app.bot.common.utils import get_lang_code, send_admin_preview_media_group
 from src.app.bot.states.admin.dialogs import AddMovieWizardSG
+from src.app.core.config import load_config
 from src.app.database.queries.movie.anime import (
     AnimeFeatureActions,
     AnimeMiniSeriesActions,
@@ -51,22 +47,34 @@ from src.app.database.queries.movie.multi_films import (
     MultiFilmSeriesActions,
 )
 from src.app.database.queries.movie.series import SeriesActions
+from src.app.database.queries.post_channels import PostChannelActions
+from src.app.services.tmdb import TMDBService
 from src.app.services.transcoder import Transcoder
 
 
 async def get_all_languages_for_code(session: AsyncSession, code: int):
     from sqlalchemy import text
-    tables = ["feature_films", "series", "mini_series", "multi_film_features", "multi_film_series", "multi_film_mini_series"]
+
+    tables = [
+        "feature_films",
+        "series",
+        "mini_series",
+        "multi_film_features",
+        "multi_film_series",
+        "multi_film_mini_series",
+    ]
     langs = set()
     for table in tables:
         try:
             stmt = text(f"SELECT language FROM {table} WHERE code = :code")
             result = await session.execute(stmt, {"code": code})
             for row in result.all():
-                if row[0]: langs.add(row[0])
+                if row[0]:
+                    langs.add(row[0])
         except:
             pass
     return list(langs)
+
 
 # ─────────────────────────────────────────────
 #  HELPERS
@@ -532,17 +540,24 @@ async def on_genre_toggle(
 #  Auto Posting Preview Handlers
 # ─────────────────────────────────────────────
 
+
 async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogManager):
     config = load_config()
     tmdb = TMDBService(config.tmdb_api_key)
-    
+
     movie_name = manager.dialog_data.get("name")
     if isinstance(movie_name, dict):
         # Prefer UZ name, then RU, then first available
-        movie_name = movie_name.get("uz") or movie_name.get("ru") or next(iter(movie_name.values()))
-    
+        movie_name = (
+            movie_name.get("uz")
+            or movie_name.get("ru")
+            or next(iter(movie_name.values()))
+        )
+
     session = manager.middleware_data["session"]
-    all_langs = await get_all_languages_for_code(session, manager.dialog_data.get("code"))
+    all_langs = await get_all_languages_for_code(
+        session, manager.dialog_data.get("code")
+    )
     # Add current language if not in list
     curr_lang = manager.dialog_data.get("language")
     if curr_lang and curr_lang not in all_langs:
@@ -554,7 +569,7 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
     if tmdb_result:
         manager.dialog_data["tmdb_data"] = tmdb_result["data"]
         manager.dialog_data["tmdb_id"] = tmdb_result["tmdb_id"]
-        
+
         # Fetch all backdrops (horizontal)
         images = tmdb.get_all_backdrops(tmdb_result["data"])
         manager.dialog_data["all_posters"] = images
@@ -568,162 +583,307 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
 
         # Use current target language for initial caption
         target_lang = manager.dialog_data.get("post_target_lang", "uz")
-        
+
         # Get localized title
         movie_name_data = manager.dialog_data.get("name", {})
         if isinstance(movie_name_data, dict):
             title_to_use = movie_name_data.get(target_lang)
             if not title_to_use:
-                tmdb_title = await tmdb.get_localized_title(tmdb_result["tmdb_id"], target_lang)
+                tmdb_title = await tmdb.get_localized_title(
+                    tmdb_result["tmdb_id"], target_lang
+                )
                 title_to_use = tmdb_title or movie_name_data.get("uz") or movie_name
         else:
             title_to_use = movie_name_data or movie_name
-        
+
         data_for_caption = tmdb_result["data"].copy()
-        data_for_caption['title'] = title_to_use
+        data_for_caption["title"] = title_to_use
 
         manager.dialog_data["post_caption"] = tmdb.format_caption(
             data_for_caption,
             code=manager.dialog_data.get("code"),
-            genres_str=get_post_hashtags(manager.dialog_data.get("genres", []), target_lang=target_lang),
+            genres_str=get_post_hashtags(
+                manager.dialog_data.get("genres", []), target_lang=target_lang
+            ),
             quality=manager.dialog_data.get("input_quality"),
             all_langs=all_langs,
-            target_lang=target_lang
+            target_lang=target_lang,
         )
     else:
         # Fallback if not found
         manager.dialog_data["all_posters"] = []
         manager.dialog_data["poster_index"] = 0
         manager.dialog_data["post_image"] = manager.dialog_data.get("thumbnail_file_id")
-        manager.dialog_data["post_caption"] = f"🎬 <b>NOMI:</b> {movie_name}\n\n💾 <b>KODI:</b> {manager.dialog_data.get('code')}"
+        manager.dialog_data["post_caption"] = (
+            f"🎬 <b>NOMI:</b> {movie_name}\n\n💾 <b>KODI:</b> {manager.dialog_data.get('code')}"
+        )
 
     await manager.switch_to(AddMovieWizardSG.post_preview)
 
+
 async def on_prev_poster(c: CallbackQuery, widget: Any, manager: DialogManager):
     images = manager.dialog_data.get("all_posters", [])
-    if not images: return
-    
+    if not images:
+        return
+
     current_idx = manager.dialog_data.get("poster_index", 0)
     new_idx = (current_idx - 1) % len(images)
     manager.dialog_data["poster_index"] = new_idx
     manager.dialog_data["post_image"] = images[new_idx]
-    await c.answer(str(_("🖼 Oldingi rasm ({idx}/{total})")).format(idx=new_idx+1, total=len(images)))
+    await c.answer(
+        str(_("🖼 Oldingi rasm ({idx}/{total})")).format(
+            idx=new_idx + 1, total=len(images)
+        )
+    )
+
 
 async def on_next_poster(c: CallbackQuery, widget: Any, manager: DialogManager):
     images = manager.dialog_data.get("all_posters", [])
     if not images:
         await c.answer(str(_("❌ Rasmlar topilmadi")))
         return
-    
+
     current_idx = manager.dialog_data.get("poster_index", 0)
     new_idx = (current_idx + 1) % len(images)
     manager.dialog_data["poster_index"] = new_idx
     manager.dialog_data["post_image"] = images[new_idx]
-    await c.answer(str(_("🖼 Keyingi rasm ({idx}/{total})")).format(idx=new_idx+1, total=len(images)))
+    await c.answer(
+        str(_("🖼 Keyingi rasm ({idx}/{total})")).format(
+            idx=new_idx + 1, total=len(images)
+        )
+    )
 
-async def on_post_lang_change(c: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
+
+async def on_post_lang_change(
+    c: CallbackQuery, widget: Any, manager: DialogManager, item_id: str
+):
     manager.dialog_data["post_target_lang"] = item_id
     await on_refresh_post(c, widget, manager)
 
-def get_post_hashtags(genres, target_lang='uz'):
-    if not genres: return ""
+
+def get_post_hashtags(genres, target_lang="uz"):
+    if not genres:
+        return ""
     # Map from any source genre name to the target language name
     translations = {
         "uz": {
-            "Боевик": "Jangari", "Action": "Jangari", "Jangari": "Jangari",
-            "Драма": "Drama", "Drama": "Drama",
-            "Комедия": "Komediya", "Comedy": "Komediya", "Komediya": "Komediya",
-            "Триллер": "Triller", "Thriller": "Triller", "Triller": "Triller",
-            "Ужасы": "Qorqinchli", "Horror": "Qorqinchli", "Qorqinchli": "Qorqinchli",
-            "Фантастика": "Fantastika", "Science Fiction": "Fantastika", "Fantastika": "Fantastika",
-            "Фэнтези": "Fentezi", "Fantasy": "Fentezi", "Fentezi": "Fentezi",
-            "Мелодрама": "Melodrama", "Romance": "Romantika", "Melodrama": "Melodrama",
-            "Детектив": "Detektiv", "Mystery": "Detektiv", "Detektiv": "Detektiv",
-            "Приключения": "Sarguzasht", "Adventure": "Sarguzasht", "Sarguzasht": "Sarguzasht",
-            "Семейный": "Oilaviy", "Family": "Oilaviy", "Oilaviy": "Oilaviy",
-            "Мультфильм": "Multfilm", "Animation": "Multfilm", "Multfilm": "Multfilm",
-            "Исторический": "Tarixiy", "History": "Tarixiy", "Tarixiy": "Tarixiy",
-            "Документальный": "Hujjatli", "Documentary": "Hujjatli", "Hujjatli": "Hujjatli",
-            "Военный": "Harbiy", "War": "Harbiy", "Harbiy": "Harbiy",
-            "Криминал": "Kriminal", "Crime": "Kriminal", "Kriminal": "Kriminal",
-            "Биография": "Biografiya", "Biography": "Biografiya", "Biografiya": "Biografiya",
-            "Anime": "Anime", "Аниме": "Anime",
-            "Psychological": "Psixologik", "Психологический": "Psixologik", "Psixologik": "Psixologik",
-            "Short": "Qisqa metrajli", "Короткометражка": "Qisqa metrajli",
-            "Musical": "Myuzikl", "Мюзикл": "Myuzikl",
-            "Western": "Vestern", "Вестерн": "Vestern",
-            "TV Movie": "Televizion film", "Телевизионный фильм": "Televizion film"
+            "Боевик": "Jangari",
+            "Action": "Jangari",
+            "Jangari": "Jangari",
+            "Драма": "Drama",
+            "Drama": "Drama",
+            "Комедия": "Komediya",
+            "Comedy": "Komediya",
+            "Komediya": "Komediya",
+            "Триллер": "Triller",
+            "Thriller": "Triller",
+            "Triller": "Triller",
+            "Ужасы": "Qorqinchli",
+            "Horror": "Qorqinchli",
+            "Qorqinchli": "Qorqinchli",
+            "Фантастика": "Fantastika",
+            "Science Fiction": "Fantastika",
+            "Fantastika": "Fantastika",
+            "Фэнтези": "Fentezi",
+            "Fantasy": "Fentezi",
+            "Fentezi": "Fentezi",
+            "Мелодрама": "Melodrama",
+            "Romance": "Romantika",
+            "Melodrama": "Melodrama",
+            "Детектив": "Detektiv",
+            "Mystery": "Detektiv",
+            "Detektiv": "Detektiv",
+            "Приключения": "Sarguzasht",
+            "Adventure": "Sarguzasht",
+            "Sarguzasht": "Sarguzasht",
+            "Семейный": "Oilaviy",
+            "Family": "Oilaviy",
+            "Oilaviy": "Oilaviy",
+            "Мультфильм": "Multfilm",
+            "Animation": "Multfilm",
+            "Multfilm": "Multfilm",
+            "Исторический": "Tarixiy",
+            "History": "Tarixiy",
+            "Tarixiy": "Tarixiy",
+            "Документальный": "Hujjatli",
+            "Documentary": "Hujjatli",
+            "Hujjatli": "Hujjatli",
+            "Военный": "Harbiy",
+            "War": "Harbiy",
+            "Harbiy": "Harbiy",
+            "Криминал": "Kriminal",
+            "Crime": "Kriminal",
+            "Kriminal": "Kriminal",
+            "Биография": "Biografiya",
+            "Biography": "Biografiya",
+            "Biografiya": "Biografiya",
+            "Anime": "Anime",
+            "Аниме": "Anime",
+            "Psychological": "Psixologik",
+            "Психологический": "Psixologik",
+            "Psixologik": "Psixologik",
+            "Short": "Qisqa metrajli",
+            "Короткометражка": "Qisqa metrajli",
+            "Musical": "Myuzikl",
+            "Мюзикл": "Myuzikl",
+            "Western": "Vestern",
+            "Вестерн": "Vestern",
+            "TV Movie": "Televizion film",
+            "Телевизионный фильм": "Televizion film",
         },
         "ru": {
-            "Action": "Боевик", "Jangari": "Боевик", "Боевик": "Боевик",
-            "Drama": "Драма", "Драма": "Драма",
-            "Comedy": "Комедия", "Komediya": "Комедия", "Комедия": "Комедия",
-            "Thriller": "Триллер", "Triller": "Триллер", "Триллер": "Триллер",
-            "Horror": "Ужасы", "Qorqinchli": "Ужасы", "Ужасы": "Ужасы",
-            "Science Fiction": "Фантастика", "Fantastika": "Фантастика", "Фантастика": "Фантастика",
-            "Fantasy": "Фэнтези", "Fentezi": "Фэнтези", "Фэнтези": "Фэнтези",
-            "Romance": "Мелодрама", "Melodrama": "Мелодрама", "Мелодрама": "Мелодрама",
-            "Mystery": "Детектив", "Detektiv": "Детектив", "Детектив": "Детектив",
-            "Adventure": "Приключения", "Sarguzasht": "Приключения", "Приключения": "Приключения",
-            "Family": "Семейный", "Oilaviy": "Семейный", "Семейный": "Семейный",
-            "Animation": "Мультфильм", "Multfilm": "Мультфильм", "Мультфильм": "Мультфильм",
-            "History": "Исторический", "Tarixiy": "Исторический", "Исторический": "Исторический",
-            "Documentary": "Документальный", "Hujjatli": "Документальный", "Документальный": "Документальный",
-            "War": "Военный", "Harbiy": "Военный", "Военный": "Военный",
-            "Crime": "Криминал", "Kriminal": "Криминал", "Криминал": "Криминал",
-            "Biography": "Биография", "Biografiya": "Биография", "Биография": "Биография",
-            "Anime": "Аниме", "Аниме": "Аниме",
-            "Psychological": "Психологический", "Psixologik": "Психологический", "Психологический": "Психологический",
-            "Short": "Короткометражка", "Qisqa metrajli": "Короткометражка",
-            "Musical": "Мюзикл", "Myuzikl": "Мюзикл",
-            "Western": "Вестерн", "Vestern": "Вестерн",
-            "TV Movie": "Телевизионный фильм", "Televizion film": "Телевизионный фильм"
+            "Action": "Боевик",
+            "Jangari": "Боевик",
+            "Боевик": "Боевик",
+            "Drama": "Драма",
+            "Драма": "Драма",
+            "Comedy": "Комедия",
+            "Komediya": "Комедия",
+            "Комедия": "Комедия",
+            "Thriller": "Триллер",
+            "Triller": "Триллер",
+            "Триллер": "Триллер",
+            "Horror": "Ужасы",
+            "Qorqinchli": "Ужасы",
+            "Ужасы": "Ужасы",
+            "Science Fiction": "Фантастика",
+            "Fantastika": "Фантастика",
+            "Фантастика": "Фантастика",
+            "Fantasy": "Фэнтези",
+            "Fentezi": "Фэнтези",
+            "Фэнтези": "Фэнтези",
+            "Romance": "Мелодрама",
+            "Melodrama": "Мелодрама",
+            "Мелодрама": "Мелодрама",
+            "Mystery": "Детектив",
+            "Detektiv": "Детектив",
+            "Детектив": "Детектив",
+            "Adventure": "Приключения",
+            "Sarguzasht": "Приключения",
+            "Приключения": "Приключения",
+            "Family": "Семейный",
+            "Oilaviy": "Семейный",
+            "Семейный": "Семейный",
+            "Animation": "Мультфильм",
+            "Multfilm": "Мультфильм",
+            "Мультфильм": "Мультфильм",
+            "History": "Исторический",
+            "Tarixiy": "Исторический",
+            "Исторический": "Исторический",
+            "Documentary": "Документальный",
+            "Hujjatli": "Документальный",
+            "Документальный": "Документальный",
+            "War": "Военный",
+            "Harbiy": "Военный",
+            "Военный": "Военный",
+            "Crime": "Криминал",
+            "Kriminal": "Криминал",
+            "Криминал": "Криминал",
+            "Biography": "Биография",
+            "Biografiya": "Биография",
+            "Биография": "Биография",
+            "Anime": "Аниме",
+            "Аниме": "Аниме",
+            "Psychological": "Психологический",
+            "Psixologik": "Психологический",
+            "Психологический": "Психологический",
+            "Short": "Короткометражка",
+            "Qisqa metrajli": "Короткометражка",
+            "Musical": "Мюзикл",
+            "Myuzikl": "Мюзикл",
+            "Western": "Вестерн",
+            "Vestern": "Вестерн",
+            "TV Movie": "Телевизионный фильм",
+            "Televizion film": "Телевизионный фильм",
         },
         "en": {
-            "Боевик": "Action", "Jangari": "Action", "Action": "Action",
-            "Драма": "Drama", "Drama": "Drama",
-            "Комедия": "Comedy", "Komediya": "Comedy", "Comedy": "Comedy",
-            "Триллер": "Thriller", "Triller": "Thriller", "Thriller": "Thriller",
-            "Ужасы": "Horror", "Qorqinchli": "Horror", "Horror": "Horror",
-            "Фантастика": "Sci-Fi", "Fantastika": "Sci-Fi", "Sci-Fi": "Sci-Fi",
-            "Фэнтези": "Fantasy", "Fentezi": "Fantasy", "Fantasy": "Fantasy",
-            "Мелодрама": "Romance", "Melodrama": "Romance", "Romance": "Romance",
-            "Детектив": "Mystery", "Detektiv": "Mystery", "Mystery": "Mystery",
-            "Приключения": "Adventure", "Sarguzasht": "Adventure", "Adventure": "Adventure",
-            "Семейный": "Family", "Oilaviy": "Family", "Family": "Family",
-            "Мультфильм": "Animation", "Multfilm": "Animation", "Animation": "Animation",
-            "Исторический": "History", "Tarixiy": "History", "History": "History",
-            "Документальный": "Documentary", "Hujjatli": "Documentary", "Documentary": "Documentary",
-            "Военный": "War", "Harbiy": "War", "War": "War",
-            "Криминал": "Crime", "Kriminal": "Crime", "Crime": "Crime",
-            "Биография": "Biography", "Biografiya": "Biography", "Biography": "Biography",
-            "Аниме": "Anime", "Anime": "Anime",
-            "Психологический": "Psychological", "Psixologik": "Psychological", "Psychological": "Psychological",
-            "Короткометражка": "Short", "Qisqa metrajli": "Short",
-            "Мюзикл": "Musical", "Myuzikl": "Musical",
-            "Вестерн": "Western", "Vestern": "Western",
-            "Телевизионный фильм": "TV Movie", "Televizion film": "TV Movie"
-        }
+            "Боевик": "Action",
+            "Jangari": "Action",
+            "Action": "Action",
+            "Драма": "Drama",
+            "Drama": "Drama",
+            "Комедия": "Comedy",
+            "Komediya": "Comedy",
+            "Comedy": "Comedy",
+            "Триллер": "Thriller",
+            "Triller": "Thriller",
+            "Thriller": "Thriller",
+            "Ужасы": "Horror",
+            "Qorqinchli": "Horror",
+            "Horror": "Horror",
+            "Фантастика": "Sci-Fi",
+            "Fantastika": "Sci-Fi",
+            "Sci-Fi": "Sci-Fi",
+            "Фэнтези": "Fantasy",
+            "Fentezi": "Fantasy",
+            "Fantasy": "Fantasy",
+            "Мелодрама": "Romance",
+            "Melodrama": "Romance",
+            "Romance": "Romance",
+            "Детектив": "Mystery",
+            "Detektiv": "Mystery",
+            "Mystery": "Mystery",
+            "Приключения": "Adventure",
+            "Sarguzasht": "Adventure",
+            "Adventure": "Adventure",
+            "Семейный": "Family",
+            "Oilaviy": "Family",
+            "Family": "Family",
+            "Мультфильм": "Animation",
+            "Multfilm": "Animation",
+            "Animation": "Animation",
+            "Исторический": "History",
+            "Tarixiy": "History",
+            "History": "History",
+            "Документальный": "Documentary",
+            "Hujjatli": "Documentary",
+            "Documentary": "Documentary",
+            "Военный": "War",
+            "Harbiy": "War",
+            "War": "War",
+            "Криминал": "Crime",
+            "Kriminal": "Crime",
+            "Crime": "Crime",
+            "Биография": "Biography",
+            "Biografiya": "Biography",
+            "Biography": "Biography",
+            "Аниме": "Anime",
+            "Anime": "Anime",
+            "Психологический": "Psychological",
+            "Psixologik": "Psychological",
+            "Psychological": "Psychological",
+            "Короткометражка": "Short",
+            "Qisqa metrajli": "Short",
+            "Мюзикл": "Musical",
+            "Myuzikl": "Musical",
+            "Вестерн": "Western",
+            "Vestern": "Western",
+            "Телевизионный фильм": "TV Movie",
+            "Televizion film": "TV Movie",
+        },
     }
-    
-    lang_map = translations.get(target_lang, translations['uz'])
+
+    lang_map = translations.get(target_lang, translations["uz"])
     return " ".join([f"{lang_map.get(g, g.replace(' ', ''))}" for g in genres])
 
+
 def get_language_display_text(lang_id):
-    if not lang_id: return "N/A"
+    if not lang_id:
+        return "N/A"
     for l in LANGUAGES:
         if l["id"] == lang_id:
             return f"{l['label']} {l['flag']}"
     return lang_id
 
+
 async def on_refresh_post(c: CallbackQuery, widget: Any, manager: DialogManager):
     config = load_config()
     tmdb = TMDBService(config.tmdb_api_key)
     tmdb_data = manager.dialog_data.get("tmdb_data", {})
-    
+
     movie_name_data = manager.dialog_data.get("name", {})
     target_lang = manager.dialog_data.get("post_target_lang", "uz")
-    
+
     # Get localized title from the name dictionary if it is a dict
     if isinstance(movie_name_data, dict):
         title_to_use = movie_name_data.get(target_lang)
@@ -733,55 +893,80 @@ async def on_refresh_post(c: CallbackQuery, widget: Any, manager: DialogManager)
             if tmdb_id:
                 # Map internal lang codes to TMDB lang codes
                 tmdb_lang_map = {"uz": "uz-UZ", "ru": "ru-RU", "en": "en-US"}
-                tmdb_title = await tmdb.get_localized_title(tmdb_id, tmdb_lang_map.get(target_lang, "en-US"))
+                tmdb_title = await tmdb.get_localized_title(
+                    tmdb_id, tmdb_lang_map.get(target_lang, "en-US")
+                )
                 if tmdb_title:
                     title_to_use = tmdb_title
                     # Save it to name_data for future use
                     movie_name_data[target_lang] = tmdb_title
-            
+
             if not title_to_use:
                 # Final fallback sequence
-                title_to_use = movie_name_data.get("uz") or movie_name_data.get("ru") or next(iter(movie_name_data.values()), "N/A")
+                title_to_use = (
+                    movie_name_data.get("uz")
+                    or movie_name_data.get("ru")
+                    or next(iter(movie_name_data.values()), "N/A")
+                )
     else:
         title_to_use = movie_name_data or "N/A"
 
     # Copy tmdb_data and override title with our localized version
     data_for_caption = (tmdb_data or {}).copy()
-    data_for_caption['title'] = title_to_use
+    data_for_caption["title"] = title_to_use
 
     manager.dialog_data["post_caption"] = tmdb.format_caption(
         data_for_caption,
         code=manager.dialog_data.get("code"),
-        genres_str=get_post_hashtags(manager.dialog_data.get("genres", []), target_lang=target_lang),
+        genres_str=get_post_hashtags(
+            manager.dialog_data.get("genres", []), target_lang=target_lang
+        ),
         quality=manager.dialog_data.get("input_quality"),
         all_langs=manager.dialog_data.get("all_movie_langs"),
-        target_lang=target_lang
+        target_lang=target_lang,
     )
     await c.answer(str(_("✅ Post yangilandi")))
+
 
 async def on_post_publish(c: CallbackQuery, widget: Any, manager: DialogManager):
     session: AsyncSession = manager.middleware_data["session"]
     post_actions = PostChannelActions(session)
     channels = await post_actions.get_active_post_channels()
-    
+
     image = manager.dialog_data.get("post_image")
     caption = manager.dialog_data.get("post_caption")
-    
+
     sent_count = 0
     for channel in channels:
         try:
             if image:
                 if isinstance(image, str) and image.startswith("http"):
-                    await c.bot.send_photo(channel.channel_id, photo=image, caption=caption, parse_mode="HTML")
+                    await c.bot.send_photo(
+                        channel.channel_id,
+                        photo=image,
+                        caption=caption,
+                        parse_mode="HTML",
+                    )
                 else:
-                    await c.bot.send_photo(channel.channel_id, photo=image, caption=caption, parse_mode="HTML")
+                    await c.bot.send_photo(
+                        channel.channel_id,
+                        photo=image,
+                        caption=caption,
+                        parse_mode="HTML",
+                    )
             else:
-                await c.bot.send_message(channel.channel_id, text=caption, parse_mode="HTML")
+                await c.bot.send_message(
+                    channel.channel_id, text=caption, parse_mode="HTML"
+                )
             sent_count += 1
         except Exception as e:
             logger.error(f"Post publishing error for channel {channel.channel_id}: {e}")
-            
-    await c.answer(str(_("✅ Post {count} ta kanalga yuborildi.")).format(count=sent_count), show_alert=True)
+
+    await c.answer(
+        str(_("✅ Post {count} ta kanalga yuborildi.")).format(count=sent_count),
+        show_alert=True,
+    )
+
 
 async def on_edit_post_image_input(m: Message, widget: Any, manager: DialogManager):
     if m.photo:
@@ -793,26 +978,28 @@ async def on_edit_post_image_input(m: Message, widget: Any, manager: DialogManag
         return
     await manager.switch_to(AddMovieWizardSG.post_preview)
 
+
 async def on_edit_post_caption_input(m: Message, widget: Any, manager: DialogManager):
     manager.dialog_data["post_caption"] = m.html_text or m.text
     await manager.switch_to(AddMovieWizardSG.post_preview)
 
+
 async def get_post_preview_data(dialog_manager: DialogManager, **kwargs):
     image = dialog_manager.dialog_data.get("post_image")
     caption = dialog_manager.dialog_data.get("post_caption")
-    
+
     media = None
     if image:
         if isinstance(image, str) and image.startswith("http"):
             media = MediaAttachment(ContentType.PHOTO, url=image)
         else:
             media = MediaAttachment(ContentType.PHOTO, file_id=MediaId(image))
-        
+
     target_lang = dialog_manager.dialog_data.get("post_target_lang", "uz")
     images = dialog_manager.dialog_data.get("all_posters", [])
     current_idx = dialog_manager.dialog_data.get("poster_index", 0)
     total = len(images)
-    
+
     return {
         "media": media,
         "caption": caption or "No caption",
@@ -828,7 +1015,7 @@ async def get_post_preview_data(dialog_manager: DialogManager, **kwargs):
         "has_next": total > 1 and current_idx < total - 1,
         "has_prev": total > 1 and current_idx > 0,
         "img_prompt": str(_("🖼 Yangi rasm yuboring yoki rasm linkini yuboring:")),
-        "cap_prompt": str(_("📝 Yangi post matnini yuboring:"))
+        "cap_prompt": str(_("📝 Yangi post matnini yuboring:")),
     }
 
 
@@ -861,15 +1048,19 @@ async def on_confirm(c: CallbackQuery, widget: Any, manager: DialogManager):
         )
 
         admin_locale = manager.middleware_data.get("i18n").current_locale
-        
+
         # Auto-generate post data if missing (for auto-posting feature)
         if not data.get("post_caption"):
             config = load_config()
             tmdb = TMDBService(config.tmdb_api_key)
             movie_name = data.get("name")
             if isinstance(movie_name, dict):
-                movie_name = movie_name.get("uz") or movie_name.get("ru") or next(iter(movie_name.values()))
-            
+                movie_name = (
+                    movie_name.get("uz")
+                    or movie_name.get("ru")
+                    or next(iter(movie_name.values()))
+                )
+
             tmdb_result = await tmdb.parse_movie(movie_name)
             if tmdb_result:
                 data["post_image"] = tmdb_result["preview"]
@@ -878,11 +1069,13 @@ async def on_confirm(c: CallbackQuery, widget: Any, manager: DialogManager):
                     code=data.get("code"),
                     genres_str=get_post_hashtags(data.get("genres", [])),
                     lang_str=get_language_display_text(data.get("language")),
-                    quality=data.get("input_quality")
+                    quality=data.get("input_quality"),
                 )
             else:
                 data["post_image"] = data.get("thumbnail_file_id")
-                data["post_caption"] = f"🎬 <b>Nomi:</b> {movie_name}\n\n💾 <b>KODI:</b> {data.get('code')}"
+                data["post_caption"] = (
+                    f"🎬 <b>Nomi:</b> {movie_name}\n\n💾 <b>KODI:</b> {data.get('code')}"
+                )
 
         task_data = {
             "admin_id": c.from_user.id,
@@ -1876,7 +2069,11 @@ add_movie_dialog = Dialog(
         getter=get_type_specific_prompts,
     ),
     Window(
-        Format(_("💿 <b>Video sifatini tanlang:</b>\n(Bu sifat asosida transkodlash amalga oshiriladi)")),
+        Format(
+            _(
+                "💿 <b>Video sifatini tanlang:</b>\n(Bu sifat asosida transkodlash amalga oshiriladi)"
+            )
+        ),
         Group(
             Select(
                 Format("{item[1]}"),
@@ -2013,7 +2210,11 @@ add_movie_dialog = Dialog(
         Format("{summary}"),
         Row(
             Button(Format(_("💾 Saqlash")), id="save", on_click=on_confirm),
-            Button(Format(_("📱 Postni ko'rish")), id="btn_post_preview", on_click=on_post_preview_click),
+            Button(
+                Format(_("📱 Postni ko'rish")),
+                id="btn_post_preview",
+                on_click=on_post_preview_click,
+            ),
         ),
         Row(
             Button(
@@ -2126,17 +2327,43 @@ add_movie_dialog = Dialog(
             Button(Format("{refresh_label}"), id="refresh", on_click=on_refresh_post),
         ),
         Row(
-            Button(Format("{prev_label}"), id="prev_img", on_click=on_prev_poster, when="has_prev"),
+            Button(
+                Format("{prev_label}"),
+                id="prev_img",
+                on_click=on_prev_poster,
+                when="has_prev",
+            ),
             Button(Format("{counter}"), id="counter_img"),
-            Button(Format("{next_label}"), id="next_img", on_click=on_next_poster, when="has_next"),
+            Button(
+                Format("{next_label}"),
+                id="next_img",
+                on_click=on_next_poster,
+                when="has_next",
+            ),
         ),
         Row(
-            SwitchTo(Format("{img_edit_label}"), id="edit_img", state=AddMovieWizardSG.edit_post_image),
-            SwitchTo(Format("{cap_edit_label}"), id="edit_cap", state=AddMovieWizardSG.edit_post_caption),
+            SwitchTo(
+                Format("{img_edit_label}"),
+                id="edit_img",
+                state=AddMovieWizardSG.edit_post_image,
+            ),
+            SwitchTo(
+                Format("{cap_edit_label}"),
+                id="edit_cap",
+                state=AddMovieWizardSG.edit_post_caption,
+            ),
         ),
         Row(
-            SwitchTo(Format("{lang_select_label}"), id="go_to_lang", state=AddMovieWizardSG.post_lang_menu),
-            SwitchTo(Format("{back_label}"), id="back_to_confirm_post", state=AddMovieWizardSG.confirm),
+            SwitchTo(
+                Format("{lang_select_label}"),
+                id="go_to_lang",
+                state=AddMovieWizardSG.post_lang_menu,
+            ),
+            SwitchTo(
+                Format("{back_label}"),
+                id="back_to_confirm_post",
+                state=AddMovieWizardSG.confirm,
+            ),
         ),
         state=AddMovieWizardSG.post_preview,
         getter=get_post_preview_data,
@@ -2147,26 +2374,34 @@ add_movie_dialog = Dialog(
             Select(
                 Format("{item[1]}"),
                 id="post_lang",
-                items=[('uz', '🇺🇿 UZ'), ('ru', '🇷🇺 RU'), ('en', '🇺🇸 EN')],
+                items=[("uz", "🇺🇿 UZ"), ("ru", "🇷🇺 RU"), ("en", "🇺🇸 EN")],
                 item_id_getter=lambda x: x[0],
                 on_click=on_post_lang_change,
             ),
         ),
-        SwitchTo(Format("{back_label}"), id="back_to_preview", state=AddMovieWizardSG.post_preview),
+        SwitchTo(
+            Format("{back_label}"),
+            id="back_to_preview",
+            state=AddMovieWizardSG.post_preview,
+        ),
         state=AddMovieWizardSG.post_lang_menu,
         getter=get_post_preview_data,
     ),
     Window(
         Format("{img_prompt}"),
         MessageInput(on_edit_post_image_input),
-        SwitchTo(Format("{back_label}"), id="cancel_img", state=AddMovieWizardSG.post_preview),
+        SwitchTo(
+            Format("{back_label}"), id="cancel_img", state=AddMovieWizardSG.post_preview
+        ),
         state=AddMovieWizardSG.edit_post_image,
         getter=get_post_preview_data,
     ),
     Window(
         Format("{cap_prompt}"),
         MessageInput(on_edit_post_caption_input),
-        SwitchTo(Format("{back_label}"), id="cancel_cap", state=AddMovieWizardSG.post_preview),
+        SwitchTo(
+            Format("{back_label}"), id="cancel_cap", state=AddMovieWizardSG.post_preview
+        ),
         state=AddMovieWizardSG.edit_post_caption,
         getter=get_post_preview_data,
     ),

@@ -2841,3 +2841,39 @@ msgstr "📝 Send new post text:"
 
 msgid "✅ Post {count} ta kanalga yuborildi."
 msgstr "✅ Post sent to {count} channels."
+
+
+# Dynamic UI Translations
+msgid "🌍 Tilni almashtirish"
+msgstr "🌍 Change language"
+
+msgid "🔙 Ortga"
+msgstr "🔙 Back"
+
+msgid "🖼 Rasmni o'zgartirish"
+msgstr "🖼 Change photo"
+
+msgid "📝 Matnni o'zgartirish"
+msgstr "📝 Change text"
+
+msgid "🚀 Postni chiqarish"
+msgstr "🚀 Publish post"
+
+msgid "🔄 Yangilash"
+msgstr "🔄 Refresh"
+
+msgid "🖼 Yangi rasm yuboring yoki rasm linkini yuboring:"
+msgstr "🖼 Send new image or image URL:"
+
+msgid "📝 Yangi post matnini yuboring:"
+msgstr "📝 Send new post text:"
+
+msgid "🖼 Keyingi rasm ({idx}/{total})"
+msgstr "🖼 Next image ({idx}/{total})"
+
+msgid "🖼 Oldingi rasm ({idx}/{total})"
+msgstr "🖼 Previous image ({idx}/{total})"
+
+msgid "❌ Rasmlar topilmadi"
+msgstr "❌ Images not found"
+
