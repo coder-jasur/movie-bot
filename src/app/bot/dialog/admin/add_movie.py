@@ -564,7 +564,12 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
         all_langs.append(curr_lang)
     manager.dialog_data["all_movie_langs"] = all_langs
 
-    # Always Refresh caption and images to sync with possible wizard edits
+    # If user manually searched for a different movie, preserve it unless official name changed
+    if manager.dialog_data.get("poster_manual_override") and manager.dialog_data.get("last_synced_name") == movie_name:
+        await manager.switch_to(AddMovieWizardSG.post_preview)
+        return
+
+    manager.dialog_data["last_synced_name"] = movie_name
     tmdb_result = await tmdb.parse_movie(movie_name)
     if tmdb_result:
         manager.dialog_data["tmdb_data"] = tmdb_result["data"]
@@ -1030,10 +1035,18 @@ async def on_edit_post_search_name_input(
         manager.dialog_data["tmdb_id"] = tmdb_result["tmdb_id"]
         manager.dialog_data["poster_manual_override"] = True
 
-        # Update genres to match new movie
+        # Update genres to match new movie (Map English TMDB names to Bot's technical Russian names)
         tmdb_genres = tmdb_result["data"].get("genres", [])
         if tmdb_genres:
-            manager.dialog_data["genres"] = [g["name"] for g in tmdb_genres]
+            genre_mapping = {
+                "Drama": "Драма", "Comedy": "Комедия", "Action": "Боевик", "Thriller": "Триллер",
+                "Horror": "Ужасы", "Science Fiction": "Фантастика", "Fantasy": "Фэнтези", 
+                "Romance": "Мелодрама", "Mystery": "Детектив", "Adventure": "Приключения", 
+                "Family": "Семейный", "Animation": "Мультфильм", "History": "Исторический", 
+                "Documentary": "Документальный", "War": "Военный", "Crime": "Криминал", 
+                "Music": "Мюзикл", "Western": "Вестерн", "TV Movie": "Телевизионный film"
+            }
+            manager.dialog_data["genres"] = [genre_mapping.get(g["name"], g["name"]) for g in tmdb_genres]
 
         images = tmdb.get_all_backdrops(tmdb_result["data"])
         manager.dialog_data["all_posters"] = images
@@ -1066,7 +1079,9 @@ async def on_edit_post_search_name_input(
         # or use the new search name only if official name is somehow missing
         official_name_data = manager.dialog_data.get("name", {})
         if isinstance(official_name_data, dict):
-            title_to_use = official_name_data.get(target_lang) or next(iter(official_name_data.values()), new_name)
+            title_to_use = official_name_data.get(target_lang) or next(
+                iter(official_name_data.values()), new_name
+            )
         else:
             title_to_use = official_name_data or new_name
 
@@ -1083,7 +1098,9 @@ async def on_edit_post_search_name_input(
             all_langs=all_langs,
             target_lang=target_lang,
         )
-        await m.answer(str(_("✅ Ma'lumotlar va poster yangilandi, sarlavha o'zgarishsiz qoldi!")))
+        await m.answer(
+            str(_("✅ Ma'lumotlar va poster yangilandi, sarlavha o'zgarishsiz qoldi!"))
+        )
     else:
         await m.answer(str(_("❌ Bunday nomli film topilmadi. Qayta urinib ko'ring.")))
         return
@@ -1991,23 +2008,38 @@ async def get_summary(dialog_manager: DialogManager, **kwargs):
         display_caption = str(raw_caption) if raw_caption else ""
 
     summary = (
-        f"{_('SUM_TITLE')}\n"
-        f"━━━━━━━━━━━━━━━\n"
-        f"{_('SUM_CATEGORY')} {cats.get(category, category)}\n"
-        f"{_('SUM_TYPE')} {types_map.get(category, {}).get(movie_type, movie_type)}\n"
-        f"{_('SUM_CODE')} <code>{data.get('code')}</code>\n"
-        f"{_('SUM_LANG')} {lang_display}\n"
-        f"{_('SUM_NAME')} {display_name}\n"
-        f"{_('SUM_GENRES')} {get_genre_display_text(data.get('genres', []))}\n"
+        f"<b>{_('SUM_TITLE')}</b>
+"
+        f"━━━━━━━━━━━━━━━
+"
+        f"🔹 <b>{_('SUM_CATEGORY')}:</b> {cats.get(category, category)}
+"
+        f"🔹 <b>{_('SUM_TYPE')}:</b> {types_map.get(category, {}).get(movie_type, movie_type)}
+"
+        f"🔹 <b>{_('SUM_CODE')}:</b> <code>{data.get('code')}</code>
+"
+        f"🔹 <b>{_('SUM_LANG')}:</b> {lang_display}
+"
+        f"🔹 <b>{_('SUM_NAME')}:</b> {display_name}
+"
+        f"🔹 <b>{_('SUM_GENRES')}:</b> {get_genre_display_text(data.get('genres', []))}
+"
     )
     if movie_type == "series":
-        summary += f"{_('SUM_SEASON')} {data.get('season')}\n"
-        summary += f"{_('SUM_SERIES')} {data.get('series')}\n"
+        summary += f"🔹 <b>{_('SUM_SEASON')}:</b> {data.get('season')}
+"
+        summary += f"🔹 <b>{_('SUM_SERIES')}:</b> {data.get('series')}
+"
     elif movie_type == "mini_series":
-        summary += f"{_('SUM_SERIES')} {data.get('series')}\n"
+        summary += f"🔹 <b>{_('SUM_SERIES')}:</b> {data.get('series')}
+"
 
-    summary += f"\n{_('SUM_CAPTION')}\n{display_caption if display_caption else str(_('Yo\'q'))}"
-    summary += "\n━━━━━━━━━━━━━━━\n"
+    summary += f"
+📝 <b>{_('SUM_CAPTION')}:</b>
+{display_caption if display_caption else str(_('Yo\'q'))}"
+    summary += \"
+━━━━━━━━━━━━━━━
+\"
 
     file_id = data.get("file_id")
     thumbnail_id = data.get("thumbnail_file_id")
