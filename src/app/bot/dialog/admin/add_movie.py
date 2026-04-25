@@ -565,11 +565,6 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
     manager.dialog_data["all_movie_langs"] = all_langs
 
     # Always Refresh caption and images to sync with possible wizard edits
-    # UNLESS manual override is set
-    if manager.dialog_data.get("poster_manual_override"):
-        await manager.switch_to(AddMovieWizardSG.post_preview)
-        return
-
     tmdb_result = await tmdb.parse_movie(movie_name)
     if tmdb_result:
         manager.dialog_data["tmdb_data"] = tmdb_result["data"]
@@ -1051,16 +1046,29 @@ async def on_edit_post_search_name_input(
         target_lang = manager.dialog_data.get("post_target_lang", "uz")
         all_langs = manager.dialog_data.get("all_movie_langs", [])
 
-        # Force fetch new localized title and update dialog_data["name"]
-        tmdb_title = await tmdb.get_localized_title(
-            tmdb_result["tmdb_id"], target_lang
-        )
-        title_to_use = tmdb_title or tmdb_result["data"].get("title") or new_name
-        
-        # Update stored name to new one
-        if "name" not in manager.dialog_data or not isinstance(manager.dialog_data["name"], dict):
-            manager.dialog_data["name"] = {}
-        manager.dialog_data["name"][target_lang] = title_to_use
+        # Update genres to match new movie
+        tmdb_genres = tmdb_result["data"].get("genres", [])
+        if tmdb_genres:
+            manager.dialog_data["genres"] = [g["name"] for g in tmdb_genres]
+
+        images = tmdb.get_all_backdrops(tmdb_result["data"])
+        manager.dialog_data["all_posters"] = images
+        manager.dialog_data["poster_index"] = 0
+        if images:
+            manager.dialog_data["post_image"] = images[0]
+        else:
+            manager.dialog_data["post_image"] = tmdb_result["preview"]
+
+        target_lang = manager.dialog_data.get("post_target_lang", "uz")
+        all_langs = manager.dialog_data.get("all_movie_langs", [])
+
+        # Get the official name entered by the user at the start (Step 1)
+        # or use the new search name only if official name is somehow missing
+        official_name_data = manager.dialog_data.get("name", {})
+        if isinstance(official_name_data, dict):
+            title_to_use = official_name_data.get(target_lang) or next(iter(official_name_data.values()), new_name)
+        else:
+            title_to_use = official_name_data or new_name
 
         data_for_caption = tmdb_result["data"].copy()
         data_for_caption["title"] = title_to_use
@@ -1075,7 +1083,7 @@ async def on_edit_post_search_name_input(
             all_langs=all_langs,
             target_lang=target_lang,
         )
-        await m.answer(str(_("✅ Yangi ma'lumotlar topildi!")))
+        await m.answer(str(_("✅ Ma'lumotlar va poster yangilandi, sarlavha o'zgarishsiz qoldi!")))
     else:
         await m.answer(str(_("❌ Bunday nomli film topilmadi. Qayta urinib ko'ring.")))
         return
