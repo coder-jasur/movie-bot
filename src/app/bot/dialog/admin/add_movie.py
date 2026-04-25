@@ -604,7 +604,7 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
         data_for_caption = tmdb_result["data"].copy()
         data_for_caption["title"] = title_to_use
 
-        manager.dialog_data["post_caption"] = tmdb.format_caption(
+        _cap_text, _cap_entities = tmdb.format_caption(
             data_for_caption,
             code=manager.dialog_data.get("code"),
             genres_str=get_post_hashtags(
@@ -614,14 +614,19 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
             all_langs=all_langs,
             target_lang=target_lang,
         )
+        manager.dialog_data["post_caption"] = _cap_text
+        manager.dialog_data["post_caption_entities"] = [
+            e.model_dump() for e in _cap_entities
+        ]
     else:
         # Fallback if not found
         manager.dialog_data["all_posters"] = []
         manager.dialog_data["poster_index"] = 0
         manager.dialog_data["post_image"] = manager.dialog_data.get("thumbnail_file_id")
         manager.dialog_data["post_caption"] = (
-            f"🎬 <b>NOMI:</b> {movie_name}\n\n💾 <b>KODI:</b> {manager.dialog_data.get('code')}"
+            f"🎬 Nomi: {movie_name}\n\n💾 Kodi: {manager.dialog_data.get('code')}"
         )
+        manager.dialog_data["post_caption_entities"] = []
 
     await manager.switch_to(AddMovieWizardSG.post_preview)
 
@@ -925,7 +930,7 @@ async def on_refresh_post(c: CallbackQuery, widget: Any, manager: DialogManager)
     data_for_caption = (tmdb_data or {}).copy()
     data_for_caption["title"] = title_to_use
 
-    manager.dialog_data["post_caption"] = tmdb.format_caption(
+    _cap_text, _cap_entities = tmdb.format_caption(
         data_for_caption,
         code=manager.dialog_data.get("code"),
         genres_str=get_post_hashtags(
@@ -935,6 +940,10 @@ async def on_refresh_post(c: CallbackQuery, widget: Any, manager: DialogManager)
         all_langs=manager.dialog_data.get("all_movie_langs"),
         target_lang=target_lang,
     )
+    manager.dialog_data["post_caption"] = _cap_text
+    manager.dialog_data["post_caption_entities"] = [
+        e.model_dump() for e in _cap_entities
+    ]
     await c.answer(str(_("✅ Post yangilandi")))
 
 
@@ -945,6 +954,11 @@ async def on_post_publish(c: CallbackQuery, widget: Any, manager: DialogManager)
 
     image = manager.dialog_data.get("post_image")
     caption = manager.dialog_data.get("post_caption")
+    raw_entities = manager.dialog_data.get("post_caption_entities", [])
+
+    # Rebuild MessageEntity objects from stored dicts
+    from aiogram.types import MessageEntity
+    entities = [MessageEntity(**e) for e in raw_entities] if raw_entities else None
 
     sent_count = 0
     failed_channels = []
@@ -956,11 +970,15 @@ async def on_post_publish(c: CallbackQuery, widget: Any, manager: DialogManager)
                     channel.channel_id,
                     photo=image,
                     caption=caption,
-                    parse_mode="HTML",
+                    caption_entities=entities if entities else None,
+                    parse_mode=None if entities else "HTML",
                 )
             else:
                 await c.bot.send_message(
-                    channel.channel_id, text=caption, parse_mode="HTML"
+                    channel.channel_id,
+                    text=caption,
+                    entities=entities if entities else None,
+                    parse_mode=None if entities else "HTML",
                 )
             sent_count += 1
         except Exception as e:
@@ -1032,7 +1050,7 @@ async def on_edit_post_search_name_input(m: Message, widget: Any, manager: Dialo
         data_for_caption = tmdb_result["data"].copy()
         data_for_caption["title"] = title_to_use
 
-        manager.dialog_data["post_caption"] = tmdb.format_caption(
+        _cap_text, _cap_entities = tmdb.format_caption(
             data_for_caption,
             code=manager.dialog_data.get("code"),
             genres_str=get_post_hashtags(
@@ -1042,6 +1060,10 @@ async def on_edit_post_search_name_input(m: Message, widget: Any, manager: Dialo
             all_langs=all_langs,
             target_lang=target_lang,
         )
+        manager.dialog_data["post_caption"] = _cap_text
+        manager.dialog_data["post_caption_entities"] = [
+            e.model_dump() for e in _cap_entities
+        ]
         await m.answer(str(_("✅ Yangi ma'lumotlar topildi!")))
     else:
         await m.answer(str(_("❌ Bunday nomli film topilmadi. Qayta urinib ko'ring.")))
@@ -1132,18 +1154,23 @@ async def on_confirm(c: CallbackQuery, widget: Any, manager: DialogManager):
             tmdb_result = await tmdb.parse_movie(movie_name)
             if tmdb_result:
                 data["post_image"] = tmdb_result["preview"]
-                data["post_caption"] = tmdb.format_caption(
+                _cap_text, _cap_entities = tmdb.format_caption(
                     tmdb_result["data"],
                     code=data.get("code"),
                     genres_str=get_post_hashtags(data.get("genres", [])),
                     lang_str=get_language_display_text(data.get("language")),
                     quality=data.get("input_quality"),
                 )
+                data["post_caption"] = _cap_text
+                data["post_caption_entities"] = [
+                    e.model_dump() for e in _cap_entities
+                ]
             else:
                 data["post_image"] = data.get("thumbnail_file_id")
                 data["post_caption"] = (
-                    f"🎬 <b>Nomi:</b> {movie_name}\n\n💾 <b>KODI:</b> {data.get('code')}"
+                    f"🎬 Nomi: {movie_name}\n\n💾 Kodi: {data.get('code')}"
                 )
+                data["post_caption_entities"] = []
 
         task_data = {
             "admin_id": c.from_user.id,
