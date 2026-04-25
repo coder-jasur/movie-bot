@@ -1038,7 +1038,7 @@ async def on_edit_post_search_name_input(
         # Update genres to match new movie
         tmdb_genres = tmdb_result["data"].get("genres", [])
         if tmdb_genres:
-            manager.dialog_data["genres"] = [g["id"] for g in tmdb_genres]
+            manager.dialog_data["genres"] = [g["name"] for g in tmdb_genres]
 
         images = tmdb.get_all_backdrops(tmdb_result["data"])
         manager.dialog_data["all_posters"] = images
