@@ -1035,6 +1035,11 @@ async def on_edit_post_search_name_input(
         manager.dialog_data["tmdb_id"] = tmdb_result["tmdb_id"]
         manager.dialog_data["poster_manual_override"] = True
 
+        # Update genres to match new movie
+        tmdb_genres = tmdb_result["data"].get("genres", [])
+        if tmdb_genres:
+            manager.dialog_data["genres"] = [g["id"] for g in tmdb_genres]
+
         images = tmdb.get_all_backdrops(tmdb_result["data"])
         manager.dialog_data["all_posters"] = images
         manager.dialog_data["poster_index"] = 0
@@ -1046,19 +1051,16 @@ async def on_edit_post_search_name_input(
         target_lang = manager.dialog_data.get("post_target_lang", "uz")
         all_langs = manager.dialog_data.get("all_movie_langs", [])
 
-        # Localized title
-        movie_name_data = manager.dialog_data.get("name", {})
-        if isinstance(movie_name_data, dict):
-            title_to_use = movie_name_data.get(target_lang)
-            if not title_to_use:
-                tmdb_title = await tmdb.get_localized_title(
-                    tmdb_result["tmdb_id"], target_lang
-                )
-                title_to_use = tmdb_title or next(
-                    iter(movie_name_data.values()), new_name
-                )
-        else:
-            title_to_use = movie_name_data or new_name
+        # Force fetch new localized title and update dialog_data["name"]
+        tmdb_title = await tmdb.get_localized_title(
+            tmdb_result["tmdb_id"], target_lang
+        )
+        title_to_use = tmdb_title or tmdb_result["data"].get("title") or new_name
+        
+        # Update stored name to new one
+        if "name" not in manager.dialog_data or not isinstance(manager.dialog_data["name"], dict):
+            manager.dialog_data["name"] = {}
+        manager.dialog_data["name"][target_lang] = title_to_use
 
         data_for_caption = tmdb_result["data"].copy()
         data_for_caption["title"] = title_to_use
