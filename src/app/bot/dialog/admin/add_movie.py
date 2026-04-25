@@ -564,44 +564,37 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
         all_langs.append(curr_lang)
     manager.dialog_data["all_movie_langs"] = all_langs
 
-    # If user manually searched for a different movie, preserve it unless official name changed
-    if manager.dialog_data.get("poster_manual_override") and manager.dialog_data.get("last_synced_name") == movie_name:
-        await manager.switch_to(AddMovieWizardSG.post_preview)
-        return
+    # Refresh caption to sync with possible wizard edits (like name)
+    # But do NOT re-search TMDB if we already have data
+    tmdb_data = manager.dialog_data.get("tmdb_data")
+    if not tmdb_data:
+        tmdb_result = await tmdb.parse_movie(movie_name)
+        if tmdb_result:
+            tmdb_data = tmdb_result["data"]
+            manager.dialog_data["tmdb_data"] = tmdb_data
+            manager.dialog_data["tmdb_id"] = tmdb_result["tmdb_id"]
+            
+            # Fetch all backdrops if not set
+            if not manager.dialog_data.get("all_posters"):
+                images = tmdb.get_all_backdrops(tmdb_data)
+                manager.dialog_data["all_posters"] = images
+                if images:
+                    manager.dialog_data["post_image"] = images[0]
+                else:
+                    manager.dialog_data["post_image"] = tmdb_result["preview"]
 
-    manager.dialog_data["last_synced_name"] = movie_name
-    tmdb_result = await tmdb.parse_movie(movie_name)
-    if tmdb_result:
-        manager.dialog_data["tmdb_data"] = tmdb_result["data"]
-        manager.dialog_data["tmdb_id"] = tmdb_result["tmdb_id"]
-
-        # Fetch all backdrops (horizontal)
-        images = tmdb.get_all_backdrops(tmdb_result["data"])
-        manager.dialog_data["all_posters"] = images
-        # Only reset index if images changed or not set
-        if manager.dialog_data.get("post_image") not in images:
-            manager.dialog_data["poster_index"] = 0
-            if images:
-                manager.dialog_data["post_image"] = images[0]
-            else:
-                manager.dialog_data["post_image"] = tmdb_result["preview"]
-
-        # Use current target language for initial caption
+    if tmdb_data:
+        # Use current target language for caption
         target_lang = manager.dialog_data.get("post_target_lang", "uz")
 
-        # Get localized title
+        # Get the latest official name from wizard
         movie_name_data = manager.dialog_data.get("name", {})
         if isinstance(movie_name_data, dict):
-            title_to_use = movie_name_data.get(target_lang)
-            if not title_to_use:
-                tmdb_title = await tmdb.get_localized_title(
-                    tmdb_result["tmdb_id"], target_lang
-                )
-                title_to_use = tmdb_title or movie_name_data.get("uz") or movie_name
+            title_to_use = movie_name_data.get(target_lang) or next(iter(movie_name_data.values()), movie_name)
         else:
             title_to_use = movie_name_data or movie_name
 
-        data_for_caption = tmdb_result["data"].copy()
+        data_for_caption = tmdb_data.copy()
         data_for_caption["title"] = title_to_use
 
         manager.dialog_data["post_caption"] = tmdb.format_caption(
@@ -615,14 +608,10 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
             target_lang=target_lang,
         )
     else:
-        # Fallback if not found
-        manager.dialog_data["all_posters"] = []
-        manager.dialog_data["poster_index"] = 0
-        manager.dialog_data["post_image"] = manager.dialog_data.get("thumbnail_file_id")
+        # Fallback if no TMDB data found
         manager.dialog_data["post_caption"] = (
             f"🎬 Nomi: {movie_name}\n\n💾 Kodi: {manager.dialog_data.get('code')}"
         )
-        manager.dialog_data["post_caption_entities"] = []
 
     await manager.switch_to(AddMovieWizardSG.post_preview)
 
