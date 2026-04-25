@@ -3008,3 +3008,6 @@ msgstr "✅ Новые данные найдены!"
 
 msgid "❌ Bunday nomli film topilmadi. Qayta urinib ko'ring."
 msgstr "❌ Фильм с таким названием не найден. Попробуйте еще раз."
+
+msgid "⚠️ Ba'zi kanallarga yuborib bo'lmadi (bot admin emas yoki chat topilmadi):\n\n{channels}"
+msgstr "⚠️ Не удалось отправить в некоторые каналы (бот не админ или чат не найден):\n\n{channels}"

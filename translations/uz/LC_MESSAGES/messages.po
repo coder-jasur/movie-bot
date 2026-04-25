@@ -2952,3 +2952,6 @@ msgstr "✅ Yangi ma'lumotlar topildi!"
 
 msgid "❌ Bunday nomli film topilmadi. Qayta urinib ko'ring."
 msgstr "❌ Bunday nomli film topilmadi. Qayta urinib ko'ring."
+
+msgid "⚠️ Ba'zi kanallarga yuborib bo'lmadi (bot admin emas yoki chat topilmadi):\n\n{channels}"
+msgstr "⚠️ Ba'zi kanallarga yuborib bo'lmadi (bot admin emas yoki chat topilmadi):\n\n{channels}"

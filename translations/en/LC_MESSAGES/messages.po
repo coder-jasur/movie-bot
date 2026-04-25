@@ -2886,3 +2886,6 @@ msgstr "✅ New data found!"
 
 msgid "❌ Bunday nomli film topilmadi. Qayta urinib ko'ring."
 msgstr "❌ Movie with this name not found. Try again."
+
+msgid "⚠️ Ba'zi kanallarga yuborib bo'lmadi (bot admin emas yoki chat topilmadi):\n\n{channels}"
+msgstr "⚠️ Could not send to some channels (bot is not an admin or chat not found):\n\n{channels}"

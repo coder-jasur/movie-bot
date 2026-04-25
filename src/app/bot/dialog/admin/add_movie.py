@@ -947,23 +947,17 @@ async def on_post_publish(c: CallbackQuery, widget: Any, manager: DialogManager)
     caption = manager.dialog_data.get("post_caption")
 
     sent_count = 0
+    failed_channels = []
+
     for channel in channels:
         try:
             if image:
-                if isinstance(image, str) and image.startswith("http"):
-                    await c.bot.send_photo(
-                        channel.channel_id,
-                        photo=image,
-                        caption=caption,
-                        parse_mode="HTML",
-                    )
-                else:
-                    await c.bot.send_photo(
-                        channel.channel_id,
-                        photo=image,
-                        caption=caption,
-                        parse_mode="HTML",
-                    )
+                await c.bot.send_photo(
+                    channel.channel_id,
+                    photo=image,
+                    caption=caption,
+                    parse_mode="HTML",
+                )
             else:
                 await c.bot.send_message(
                     channel.channel_id, text=caption, parse_mode="HTML"
@@ -971,6 +965,13 @@ async def on_post_publish(c: CallbackQuery, widget: Any, manager: DialogManager)
             sent_count += 1
         except Exception as e:
             logger.error(f"Post publishing error for channel {channel.channel_id}: {e}")
+            failed_channels.append(channel.username or str(channel.channel_id))
+
+    if failed_channels:
+        failed_text = "\n".join([f"❌ @{ch}" if not ch.startswith("-") else f"❌ {ch}" for ch in failed_channels])
+        await c.message.answer(
+            str(_("⚠️ Ba'zi kanallarga yuborib bo'lmadi (bot admin emas yoki chat topilmadi):\n\n{channels}")).format(channels=failed_text)
+        )
 
     await c.answer(
         str(_("✅ Post {count} ta kanalga yuborildi.")).format(count=sent_count),
