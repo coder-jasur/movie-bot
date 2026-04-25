@@ -2964,9 +2964,6 @@ msgstr 🖼 Предыдущее изображение ({idx}/{total})
 msgid ❌ Rasmlar topilmadi
 msgstr ❌ Изображения не найдены
 
-
-
-# Dynamic UI Translations
 msgid "🌍 Tilni almashtirish"
 msgstr "🌍 Сменить язык"
 
@@ -3000,3 +2997,14 @@ msgstr "🖼 Предыдущее изображение ({idx}/{total})"
 msgid "❌ Rasmlar topilmadi"
 msgstr "❌ Изображения не найдены"
 
+msgid "🔎 Qidiruv nomini o'zgartirish"
+msgstr "🔎 Изменить название поиска"
+
+msgid "🔍 Qidiruv uchun yangi nom kiriting:"
+msgstr "🔍 Введите новое название для поиска:"
+
+msgid "✅ Yangi ma'lumotlar topildi!"
+msgstr "✅ Новые данные найдены!"
+
+msgid "❌ Bunday nomli film topilmadi. Qayta urinib ko'ring."
+msgstr "❌ Фильм с таким названием не найден. Попробуйте еще раз."

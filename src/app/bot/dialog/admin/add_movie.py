@@ -565,6 +565,11 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
     manager.dialog_data["all_movie_langs"] = all_langs
 
     # Always Refresh caption and images to sync with possible wizard edits
+    # UNLESS manual override is set
+    if manager.dialog_data.get("poster_manual_override"):
+        await manager.switch_to(AddMovieWizardSG.post_preview)
+        return
+
     tmdb_result = await tmdb.parse_movie(movie_name)
     if tmdb_result:
         manager.dialog_data["tmdb_data"] = tmdb_result["data"]
@@ -689,6 +694,9 @@ def get_post_hashtags(genres, target_lang="uz"):
             "Fentezi": "Fentezi",
             "Мелодрама": "Melodrama",
             "Romance": "Romantika",
+            "Романтика": "Romantika",
+            "#Романтика": "Romantika",
+            "Romantika": "Romantika",
             "Melodrama": "Melodrama",
             "Детектив": "Detektiv",
             "Mystery": "Detektiv",
@@ -754,6 +762,8 @@ def get_post_hashtags(genres, target_lang="uz"):
             "Фэнтези": "Фэнтези",
             "Romance": "Мелодрама",
             "Melodrama": "Мелодрама",
+            "Романтика": "Мелодрама",
+            "#Романтика": "Мелодрама",
             "Мелодрама": "Мелодрама",
             "Mystery": "Детектив",
             "Detektiv": "Детектив",
@@ -984,6 +994,61 @@ async def on_edit_post_caption_input(m: Message, widget: Any, manager: DialogMan
     await manager.switch_to(AddMovieWizardSG.post_preview)
 
 
+async def on_edit_post_search_name_input(m: Message, widget: Any, manager: DialogManager):
+    config = load_config()
+    tmdb = TMDBService(config.tmdb_api_key)
+    new_name = m.text
+
+    tmdb_result = await tmdb.parse_movie(new_name)
+    if tmdb_result:
+        manager.dialog_data["tmdb_data"] = tmdb_result["data"]
+        manager.dialog_data["tmdb_id"] = tmdb_result["tmdb_id"]
+        manager.dialog_data["poster_manual_override"] = True
+
+        images = tmdb.get_all_backdrops(tmdb_result["data"])
+        manager.dialog_data["all_posters"] = images
+        manager.dialog_data["poster_index"] = 0
+        if images:
+            manager.dialog_data["post_image"] = images[0]
+        else:
+            manager.dialog_data["post_image"] = tmdb_result["preview"]
+
+        target_lang = manager.dialog_data.get("post_target_lang", "uz")
+        all_langs = manager.dialog_data.get("all_movie_langs", [])
+
+        # Localized title
+        movie_name_data = manager.dialog_data.get("name", {})
+        if isinstance(movie_name_data, dict):
+            title_to_use = movie_name_data.get(target_lang)
+            if not title_to_use:
+                tmdb_title = await tmdb.get_localized_title(
+                    tmdb_result["tmdb_id"], target_lang
+                )
+                title_to_use = tmdb_title or next(iter(movie_name_data.values()), new_name)
+        else:
+            title_to_use = movie_name_data or new_name
+
+        data_for_caption = tmdb_result["data"].copy()
+        data_for_caption["title"] = title_to_use
+
+        manager.dialog_data["post_caption"] = tmdb.format_caption(
+            data_for_caption,
+            code=manager.dialog_data.get("code"),
+            genres_str=get_post_hashtags(
+                manager.dialog_data.get("genres", []), target_lang=target_lang
+            ),
+            quality=manager.dialog_data.get("input_quality"),
+            all_langs=all_langs,
+            target_lang=target_lang,
+        )
+        await m.answer(str(_("✅ Yangi ma'lumotlar topildi!")))
+    else:
+        await m.answer(str(_("❌ Bunday nomli film topilmadi. Qayta urinib ko'ring.")))
+        return
+
+    await manager.switch_to(AddMovieWizardSG.post_preview)
+
+
 async def get_post_preview_data(dialog_manager: DialogManager, **kwargs):
     image = dialog_manager.dialog_data.get("post_image")
     caption = dialog_manager.dialog_data.get("post_caption")
@@ -1016,6 +1081,8 @@ async def get_post_preview_data(dialog_manager: DialogManager, **kwargs):
         "has_prev": total > 1 and current_idx > 0,
         "img_prompt": str(_("🖼 Yangi rasm yuboring yoki rasm linkini yuboring:")),
         "cap_prompt": str(_("📝 Yangi post matnini yuboring:")),
+        "search_name_prompt": str(_("🔍 Qidiruv uchun yangi nom kiriting:")),
+        "btn_edit_search_name": str(_("🔎 Qidiruv nomini o'zgartirish")),
     }
 
 
@@ -2355,6 +2422,13 @@ add_movie_dialog = Dialog(
         ),
         Row(
             SwitchTo(
+                Format("{btn_edit_search_name}"),
+                id="edit_search_name",
+                state=AddMovieWizardSG.edit_post_search_name,
+            ),
+        ),
+        Row(
+            SwitchTo(
                 Format("{lang_select_label}"),
                 id="go_to_lang",
                 state=AddMovieWizardSG.post_lang_menu,
@@ -2403,6 +2477,15 @@ add_movie_dialog = Dialog(
             Format("{back_label}"), id="cancel_cap", state=AddMovieWizardSG.post_preview
         ),
         state=AddMovieWizardSG.edit_post_caption,
+        getter=get_post_preview_data,
+    ),
+    Window(
+        Format("{search_name_prompt}"),
+        MessageInput(on_edit_post_search_name_input),
+        SwitchTo(
+            Format("{back_label}"), id="cancel_search", state=AddMovieWizardSG.post_preview
+        ),
+        state=AddMovieWizardSG.edit_post_search_name,
         getter=get_post_preview_data,
     ),
 )

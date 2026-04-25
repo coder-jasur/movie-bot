@@ -2941,3 +2941,14 @@ msgstr "🖼 Oldingi rasm ({idx}/{total})"
 msgid "❌ Rasmlar topilmadi"
 msgstr "❌ Rasmlar topilmadi"
 
+msgid "🔎 Qidiruv nomini o'zgartirish"
+msgstr "🔎 Qidiruv nomini o'zgartirish"
+
+msgid "🔍 Qidiruv uchun yangi nom kiriting:"
+msgstr "🔍 Qidiruv uchun yangi nom kiriting:"
+
+msgid "✅ Yangi ma'lumotlar topildi!"
+msgstr "✅ Yangi ma'lumotlar topildi!"
+
+msgid "❌ Bunday nomli film topilmadi. Qayta urinib ko'ring."
+msgstr "❌ Bunday nomli film topilmadi. Qayta urinib ko'ring."

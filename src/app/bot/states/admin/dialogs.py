@@ -44,6 +44,7 @@ class AddMovieWizardSG(StatesGroup):
     edit_post_image = State()
     edit_post_caption = State()
     post_lang_menu = State()
+    edit_post_search_name = State()
 
 
 class EditMovieSG(StatesGroup):

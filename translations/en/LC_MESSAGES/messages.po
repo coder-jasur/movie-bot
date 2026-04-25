@@ -2842,8 +2842,6 @@ msgstr "📝 Send new post text:"
 msgid "✅ Post {count} ta kanalga yuborildi."
 msgstr "✅ Post sent to {count} channels."
 
-
-# Dynamic UI Translations
 msgid "🌍 Tilni almashtirish"
 msgstr "🌍 Change language"
 
@@ -2877,3 +2875,14 @@ msgstr "🖼 Previous image ({idx}/{total})"
 msgid "❌ Rasmlar topilmadi"
 msgstr "❌ Images not found"
 
+msgid "🔎 Qidiruv nomini o'zgartirish"
+msgstr "🔎 Change Search Name"
+
+msgid "🔍 Qidiruv uchun yangi nom kiriting:"
+msgstr "🔍 Enter new name for search:"
+
+msgid "✅ Yangi ma'lumotlar topildi!"
+msgstr "✅ New data found!"
+
+msgid "❌ Bunday nomli film topilmadi. Qayta urinib ko'ring."
+msgstr "❌ Movie with this name not found. Try again."
