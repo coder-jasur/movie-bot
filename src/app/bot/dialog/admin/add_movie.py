@@ -941,7 +941,7 @@ async def on_refresh_post(c: CallbackQuery, widget: Any, manager: DialogManager)
 
 async def on_post_publish(c: CallbackQuery, button: Any, manager: DialogManager):
     from aiogram.utils.i18n import gettext as _
-    
+
     # Save to db
     session = manager.middleware_data["session"]
     movie_id = manager.dialog_data.get("movie_id")
@@ -977,19 +977,25 @@ async def on_post_publish(c: CallbackQuery, button: Any, manager: DialogManager)
                     text=caption,
                     parse_mode="HTML",
                 )
-            
+
             sent_count += 1
         except Exception as e:
             logger.error(f"Post publishing error for channel {channel.channel_id}: {e}")
             failed_channels.append(channel.username or str(channel.channel_id))
 
     if failed_channels:
-        failed_text = "
-".join([f"❌ @{ch}" if not ch.startswith("-") else f"❌ {ch}" for ch in failed_channels])
+        failed_text = "\n".join(
+            [
+                f"❌ @{ch}" if not ch.startswith("-") else f"❌ {ch}"
+                for ch in failed_channels
+            ]
+        )
         await c.message.answer(
-            str(_("⚠️ Ba'zi kanallarga yuborib bo'lmadi (bot admin emas yoki chat topilmadi):
-
-{channels}")).format(channels=failed_text)
+            str(
+                _(
+                    "⚠️ Ba'zi kanallarga yuborib bo'lmadi (bot admin emas yoki chat topilmadi):\n\n{channels}"
+                )
+            ).format(channels=failed_text)
         )
 
     await c.answer(
@@ -998,6 +1004,7 @@ async def on_post_publish(c: CallbackQuery, button: Any, manager: DialogManager)
     )
 
     await manager.done()
+
 
 async def on_edit_post_image_input(m: Message, widget: Any, manager: DialogManager):
     if m.photo:
