@@ -2008,38 +2008,23 @@ async def get_summary(dialog_manager: DialogManager, **kwargs):
         display_caption = str(raw_caption) if raw_caption else ""
 
     summary = (
-        f"<b>{_('SUM_TITLE')}</b>
-"
-        f"━━━━━━━━━━━━━━━
-"
-        f"🔹 <b>{_('SUM_CATEGORY')}:</b> {cats.get(category, category)}
-"
-        f"🔹 <b>{_('SUM_TYPE')}:</b> {types_map.get(category, {}).get(movie_type, movie_type)}
-"
-        f"🔹 <b>{_('SUM_CODE')}:</b> <code>{data.get('code')}</code>
-"
-        f"🔹 <b>{_('SUM_LANG')}:</b> {lang_display}
-"
-        f"🔹 <b>{_('SUM_NAME')}:</b> {display_name}
-"
-        f"🔹 <b>{_('SUM_GENRES')}:</b> {get_genre_display_text(data.get('genres', []))}
-"
+        f"<b>{_('SUM_TITLE')}</b>\n"
+        f"━━━━━━━━━━━━━━━\n"
+        f"🔹 <b>{_('SUM_CATEGORY')}:</b> {cats.get(category, category)}\n"
+        f"🔹 <b>{_('SUM_TYPE')}:</b> {types_map.get(category, {}).get(movie_type, movie_type)}\n"
+        f"🔹 <b>{_('SUM_CODE')}:</b> <code>{data.get('code')}</code>\n"
+        f"🔹 <b>{_('SUM_LANG')}:</b> {lang_display}\n"
+        f"🔹 <b>{_('SUM_NAME')}:</b> {display_name}\n"
+        f"🔹 <b>{_('SUM_GENRES')}:</b> {get_genre_display_text(data.get('genres', []))}\n"
     )
     if movie_type == "series":
-        summary += f"🔹 <b>{_('SUM_SEASON')}:</b> {data.get('season')}
-"
-        summary += f"🔹 <b>{_('SUM_SERIES')}:</b> {data.get('series')}
-"
+        summary += f"🔹 <b>{_('SUM_SEASON')}:</b> {data.get('season')}\n"
+        summary += f"🔹 <b>{_('SUM_SERIES')}:</b> {data.get('series')}\n"
     elif movie_type == "mini_series":
-        summary += f"🔹 <b>{_('SUM_SERIES')}:</b> {data.get('series')}
-"
+        summary += f"🔹 <b>{_('SUM_SERIES')}:</b> {data.get('series')}\n"
 
-    summary += f"
-📝 <b>{_('SUM_CAPTION')}:</b>
-{display_caption if display_caption else str(_('Yo\'q'))}"
-    summary += \"
-━━━━━━━━━━━━━━━
-\"
+    summary += f"\n📝 <b>{_('SUM_CAPTION')}:</b>\n{display_caption if display_caption else str(_('Yo\'q'))}"
+    summary += "\n━━━━━━━━━━━━━━━\n"
 
     file_id = data.get("file_id")
     thumbnail_id = data.get("thumbnail_file_id")
