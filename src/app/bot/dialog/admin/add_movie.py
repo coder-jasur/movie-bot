@@ -604,7 +604,7 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
         data_for_caption = tmdb_result["data"].copy()
         data_for_caption["title"] = title_to_use
 
-        _cap_text, _cap_entities = tmdb.format_caption(
+        manager.dialog_data["post_caption"] = tmdb.format_caption(
             data_for_caption,
             code=manager.dialog_data.get("code"),
             genres_str=get_post_hashtags(
@@ -614,10 +614,6 @@ async def on_post_preview_click(c: CallbackQuery, widget: Any, manager: DialogMa
             all_langs=all_langs,
             target_lang=target_lang,
         )
-        manager.dialog_data["post_caption"] = _cap_text
-        manager.dialog_data["post_caption_entities"] = [
-            e.model_dump() for e in _cap_entities
-        ]
     else:
         # Fallback if not found
         manager.dialog_data["all_posters"] = []
@@ -930,7 +926,7 @@ async def on_refresh_post(c: CallbackQuery, widget: Any, manager: DialogManager)
     data_for_caption = (tmdb_data or {}).copy()
     data_for_caption["title"] = title_to_use
 
-    _cap_text, _cap_entities = tmdb.format_caption(
+    manager.dialog_data["post_caption"] = tmdb.format_caption(
         data_for_caption,
         code=manager.dialog_data.get("code"),
         genres_str=get_post_hashtags(
@@ -940,25 +936,28 @@ async def on_refresh_post(c: CallbackQuery, widget: Any, manager: DialogManager)
         all_langs=manager.dialog_data.get("all_movie_langs"),
         target_lang=target_lang,
     )
-    manager.dialog_data["post_caption"] = _cap_text
-    manager.dialog_data["post_caption_entities"] = [
-        e.model_dump() for e in _cap_entities
-    ]
     await c.answer(str(_("✅ Post yangilandi")))
 
 
-async def on_post_publish(c: CallbackQuery, widget: Any, manager: DialogManager):
-    session: AsyncSession = manager.middleware_data["session"]
-    post_actions = PostChannelActions(session)
-    channels = await post_actions.get_active_post_channels()
+async def on_post_publish(c: CallbackQuery, button: Any, manager: DialogManager):
+    from aiogram.utils.i18n import gettext as _
+    
+    # Save to db
+    session = manager.middleware_data["session"]
+    movie_id = manager.dialog_data.get("movie_id")
+    movie_service = MovieService(session)
 
+    # Get channels
+    channel_service = ChannelService(session)
+    channels = await channel_service.get_all_channels()
+
+    if not channels:
+        await c.answer(_("❌ Hech qanday kanal topilmadi."), show_alert=True)
+        return
+
+    # Gather data
     image = manager.dialog_data.get("post_image")
     caption = manager.dialog_data.get("post_caption")
-    raw_entities = manager.dialog_data.get("post_caption_entities", [])
-
-    from aiogram.types import MessageEntity
-
-    entities = [MessageEntity(**e) for e in raw_entities] if raw_entities else None
 
     sent_count = 0
     failed_channels = []
@@ -967,26 +966,38 @@ async def on_post_publish(c: CallbackQuery, widget: Any, manager: DialogManager)
         try:
             if image:
                 await c.bot.send_photo(
-                    channel.channel_id,
+                    chat_id=channel.channel_id,
                     photo=image,
                     caption=caption,
-                    caption_entities=entities,  # None bo'lsa Telegram ignore qiladi
-                    parse_mode=None,  # entities bor — parse_mode SHART EMAS
+                    parse_mode="HTML",
                 )
             else:
                 await c.bot.send_message(
-                    channel.channel_id,
+                    chat_id=channel.channel_id,
                     text=caption,
-                    entities=entities,  # send_message da "entities", "caption_entities" emas!
-                    parse_mode=None,
+                    parse_mode="HTML",
                 )
+            
             sent_count += 1
         except Exception as e:
             logger.error(f"Post publishing error for channel {channel.channel_id}: {e}")
             failed_channels.append(channel.username or str(channel.channel_id))
 
-    # ... qolgan kod o'zgarishsiz
+    if failed_channels:
+        failed_text = "
+".join([f"❌ @{ch}" if not ch.startswith("-") else f"❌ {ch}" for ch in failed_channels])
+        await c.message.answer(
+            str(_("⚠️ Ba'zi kanallarga yuborib bo'lmadi (bot admin emas yoki chat topilmadi):
 
+{channels}")).format(channels=failed_text)
+        )
+
+    await c.answer(
+        str(_("✅ Post {count} ta kanalga yuborildi.")).format(count=sent_count),
+        show_alert=True,
+    )
+
+    await manager.done()
 
 async def on_edit_post_image_input(m: Message, widget: Any, manager: DialogManager):
     if m.photo:
@@ -1045,7 +1056,7 @@ async def on_edit_post_search_name_input(
         data_for_caption = tmdb_result["data"].copy()
         data_for_caption["title"] = title_to_use
 
-        _cap_text, _cap_entities = tmdb.format_caption(
+        manager.dialog_data["post_caption"] = tmdb.format_caption(
             data_for_caption,
             code=manager.dialog_data.get("code"),
             genres_str=get_post_hashtags(
@@ -1055,10 +1066,6 @@ async def on_edit_post_search_name_input(
             all_langs=all_langs,
             target_lang=target_lang,
         )
-        manager.dialog_data["post_caption"] = _cap_text
-        manager.dialog_data["post_caption_entities"] = [
-            e.model_dump() for e in _cap_entities
-        ]
         await m.answer(str(_("✅ Yangi ma'lumotlar topildi!")))
     else:
         await m.answer(str(_("❌ Bunday nomli film topilmadi. Qayta urinib ko'ring.")))
@@ -1149,15 +1156,13 @@ async def on_confirm(c: CallbackQuery, widget: Any, manager: DialogManager):
             tmdb_result = await tmdb.parse_movie(movie_name)
             if tmdb_result:
                 data["post_image"] = tmdb_result["preview"]
-                _cap_text, _cap_entities = tmdb.format_caption(
+                data["post_caption"] = tmdb.format_caption(
                     tmdb_result["data"],
                     code=data.get("code"),
                     genres_str=get_post_hashtags(data.get("genres", [])),
                     lang_str=get_language_display_text(data.get("language")),
                     quality=data.get("input_quality"),
                 )
-                data["post_caption"] = _cap_text
-                data["post_caption_entities"] = [e.model_dump() for e in _cap_entities]
             else:
                 data["post_image"] = data.get("thumbnail_file_id")
                 data["post_caption"] = (
