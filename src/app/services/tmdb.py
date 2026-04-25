@@ -345,7 +345,7 @@ class TMDBService:
 
 {L['code_label']} <code>{code or '????'}</code>
 
-{L['attention'].format(code=code or '????')}
+{L['attention']}
 """.strip()
 
         # Build plain text + MessageEntity list from HTML
