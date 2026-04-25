@@ -63,7 +63,9 @@ class TMDBService:
     def get_all_backdrops(self, data):
         images = data.get("images", {})
         backdrops = images.get("backdrops", [])
-        return [f"https://image.tmdb.org/t/p/original{p['file_path']}" for p in backdrops]
+        return [
+            f"https://image.tmdb.org/t/p/original{p['file_path']}" for p in backdrops
+        ]
 
     def get_all_posters(self, data):
         images = data.get("images", {})
@@ -71,94 +73,92 @@ class TMDBService:
         return [f"https://image.tmdb.org/t/p/original{p['file_path']}" for p in posters]
 
     def _html_to_entities(self, html_text: str):
-        """
-        HTML matnni parse qilib, oddiy matn va MessageEntity ro'yxatini qaytaradi.
-        Bu usul custom emoji, bold, italic, code teglarini to'g'ri entities ga aylantiradi.
-        """
         import re
+
         from aiogram.types import MessageEntity
 
         plain = ""
         entities = []
-        i = 0
-        text = html_text
-
-        # Stack for nested tags
         stack = []
 
         tag_pattern = re.compile(
-            r'<(/?)(tg-emoji|b|i|u|s|code|pre|a)([^>]*)>|'
-            r'&amp;|&lt;|&gt;|&quot;'
+            r"<(/?)(tg-emoji|b|i|u|s|code|pre|a)([^>]*)>|" r"&amp;|&lt;|&gt;|&quot;"
         )
 
         pos = 0
-        for m in tag_pattern.finditer(text):
-            # Plain text before this match
-            plain += text[pos:m.start()]
+        for m in tag_pattern.finditer(html_text):
+            plain += html_text[pos : m.start()]
             pos = m.end()
 
             token = m.group(0)
 
-            # HTML escapes
-            if token == '&amp;':
-                plain += '&'
+            if token == "&amp;":
+                plain += "&"
                 continue
-            if token == '&lt;':
-                plain += '<'
+            if token == "&lt;":
+                plain += "<"
                 continue
-            if token == '&gt;':
-                plain += '>'
+            if token == "&gt;":
+                plain += ">"
                 continue
-            if token == '&quot;':
+            if token == "&quot;":
                 plain += '"'
                 continue
 
-            closing = m.group(1) == '/'
+            closing = m.group(1) == "/"
             tag = m.group(2)
             attrs = m.group(3)
 
             if not closing:
-                start = len(plain.encode('utf-16-le')) // 2
-                if tag == 'tg-emoji':
+                start = len(plain.encode("utf-16-le")) // 2
+                if tag == "tg-emoji":
                     eid_m = re.search(r'emoji-id="(\d+)"', attrs)
                     eid = eid_m.group(1) if eid_m else None
-                    stack.append(('custom_emoji', start, eid))
-                elif tag == 'b':
-                    stack.append(('bold', start, None))
-                elif tag == 'i':
-                    stack.append(('italic', start, None))
-                elif tag == 'u':
-                    stack.append(('underline', start, None))
-                elif tag == 's':
-                    stack.append(('strikethrough', start, None))
-                elif tag == 'code':
-                    stack.append(('code', start, None))
-                elif tag == 'pre':
-                    stack.append(('pre', start, None))
+                    stack.append(("custom_emoji", start, eid))
+                elif tag == "b":
+                    stack.append(("bold", start, None))
+                elif tag == "i":
+                    stack.append(("italic", start, None))
+                elif tag == "u":
+                    stack.append(("underline", start, None))
+                elif tag == "s":
+                    stack.append(("strikethrough", start, None))
+                elif tag == "code":
+                    stack.append(("code", start, None))
+                elif tag == "pre":
+                    stack.append(("pre", start, None))
+                elif tag == "a":
+                    href_m = re.search(r'href="([^"]*)"', attrs)
+                    href = href_m.group(1) if href_m else None
+                    stack.append(("text_link", start, href))
             else:
-                # Closing tag — find matching open
+                tag_to_etype = {
+                    "tg-emoji": "custom_emoji",
+                    "b": "bold",
+                    "i": "italic",
+                    "u": "underline",
+                    "s": "strikethrough",
+                    "code": "code",
+                    "pre": "pre",
+                    "a": "text_link",
+                }
+                target_etype = tag_to_etype.get(tag)
                 for j in range(len(stack) - 1, -1, -1):
                     etype, start, extra = stack[j]
-                    tag_match = {
-                        'custom_emoji': 'tg-emoji',
-                        'bold': 'b', 'italic': 'i',
-                        'underline': 'u', 'strikethrough': 's',
-                        'code': 'code', 'pre': 'pre',
-                    }.get(etype)
-                    if tag_match == tag:
+                    if etype == target_etype:
                         stack.pop(j)
-                        end = len(plain.encode('utf-16-le')) // 2
+                        end = len(plain.encode("utf-16-le")) // 2
                         length = end - start
                         if length > 0:
-                            kwargs = {'type': etype, 'offset': start, 'length': length}
-                            if etype == 'custom_emoji' and extra:
-                                kwargs['custom_emoji_id'] = extra
+                            kwargs = {"type": etype, "offset": start, "length": length}
+                            if etype == "custom_emoji" and extra:
+                                kwargs["custom_emoji_id"] = extra
+                            elif etype == "text_link" and extra:
+                                kwargs["url"] = extra
                             entities.append(MessageEntity(**kwargs))
                         break
 
-        # Remaining text after last match
-        plain += text[pos:]
-
+        plain += html_text[pos:]
         return plain, entities
 
     def format_caption(
@@ -347,7 +347,7 @@ class TMDBService:
 
 {L['attention'].format(code=code or '????')}
 """.strip()
-        
+
         # Build plain text + MessageEntity list from HTML
         return self._html_to_entities(html_caption)
 

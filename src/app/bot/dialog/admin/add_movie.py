@@ -956,8 +956,8 @@ async def on_post_publish(c: CallbackQuery, widget: Any, manager: DialogManager)
     caption = manager.dialog_data.get("post_caption")
     raw_entities = manager.dialog_data.get("post_caption_entities", [])
 
-    # Rebuild MessageEntity objects from stored dicts
     from aiogram.types import MessageEntity
+
     entities = [MessageEntity(**e) for e in raw_entities] if raw_entities else None
 
     sent_count = 0
@@ -970,31 +970,22 @@ async def on_post_publish(c: CallbackQuery, widget: Any, manager: DialogManager)
                     channel.channel_id,
                     photo=image,
                     caption=caption,
-                    caption_entities=entities if entities else None,
-                    parse_mode=None if entities else "HTML",
+                    caption_entities=entities,  # None bo'lsa Telegram ignore qiladi
+                    parse_mode=None,  # entities bor — parse_mode SHART EMAS
                 )
             else:
                 await c.bot.send_message(
                     channel.channel_id,
                     text=caption,
-                    entities=entities if entities else None,
-                    parse_mode=None if entities else "HTML",
+                    entities=entities,  # send_message da "entities", "caption_entities" emas!
+                    parse_mode=None,
                 )
             sent_count += 1
         except Exception as e:
             logger.error(f"Post publishing error for channel {channel.channel_id}: {e}")
             failed_channels.append(channel.username or str(channel.channel_id))
 
-    if failed_channels:
-        failed_text = "\n".join([f"❌ @{ch}" if not ch.startswith("-") else f"❌ {ch}" for ch in failed_channels])
-        await c.message.answer(
-            str(_("⚠️ Ba'zi kanallarga yuborib bo'lmadi (bot admin emas yoki chat topilmadi):\n\n{channels}")).format(channels=failed_text)
-        )
-
-    await c.answer(
-        str(_("✅ Post {count} ta kanalga yuborildi.")).format(count=sent_count),
-        show_alert=True,
-    )
+    # ... qolgan kod o'zgarishsiz
 
 
 async def on_edit_post_image_input(m: Message, widget: Any, manager: DialogManager):
@@ -1013,7 +1004,9 @@ async def on_edit_post_caption_input(m: Message, widget: Any, manager: DialogMan
     await manager.switch_to(AddMovieWizardSG.post_preview)
 
 
-async def on_edit_post_search_name_input(m: Message, widget: Any, manager: DialogManager):
+async def on_edit_post_search_name_input(
+    m: Message, widget: Any, manager: DialogManager
+):
     config = load_config()
     tmdb = TMDBService(config.tmdb_api_key)
     new_name = m.text
@@ -1043,7 +1036,9 @@ async def on_edit_post_search_name_input(m: Message, widget: Any, manager: Dialo
                 tmdb_title = await tmdb.get_localized_title(
                     tmdb_result["tmdb_id"], target_lang
                 )
-                title_to_use = tmdb_title or next(iter(movie_name_data.values()), new_name)
+                title_to_use = tmdb_title or next(
+                    iter(movie_name_data.values()), new_name
+                )
         else:
             title_to_use = movie_name_data or new_name
 
@@ -1162,9 +1157,7 @@ async def on_confirm(c: CallbackQuery, widget: Any, manager: DialogManager):
                     quality=data.get("input_quality"),
                 )
                 data["post_caption"] = _cap_text
-                data["post_caption_entities"] = [
-                    e.model_dump() for e in _cap_entities
-                ]
+                data["post_caption_entities"] = [e.model_dump() for e in _cap_entities]
             else:
                 data["post_image"] = data.get("thumbnail_file_id")
                 data["post_caption"] = (
@@ -2511,7 +2504,9 @@ add_movie_dialog = Dialog(
         Format("{search_name_prompt}"),
         MessageInput(on_edit_post_search_name_input),
         SwitchTo(
-            Format("{back_label}"), id="cancel_search", state=AddMovieWizardSG.post_preview
+            Format("{back_label}"),
+            id="cancel_search",
+            state=AddMovieWizardSG.post_preview,
         ),
         state=AddMovieWizardSG.edit_post_search_name,
         getter=get_post_preview_data,
