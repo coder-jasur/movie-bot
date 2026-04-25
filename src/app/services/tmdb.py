@@ -347,7 +347,9 @@ class TMDBService:
 
 {L['attention'].format(code=code or '????')}
 """.strip()
-        return caption
+        
+        # Build plain text + MessageEntity list from HTML
+        return self._html_to_entities(html_caption)
 
     async def parse_movie(self, movie_name: str):
         movie = await self.search_movie(movie_name)
