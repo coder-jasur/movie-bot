@@ -38,6 +38,66 @@ GENRES = [
     {"name": "Короткометражка", "emoji": "🎞️", "label": _("🎞️ Короткометражка")},
 ]
 
+# Mapping from various languages to the internal Russian technical names
+GENRE_MAPPING = {
+    # English -> Russian
+    "Action": "Боевик",
+    "Adventure": "Приключения",
+    "Animation": "Мультфильм",
+    "Comedy": "Комедия",
+    "Crime": "Криминал",
+    "Documentary": "Документальный",
+    "Drama": "Драма",
+    "Family": "Семейный",
+    "Fantasy": "Фэнтези",
+    "History": "Исторический",
+    "Horror": "Ужасы",
+    "Music": "Мюзикл",
+    "Musical": "Мюзикл",
+    "Mystery": "Детектив",
+    "Romance": "Романтика",
+    "Science Fiction": "Фантастика",
+    "Sci-Fi": "Фантастика",
+    "TV Movie": "Телевизионный фильм",
+    "Thriller": "Триллер",
+    "War": "Военный",
+    "Western": "Вестерн",
+    "Psychological": "Психологический",
+    "Anime": "Аниме",
+    "Short": "Короткометражка",
+    # Uzbek -> Russian
+    "Jangari": "Боевик",
+    "Sarguzasht": "Приключения",
+    "Multfilm": "Мультфильм",
+    "Komediya": "Комедия",
+    "Kriminal": "Криминал",
+    "Hujjatli": "Документальный",
+    "Qorqinchli": "Ужасы",
+    "Fentezi": "Фэнтези",
+    "Tarixiy": "Исторический",
+    "Detektiv": "Детектив",
+    "Romantika": "Романтика",
+    "Melodrama": "Мелодрама",
+    "Fantastika": "Фантастика",
+    "Harbiy": "Военный",
+    "Vestern": "Вестерн",
+    "Psixologik": "Психологический",
+    "Qisqa metrajli": "Короткометражка",
+    "Myuzikl": "Мюзикл",
+    "Sport": "Спорт",
+    "Biografiya": "Биография",
+    "Oilaviy": "Семейный",
+}
+
+
+def map_to_internal_genre(genre_name: str) -> str:
+    """
+    Map an external genre name (from TMDB or manual input) to internal technical name.
+    """
+    if not genre_name:
+        return genre_name
+    return GENRE_MAPPING.get(genre_name, genre_name)
+
 
 def serialize_genres(genres: List[str]) -> str:
     """
@@ -64,7 +124,7 @@ def get_genre_display_text(genres: List[str], lang: str = None) -> str:
 
     Args:
         genres: List of genre names (technical names in Russian)
-        lang: Locale code (uz, ru, en)
+        lang: Locale code (uz, ru, en). If None, uses current locale.
 
     Returns:
         Formatted string with emojis
@@ -72,13 +132,15 @@ def get_genre_display_text(genres: List[str], lang: str = None) -> str:
     from src.app.bot.common.i18n import i18n
 
     if not genres:
-        return i18n.gettext("Janr tanlanmagan", locale=lang)
+        return ""
 
     # Map of technical name to display name (translated for the specific language)
     genre_map = {g["name"]: i18n.gettext(str(g["label"]), locale=lang) for g in GENRES}
 
     display_genres = []
     for g in genres:
-        display_genres.append(genre_map.get(g, g))
+        # Ensure the genre is internal
+        internal_g = map_to_internal_genre(g)
+        display_genres.append(genre_map.get(internal_g, internal_g))
 
     return ", ".join(display_genres)

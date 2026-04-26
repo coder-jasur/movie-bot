@@ -26,6 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.app.bot.common.genres import (
     deserialize_genres,
     get_genre_display_text,
+    map_to_internal_genre,
     serialize_genres,
 )
 from src.app.bot.common.i18n import lazy_gettext
@@ -528,6 +529,9 @@ async def on_genre_toggle(
     if not item_id:
         return
     selected = list(manager.dialog_data.get("genres", []))
+    # Ensure all existing genres are mapped to internal names to avoid conflicts
+    selected = [map_to_internal_genre(g) for g in selected]
+
     if item_id in selected:
         selected.remove(item_id)
     else:
@@ -1027,15 +1031,9 @@ async def on_edit_post_search_name_input(
         # Update genres to match new movie (Map English TMDB names to Bot's technical Russian names)
         tmdb_genres = tmdb_result["data"].get("genres", [])
         if tmdb_genres:
-            genre_mapping = {
-                "Drama": "Драма", "Comedy": "Комедия", "Action": "Боевик", "Thriller": "Триллер",
-                "Horror": "Ужасы", "Science Fiction": "Фантастика", "Fantasy": "Фэнтези", 
-                "Romance": "Мелодрама", "Mystery": "Детектив", "Adventure": "Приключения", 
-                "Family": "Семейный", "Animation": "Мультфильм", "History": "Исторический", 
-                "Documentary": "Документальный", "War": "Военный", "Crime": "Криминал", 
-                "Music": "Мюзикл", "Western": "Вестерн", "TV Movie": "Телевизионный film"
-            }
-            manager.dialog_data["genres"] = [genre_mapping.get(g["name"], g["name"]) for g in tmdb_genres]
+            manager.dialog_data["genres"] = [
+                map_to_internal_genre(g["name"]) for g in tmdb_genres
+            ]
 
         images = tmdb.get_all_backdrops(tmdb_result["data"])
         manager.dialog_data["all_posters"] = images
@@ -1051,7 +1049,9 @@ async def on_edit_post_search_name_input(
         # Update genres to match new movie
         tmdb_genres = tmdb_result["data"].get("genres", [])
         if tmdb_genres:
-            manager.dialog_data["genres"] = [g["name"] for g in tmdb_genres]
+            manager.dialog_data["genres"] = [
+                map_to_internal_genre(g["name"]) for g in tmdb_genres
+            ]
 
         images = tmdb.get_all_backdrops(tmdb_result["data"])
         manager.dialog_data["all_posters"] = images
@@ -1642,7 +1642,10 @@ async def on_cancel_to_type(c: CallbackQuery, widget: Any, manager: DialogManage
 async def get_genre_data(dialog_manager: DialogManager, **kwargs):
     from src.app.bot.common.genres import GENRES
 
-    selected_genres = dialog_manager.dialog_data.get("genres", [])
+    raw_selected = dialog_manager.dialog_data.get("genres", [])
+    # Always normalize to internal names for consistent checkmarks
+    selected_genres = [map_to_internal_genre(g) for g in raw_selected]
+
     genre_list = []
     for g in GENRES:
         name = g["name"]
@@ -1651,10 +1654,13 @@ async def get_genre_data(dialog_manager: DialogManager, **kwargs):
 
     from src.app.bot.common.utils import format_multi_name
 
+    # Get current locale from middleware
+    locale = dialog_manager.middleware_data.get("i18n").current_locale
+
     return {
         "name": format_multi_name(dialog_manager.dialog_data.get("name")),
         "genres": genre_list,
-        "selected_text": get_genre_display_text(selected_genres, lang="ru"),
+        "selected_text": get_genre_display_text(selected_genres, lang=locale),
     }
 
 

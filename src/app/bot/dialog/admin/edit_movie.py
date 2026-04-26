@@ -26,6 +26,7 @@ from src.app.bot.common.genres import (
     GENRES,
     deserialize_genres,
     get_genre_display_text,
+    map_to_internal_genre,
     serialize_genres,
 )
 from src.app.bot.common.i18n import lazy_gettext as _
@@ -121,6 +122,9 @@ async def on_genre_toggle(
     if not item_id:
         return
     selected = list(manager.dialog_data.get("genres", []))
+    # Ensure all existing genres are mapped to internal names to avoid conflicts
+    selected = [map_to_internal_genre(g) for g in selected]
+
     if item_id in selected:
         selected.remove(item_id)
     else:
@@ -1198,6 +1202,11 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
 
     from src.app.bot.common.utils import format_multi_caption, format_multi_name
 
+    # Get current locale
+    locale = dialog_manager.middleware_data.get("i18n").current_locale
+    raw_genres = deserialize_genres(data.get("genres"))
+    norm_genres = [map_to_internal_genre(g) for g in raw_genres]
+
     return {
         "code": code,
         "name": format_multi_name(data.get("name"), sel_lang),
@@ -1215,7 +1224,7 @@ async def get_movie_info(dialog_manager: DialogManager, **kwargs):
         "selected_season": dialog_manager.dialog_data.get("selected_season"),
         "media": media,
         "toggle_text": toggle_text,
-        "genres_text": get_genre_display_text(deserialize_genres(data.get("genres"))),
+        "genres_text": get_genre_display_text(norm_genres, lang=locale),
         "format": data.get("format"),
         "language": lang_info,
         "existing_langs": existing_langs,
@@ -1305,7 +1314,10 @@ async def get_edit_prompts(dialog_manager: DialogManager, **kwargs):
 
 
 async def get_genre_data(dialog_manager: DialogManager, **kwargs):
-    selected_genres = dialog_manager.dialog_data.get("genres", [])
+    raw_selected = dialog_manager.dialog_data.get("genres", [])
+    # Always normalize to internal names for consistent checkmarks
+    selected_genres = [map_to_internal_genre(g) for g in raw_selected]
+
     genre_list = []
     for g in GENRES:
         name = g["name"]
@@ -1315,13 +1327,14 @@ async def get_genre_data(dialog_manager: DialogManager, **kwargs):
     from src.app.bot.common.utils import format_multi_name
 
     sel_lang = dialog_manager.dialog_data.get("selected_lang_track")
+    locale = dialog_manager.middleware_data.get("i18n").current_locale
 
     return {
         "name": format_multi_name(
             dialog_manager.dialog_data.get("obj", {}).get("name"), sel_lang
         ),
         "genres": genre_list,
-        "selected_text": get_genre_display_text(selected_genres),
+        "selected_text": get_genre_display_text(selected_genres, lang=locale),
     }
 
 
